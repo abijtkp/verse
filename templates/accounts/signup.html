@@ -2,153 +2,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        primary: "#000000",
-        "background-light": "#f7f7f7",
-        "background-dark": "#191919",
-      },
-      fontFamily: {
-        display: ["Manrope", "sans-serif"]
+    <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#000000",
+            "background-light": "#f7f7f7",
+            "background-dark": "#191919",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"]
+          }
+        }
       }
     }
-  }
-}
-</script>
-
-<title>Join Us</title>
+    </script>
+    <title>Join Us</title>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display antialiased">
 
 <div class="flex min-h-screen w-full overflow-hidden">
 
-  <!-- 🔥 LEFT HERO SECTION -->
-  <div class="hidden lg:flex lg:w-1/2 relative flex-col justify-end p-12 overflow-hidden">
-
-    <!-- IMAGE -->
-    <div class="absolute inset-0 z-0 bg-[#D3D3D3]">
-      <div class="w-full h-full bg-center bg-no-repeat bg-contain"
-           style="background-image: url('{% static 'images/user_signup.png' %}')">
-      </div>
-
-      <!-- 🔥 GRADIENT OVERLAY -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+  <div class="hidden lg:flex lg:w-1/2 relative flex-col justify-end items-start p-16 overflow-hidden bg-[#D3D3D3]">
+    <div class="absolute inset-0 z-0 bg-no-repeat bg-cover"
+         style="background-image: url('{% static 'images/user_signup.png' %}'); background-position: 48% center;">
     </div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent z-[1]"></div>
 
-    <!-- TEXT -->
     <div class="relative z-10 text-white max-w-lg">
-      <h1 class="text-5xl font-black leading-tight tracking-tight mb-4">
-        Step Into Performance
+      <h1 class="text-6xl font-[900] leading-[1.05] tracking-tighter mb-4 drop-shadow-2xl">
+        Step Into <br> Performance
       </h1>
-      <p class="text-lg font-medium opacity-90 leading-relaxed">
-        Experience the next level of comfort and style with our latest collection.
+      <p class="text-lg font-medium opacity-95 leading-relaxed max-w-sm">
+        Experience the next level of comfort and style with our latest performance collection.
       </p>
     </div>
   </div>
 
-  <!-- 🔥 RIGHT FORM SECTION -->
   <div class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-20">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800">
 
-    <div class="w-full max-w-md bg-white dark:bg-slate-900 p-8 md:p-10 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800">
-
-      <!-- TITLE -->
       <div class="mb-8">
         <h2 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-2">
           Create Account
         </h2>
-        <p class="text-slate-500 dark:text-slate-400">
-          Join the community for exclusive access
+        <p class="text-slate-500 dark:text-slate-400 font-medium">
+          Join the Nike community for the latest drops and exclusive access.
         </p>
       </div>
 
-      <!-- MESSAGES -->
-      {% if messages %}
-        {% for message in messages %}
-          <p class="text-red-500 text-sm mb-2">{{ message }}</p>
-        {% endfor %}
-      {% endif %}
-
-      <!-- FORM -->
       <form method="POST" class="space-y-4">
         {% csrf_token %}
 
-        <!-- FULL NAME -->
         <div class="space-y-1.5">
-          <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
-          <input type="text" name="full_name" required
-            class="w-full h-12 px-4 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-primary focus:border-primary"
-            placeholder="John Doe"/>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Full Name</label>
+          <input type="text" name="full_name" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="John Doe"/>
         </div>
 
-        <!-- EMAIL -->
         <div class="space-y-1.5">
-          <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
-          <input type="email" name="email" required
-            class="w-full h-12 px-4 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-primary focus:border-primary"
-            placeholder="name@example.com"/>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Email Address</label>
+          <input type="email" name="email" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="name@example.com"/>
         </div>
 
-        <!-- PHONE -->
-        <div class="space-y-1.5">
-          <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Phone Number</label>
-          <input type="text" name="phone_number"
-            class="w-full h-12 px-4 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-primary focus:border-primary"
-            placeholder="Enter phone number"/>
-        </div>
-
-        <!-- PASSWORDS -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
+        <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1.5">
-            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Password</label>
-            <input type="password" name="password" required
-              class="w-full h-12 px-4 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-primary focus:border-primary"
-              placeholder="••••••••"/>
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Password</label>
+            <input type="password" name="password" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black" placeholder="••••••••"/>
           </div>
-
           <div class="space-y-1.5">
-            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Confirm Password</label>
-            <input type="password" name="confirm_password" required
-              class="w-full h-12 px-4 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-primary focus:border-primary"
-              placeholder="••••••••"/>
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Confirm</label>
+            <input type="password" name="confirm_password" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black" placeholder="••••••••"/>
           </div>
-
         </div>
 
-        <!-- BUTTON -->
-        <button type="submit"
-          class="w-full h-14 bg-primary text-white font-bold rounded-lg hover:bg-black/90 transition-all mt-4">
+        <div class="flex items-start space-x-2 py-2">
+          <input type="checkbox" required class="mt-1 rounded border-slate-300 text-black focus:ring-black">
+          <label class="text-xs text-slate-600 leading-tight">
+            I agree to the <a href="#" class="font-bold underline">Terms & Conditions</a> and the <a href="#" class="font-bold underline">Privacy Policy</a>.
+          </label>
+        </div>
+
+        <button type="submit" class="w-full h-14 bg-black text-white font-bold rounded-xl hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-lg shadow-black/10">
           Create Account
         </button>
-
       </form>
 
-      <!-- LOGIN -->
+      <div class="relative my-8">
+        <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
+        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-bold tracking-widest">Or continue with</span></div>
+      </div>
+
+      <button class="w-full h-14 border-2 border-slate-100 rounded-xl flex items-center justify-center space-x-3 hover:bg-slate-50 transition-all active:scale-[0.98]">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+        <span class="text-slate-700 font-bold">Google Account</span>
+      </button>
+
       <div class="mt-8 text-center">
-        <p class="text-slate-600 dark:text-slate-400 font-medium">
+        <p class="text-slate-600 font-medium">
           Already have an account?
-          <a href="#" class="text-primary font-extrabold hover:underline ml-1">
-            Log in
-          </a>
+          <a href="#" class="text-black font-extrabold hover:underline ml-1">Log in</a>
         </p>
       </div>
 
     </div>
-
   </div>
-
 </div>
 
 </body>

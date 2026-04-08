@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#000000",
+            "background-light": "#f7f7f7",
+            "background-dark": "#191919",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"]
+          }
+        }
+      }
+    }
+    </script>
+    <title>Login | Own Your Style</title>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+
+<div class="flex min-h-screen w-full overflow-hidden">
+
+  <div class="hidden lg:flex lg:w-1/2 relative flex-col justify-end items-start p-16 overflow-hidden bg-[#0A0A0A]">
+    
+    <div class="absolute inset-0 z-0 bg-no-repeat bg-cover"
+         style="background-image: url('{% static 'images/user_login.png' %}'); background-position: center;">
+    </div>
+
+    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-[1]"></div>
+
+    <div class="relative z-10 text-white max-w-lg">
+      {% comment %} <h1 class="text-6xl font-[900] leading-[1.05] tracking-tighter mb-4 drop-shadow-2xl">
+        Step Into Your <br> Style
+      </h1> {% endcomment %}
+      {% comment %} <p class="text-lg font-medium opacity-80 leading-relaxed max-w-sm">
+        Premium sneakers designed for comfort and performance. Elevate your everyday movement.
+      </p>
+       {% endcomment %}
+      <p class="mt-12 text-xs opacity-40">© 2024 Nike, Inc. All Rights Reserved</p>
+    </div>
+  </div>
+
+  <div class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-20">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800">
+
+      <div class="mb-10">
+        <h2 class="text-4xl font-extrabold text-slate-900 dark:text-slate-100 mb-2">
+          Own Your Style
+        </h2>
+        <p class="text-slate-500 dark:text-slate-400 font-medium">
+          Enter your details to access your account
+        </p>
+      </div>
+
+      {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            <p class="text-red-500 text-sm font-semibold">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" class="space-y-5">
+        {% csrf_token %}
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Email Address</label>
+          <input type="email" name="username" required 
+            class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" 
+            placeholder="name@example.com"/>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-end">
+             <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Password</label>
+             <a href="#" class="text-[10px] font-bold text-slate-900 hover:underline uppercase tracking-tighter">Forgot password?</a>
+          </div>
+          <div class="relative">
+            <input type="password" name="password" required 
+              class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" 
+              placeholder="••••••••"/>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 py-1">
+          <input type="checkbox" name="remember" id="remember" class="rounded border-slate-300 text-black focus:ring-black">
+          <label for="remember" class="text-xs font-semibold text-slate-600">
+            Remember me
+          </label>
+        </div>
+
+        <button type="submit" class="w-full h-14 bg-black text-white font-bold rounded-xl hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-lg shadow-black/10">
+          Login
+        </button>
+      </form>
+
+      <div class="relative my-10">
+        <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
+        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-bold tracking-widest">Or continue with</span></div>
+      </div>
+
+      <button class="w-full h-14 border-2 border-slate-100 rounded-xl flex items-center justify-center space-x-3 hover:bg-slate-50 transition-all active:scale-[0.98]">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+        <span class="text-slate-700 font-bold">Google Account</span>
+      </button>
+
+      <div class="mt-10 text-center">
+        <p class="text-slate-500 font-medium">
+          Not a member?
+          <a href="{% url 'signup' %}" class="text-black font-extrabold hover:underline ml-1">Join us.</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
