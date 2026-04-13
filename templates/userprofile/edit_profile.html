@@ -1,10 +1,132 @@
-<h2>Edit Profile</h2>
+{% extends 'base.html' %}
+{% load static %}
 
-<form method="POST">
-    {% csrf_token %}
+{% block extra_css %}
+<style>
+    /* 1. Precise Typography & Colors from Screenshot */
+    .edit-header-title {
+        font-[900];
+        font-style: italic;
+        line-height: 0.85;
+        letter-spacing: -0.05em;
+    }
+    
+    /* 2. Nike-Style Input Aesthetic */
+    .form-input {
+        width: 100%;
+        border: none; /* Screenshot uses borderless bg-slate-50 */
+        border-radius: 16px;
+        padding: 16px 16px 16px 48px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #000;
+        background: #f8fafc; /* Very light slate/gray */
+        outline: none;
+        transition: all 0.2s ease;
+    }
+    
+    .form-input:focus {
+        background: #fff;
+        box-shadow: 0 0 0 2px #000;
+    }
 
-    <input type="text" name="full_name" value="{{ user.full_name }}" placeholder="Full Name">
-    <input type="text" name="phone_number" value="{{ user.phone_number }}" placeholder="Phone">
+    /* 3. Sidebar Active State */
+    .sidebar-link.active {
+        background-color: #000;
+        color: #fff;
+        border-radius: 12px;
+    }
 
-    <button type="submit">Save</button>
-</form>
+    /* 4. Avatar Shadow & Ring */
+    .profile-photo-ring {
+        width: 110px; /* Slightly larger for better UI feel */
+        height: 110px;
+        border: 6px solid #fff;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-[#fcfcfc] min-h-screen">
+    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row py-10 px-6 gap-10">
+
+        <aside class="w-full lg:w-64 flex-shrink-0">
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 ml-4">Account Settings</p>
+            <nav class="flex flex-col gap-2">
+                <a href="#" class="sidebar-link active flex items-center gap-4 px-5 py-4 transition-all">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="uppercase tracking-widest text-[11px] font-black">Profile</span>
+                </a>
+                </nav>
+        </aside>
+
+        <main class="flex-1">
+            <div class="bg-white rounded-[40px] border border-slate-50 shadow-sm p-10 lg:p-14">
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
+                    <div>
+                        <h1 class="text-5xl font-[900] italic uppercase tracking-tighter text-black leading-[0.8]">
+                            Edit<br>Profile
+                        </h1>
+                        <p class="text-slate-400 text-sm font-medium mt-4">Update your personal information and preferences.</p>
+                    </div>
+                    <div class="flex items-center gap-3 mt-6 md:mt-0">
+                        <a href="{% url 'profile' %}" class="px-6 py-3 rounded-full border border-slate-200 text-black font-black uppercase text-[10px] tracking-widest hover:bg-slate-50">
+                            Cancel
+                        </a>
+                        <button form="edit-profile-form" type="submit" class="px-8 py-3 rounded-full bg-black text-white font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-transform">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center mb-12">
+                    <div class="relative">
+
+
+
+                        <div class="profile-photo-ring rounded-full overflow-hidden">
+                            {% if user.profile_photo %}
+                                <img src="{{ user.profile_photo.url }}" id="preview-img" class="w-full h-full object-cover object-center">
+                            {% else %}
+                                <img src="{% static 'images/no_profile.png' %}" id="preview-img" class="w-full h-full object-cover object-center">
+                            {% endif %}
+                        </div>
+
+
+                        
+                        
+                        <label for="profile-photo-input" class="camera-badge absolute bottom-1 right-1 bg-black text-white p-2 rounded-full border-4 border-white cursor-pointer shadow-lg">
+                            <span class="material-symbols-outlined text-sm">photo_camera</span>
+                        </label>
+                    </div>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-4">JPG, GIF or PNG. Max size 800KB</p>
+                </div>
+
+                <form id="edit-profile-form" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {% csrf_token %}
+                    <input type="file" id="profile-photo-input" name="profile_photo" class="hidden" accept="image/*">
+
+                    <div class="space-y-2">
+                        <label class="field-label ml-1">Full Name</label>
+                        <div class="relative group">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-black transition-colors">person</span>
+                            <input type="text" name="full_name" value="{{ user.full_name }}" class="form-input" placeholder="Full Name">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="field-label ml-1">Email Address</label>
+                        <div class="relative group">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-black transition-colors">mail</span>
+                            <input type="email" name="email" value="{{ user.email }}" class="form-input" placeholder="Email">
+                        </div>
+                    </div>
+
+                    </form>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
