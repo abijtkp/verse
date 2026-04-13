@@ -1,0 +1,10 @@
+<h2>Edit Profile</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <input type="text" name="full_name" value="{{ user.full_name }}" placeholder="Full Name">
+    <input type="text" name="phone_number" value="{{ user.phone_number }}" placeholder="Phone">
+
+    <button type="submit">Save</button>
+</form>

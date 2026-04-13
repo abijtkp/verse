@@ -59,17 +59,27 @@
         </p>
       </div>
 
-      <form method="POST" class="space-y-4">
+      {% if messages %}
+      <div class="mb-6 space-y-2">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-sm font-bold shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-200{% else %}bg-green-50 text-green-600 border border-green-200{% endif %}">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="POST" action = {% url "signup" %} class="space-y-4">
         {% csrf_token %}
 
         <div class="space-y-1.5">
           <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Full Name</label>
-          <input type="text" name="full_name" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="John Doe"/>
+          <input type="text" name="full_name" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="username"/>
         </div>
 
         <div class="space-y-1.5">
           <label class="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Email Address</label>
-          <input type="email" name="email" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="name@example.com"/>
+          <input type="email" name="email" required class="w-full h-12 px-4 rounded-xl border-slate-200 focus:ring-2 focus:ring-black focus:border-black transition-all" placeholder="email"/>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -108,7 +118,7 @@
       <div class="mt-8 text-center">
         <p class="text-slate-600 font-medium">
           Already have an account?
-          <a href="#" class="text-black font-extrabold hover:underline ml-1">Log in</a>
+          <a href="{% url 'login' %}" class="text-black font-extrabold hover:underline ml-1">Log in</a>
         </p>
       </div>
 
