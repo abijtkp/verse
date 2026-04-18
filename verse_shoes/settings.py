@@ -38,13 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'django.contrib.sites',
-    
-    # Third party
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     
     'accounts',
     'userprofile.apps.UserprofileConfig',
@@ -53,7 +46,16 @@ INSTALLED_APPS = [
     'orders',
     'payments',
     'offers',
-    'adminpanel',
+    
+    'django.contrib.sites',
+    
+    # Third party
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
+    
     
 ]
 
@@ -140,6 +142,8 @@ USE_TZ = True
 # Static files
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+
 
 # Media files
 MEDIA_URL = '/media/'

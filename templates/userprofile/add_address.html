@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Address | VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* TYPOGRAPHY & HEADINGS */
+    .form-title {
+        font-size: 32px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+    .form-subtitle {
+        font-size: 14px;
+        color: #94a3b8;
+        margin-bottom: 40px;
+    }
+
+    /* FORM LAYOUT */
+    .input-group {
+        margin-bottom: 24px;
+    }
+
+    .input-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .custom-input, .custom-select {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+        transition: all 0.2s ease;
+    }
+
+    .custom-input:focus, .custom-select:focus {
+        outline: none;
+        border-color: #000;
+        box-shadow: 0 0 0 1px #000;
+    }
+
+    .custom-input::placeholder {
+        color: #cbd5e1;
+    }
+
+    /* BUTTONS */
+    .btn-save {
+        background: #000;
+        color: #fff;
+        padding: 16px 48px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: transform 0.2s;
+    }
+
+    .btn-cancel {
+        background: #fff;
+        color: #000;
+        padding: 16px 48px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid #e2e8f0;
+        transition: background 0.2s;
+    }
+
+    .btn-save:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-cancel:hover { background: #f8fafc; }
+
+    /* CHECKBOX CUSTOMIZATION */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+        margin-top: 8px;
+    }
+
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .custom-checkbox:checked {
+        background-color: #000;
+        border-color: #000;
+    }
+
+    .custom-checkbox:checked::after {
+        content: '✓';
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[800px] mx-auto py-12 px-6">
+    <h1 class="form-title">Add New Address</h1>
+    <p class="form-subtitle">Add a primary shipping address for your future orders.</p>
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="input-group">
+            <label class="input-label">Full Name</label>
+            <input type="text" name="full_name" class="custom-input" placeholder="e.g. Michael Jordan" value="{{ request.POST.full_name|default:request.user.full_name }}" required>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Street Address</label>
+            <input type="text" name="address_line1" class="custom-input" placeholder="House number and street name" required>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Address Line 2 (Optional)</label>
+            <input type="text" name="address_line2" class="custom-input" placeholder="Apartment, suite, unit, etc.">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">City</label>
+                <input type="text" name="city" class="custom-input" placeholder="City" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">State / Region</label>
+                <input type="text" name="state" class="custom-input" placeholder="State" required>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">Postal Code</label>
+                <input type="text" name="pincode" class="custom-input" placeholder="ZIP Code" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Country</label>
+                <select name="country" class="custom-select" required>
+                    <option value="United States">United States</option>
+                    <option value="India">India</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">Phone Number</label>
+                <input type="text" name="phone_number" class="custom-input" placeholder="+1 (555) 000-0000" value="{{ request.POST.phone_number|default:request.user.phone_number }}" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Address Type</label>
+                <select name="address_type" class="custom-select">
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <label class="checkbox-container">
+            <input type="checkbox" name="is_default" class="custom-checkbox">
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-tight">Set as default shipping address</span>
+        </label>
+
+        <div class="flex gap-4 pt-10 border-t border-slate-100 mt-10">
+            <button type="submit" class="btn-save">Save Address</button>
+            <a href="{% url 'address_list' %}" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

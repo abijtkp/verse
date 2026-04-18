@@ -4,346 +4,219 @@
 {% block title %}My Profile | VERSE{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-
 <style>
-    body { font-family: 'Inter', sans-serif; }
 
-    /* Sidebar Styling */
-    .sidebar-link {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 24px;
-        border-radius: 8px;
-        color: #64748b;
-        transition: all 0.2s ease;
-    }
-    .sidebar-link.active {
-        background-color: #f1f5f9;
-        color: #000;
-        font-weight: 800;
-    }
-    .sidebar-link:hover:not(.active) {
-        background-color: #f8fafc;
-        color: #000;
-    }
+/* TITLE */
+.section-title {
+    font-size: 32px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    font-style: italic;
+}
 
-    /* Main Content Styling */
-    .section-title {
-        font-size: 32px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: -0.04em;
-        font-style: italic;
-        color: #000;
-    }
-    .section-subtitle {
-        color: #94a3b8;
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 32px;
-    }
+.section-subtitle {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-top: 6px;
+    margin-bottom: 30px;
+}
 
-    /* The Main Profile Card */
-    .profile-card {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.03);
-    }
+/* CARD */
+.profile-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid #f1f5f9;
+}
 
-    .profile-header-inner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding-bottom: 32px;
-        border-bottom: 1px solid #f1f5f9;
-        margin-bottom: 32px;
-    }
+/* HEADER */
+.profile-header {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 30px;
+}
 
-    .avatar-wrapper {
-        position: relative;
-        width: 110px;
-        height: 110px;
-        margin-bottom: 20px;
-    }
-    .avatar-img {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid #fff;
-        box-shadow: 0 0 20px rgba(0,0,0,0.08);
-    }
-    .edit-badge {
-        position: absolute;
-        bottom: 2px;
-        right: 2px;
-        background: #000;
-        color: #fff;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid #fff;
-        cursor: pointer;
-    }
+.avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f3f4f6;
+    flex-shrink: 0;
+}
 
-    .user-full-name {
-        font-size: 26px;
-        font-weight: 900;
-        color: #000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .verified-badge {
-        background: #e6f4ea;
-        color: #36ed60;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 2px 10px;
-        border-radius: 20px;
-        text-transform: uppercase;
-    }
+/* NAME */
+.name {
+    font-size: 26px;
+    font-weight: 900;
+}
 
-    .info-label {
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #94a3b8;
-        margin-bottom: 6px;
-    }
-    .info-value {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f172a;
-    }
+/* VERIFIED */
+.verified {
+    background: #ecfdf5;
+    color: #22c55e;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+}
 
-    /* Action Buttons */
-    .btn-action-primary {
-        background: #000;
-        color: #fff;
-        font-weight: 800;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        padding: 14px 28px;
-        border-radius: 30px;
-        text-align: center;
-        transition: all 0.2s;
-    }
-    .btn-action-primary:hover {
-        background: #333;
-    }
-    .btn-action-secondary {
-        border: 2px solid #e2e8f0;
-        color: #000;
-        font-weight: 800;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        padding: 14px 28px;
-        border-radius: 30px;
-        text-align: center;
-        transition: all 0.2s;
-    }
-    .btn-action-secondary:hover {
-        background: #f8fafc;
-    }
+/* TAGS */
+.tag {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
 
-    .sidebar-svg {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    /* If your SVGs are black and you want them to look slightly grey when not active */
-    opacity: 0.7; 
-    transition: opacity 0.2s ease;
-    }
+.tag.gray {
+    background: #f3f4f6;
+    color: #374151;
+}
 
-    .sidebar-link.active .sidebar-svg {
-    opacity: 1;
-    }
+.tag.red {
+    background: #fee2e2;
+    color: #ef4444;
+}
 
-    .sidebar-link:hover .sidebar-svg {
-    opacity: 1;
-    }
+/* GRID */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* BUTTONS */
+.actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 14px;
+}
+
+.btn-primary {
+    background: #000;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.btn-secondary {
+    border: 1px solid #d1d5db;
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
 
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="bg-[#f8fafc] min-h-screen">
-    <div class="max-w-7xl mx-auto flex">
-        
-        <aside class="w-72 bg-white min-h-screen border-r border-slate-100 p-6 flex flex-col justify-between hidden lg:flex">
+
+<div class="max-w-[900px] mx-auto">
+
+    <!-- TITLE -->
+    <h1 class="section-title">My Profile</h1>
+    <p class="section-subtitle">
+        Manage your personal information, security, and Verse preferences.
+    </p>
+
+    <!-- CARD -->
+    <div class="profile-card">
+
+        <!-- HEADER -->
+        <div class="profile-header">
+
+            <!-- AVATAR -->
+            <div class="avatar">
+                {% if profile.image and profile.image.name != 'default.png'  %}
+                    <img src="{{ profile.image.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <img src="{% static 'images/no_profile.png' %}" class="w-full h-full object-cover">
+                {% endif %}
+            </div>
+
+            <!-- INFO -->
             <div>
-                <div class="flex items-center gap-3 mb-10 px-2">
-                    <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100">
-                        {% if user.profile_photo and user.profile_photo.url %}
-                            <img src="{{ user.profile_photo.url }}" class="w-full h-full object-cover">
-                        {% else %}
-                            <img src="{% static 'images/profile.svg' %}" class="w-full h-full object-cover">
-                        {% endif %}
-                    </div>
-                    <div>
-                        <p class="font-bold text-xs">{{ user.full_name|default:user.email }}</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Verse Member</p>
-                    </div>
+                <div class="flex items-center">
+                    <h2 class="name">{{ user.full_name|default:user.username }}</h2>
+                    <span class="verified">Verified</span>
                 </div>
 
-                <nav class="space-y-1">
-                    <a href="{% url 'profile' %}" class="sidebar-link active">
-                        <img src="{% static 'images/profile.svg' %}" alt="Profile" class="sidebar-svg">
-                        <span class="text-[10px] uppercase tracking-widest">Profile</span>
-                    </a>
+                <p class="text-sm text-gray-400 mt-1">
+                    Member since {{ user.date_joined|date:"F Y" }}
+                </p>
 
-                    <a href="#" class="sidebar-link">
-                        <img src="{% static 'images/location.svg' %}" alt="Address" class="sidebar-svg">
-                        <span class="text-[10px] uppercase tracking-widest">Address</span>
-                        </a>
-
-                    <a href="#" class="sidebar-link">
-                        <img src="{% static 'images/myorders.svg' %}" alt="Orders" class="sidebar-svg">
-                        <span class="text-[10px] uppercase tracking-widest">My Orders</span>
-                    </a>
-
-                    <a href="#" class="sidebar-link">
-                        <img src="{% static 'images/wishlist.svg' %}" alt="Wishlist" class="sidebar-svg">
-                        <span class="text-[10px] uppercase tracking-widest">Wishlist</span>
-                    </a>
-                </nav>
+                <div class="flex gap-2 mt-3">
+                    <span class="tag gray">NIKE CONNECT</span>
+                    <span class="tag red">VIP EARLY ACCESS</span>
+                </div>
             </div>
 
-            <form action="{% url 'logout' %}" method="post" class="px-2">
-                {% csrf_token %}
-                <button type="submit" class="flex items-center gap-3 py-4 text-red-500 font-bold text-[10px] uppercase tracking-widest">
-                    <span class="material-symbols-outlined">logout</span> 
-                </button>
-            </form>
-        </aside>
-
-        <main class="flex-1 p-8 lg:p-16">
-            <div class="max-w-3xl">
-                
-                <h1 class="section-title">My Profile</h1>
-                <p class="section-subtitle">Manage your personal information, security, and Verse preferences.</p>
-
-                <div class="profile-card">
-
-
-
-
-
-
-
-
-
-
-                    
-          <div class="profile-header-inner w-full flex flex-col md:flex-row items-center md:items-start gap-8 pt-6 pb-10 border-b border-slate-100 mb-10">
-    
-    <div class="avatar-wrapper relative shrink-0">
-        <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-[4px] border-white overflow-hidden shadow-lg bg-slate-50 flex items-center justify-center">
-            {% if user.profile_photo and user.profile_photo.url %}
-                <img src="{{ user.profile_photo.url }}" class="w-full h-full object-cover">
-            {% else %}
-                <img src="{% static 'images/profile.svg' %}" class="w-full h-full object-cover">
-            {% endif %}
         </div>
-        
-        <div class="absolute bottom-1 right-1 bg-black text-white rounded-full w-8 h-8 border-[3px] border-white flex items-center justify-center cursor-pointer overflow-hidden z-10">
-            <span class="material-symbols-outlined text-[14px]">photo_camera</span>
-        </div>
-    </div>
-    
-    <div class="flex flex-col items-center md:items-start w-full">
-        
-        <div class="flex items-center gap-3 mb-1 flex-wrap justify-center md:justify-start">
-            <h2 class="text-3xl md:text-4xl font-[900] text-black tracking-tighter leading-none uppercase">
-                {{ user.full_name|default:user.username }}
-            </h2>
-            <span class="bg-[#f3fbf5] text-[#2f8f46] text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-[#d1e7d8] flex items-center gap-1 whitespace-nowrap">
-                <span class="material-symbols-outlined text-[12px] font-bold"></span> VERIFIED
-            </span>
-        </div>
-        
-        <p class="text-[#8e9aaf] font-bold text-[11px] uppercase tracking-widest mt-1 mb-6">
-            Member since {{ user.date_joined|date:"F Y" }}
-        </p>
 
-        <div class="flex items-center gap-2">
-            <span class="px-3 py-1 bg-[#f1f3f5] text-[#495057] rounded-sm text-[9px] font-black uppercase tracking-wider">
-                NIKE CONNECT
-            </span>
-            <span class="px-3 py-1 bg-[#fff1f0] text-[#ff4d4f] rounded-sm text-[9px] font-black uppercase tracking-wider border border-[#ffccc7]">
-                VIP EARLY ACCESS
-            </span>
-        </div>
-    </div>
-</div>
+        <!-- GRID -->
+        <div class="info-grid">
 
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12 mb-10">
-                        <div class="info-block">
-                            <p class="info-label">Full Name</p>
-                            <p class="info-value">{{ user.full_name|default:"—" }}</p>
-                        </div>
-                        <div class="info-block">
-                            <p class="info-label">Email Address</p>
-                            <p class="info-value">{{ user.email }}</p>
-                        </div>
-                        <div class="info-block">
-                            <p class="info-label">Phone Number</p>
-                            <p class="info-value">{{ user.phone_number|default:"Not Provided" }}</p>
-                        </div>
-                        <div class="info-block">
-                            <p class="info-label">Member Tier</p>
-                            <p class="info-value">Elite Member</p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-50">
-                        <a href="{% url 'edit_profile' %}" class="btn-action-primary">Edit Profile</a>
-                        <a href="{% url 'change_password' %}" class="btn-action-secondary">Update Security Credentials</a>
-                    </div>
-                </div>
-
-                <div class="mt-12">
-                    <h3 class="text-[11px] font-black uppercase tracking-[0.2em] mb-6">Recent Orders</h3>
-                    
-                    <div class="space-y-3">
-                        {% if recent_orders %}
-                            {% for order in recent_orders %}
-                            <div class="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between hover:translate-x-1 transition-transform cursor-pointer">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-14 h-14 bg-slate-50 rounded-lg flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-slate-300">shopping_bag</span>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-sm">Order #{{ order.id }}</p>
-                                        <p class="text-[11px] text-slate-400 font-bold">{{ order.created_at|date:"d M Y" }}</p>
-                                    </div>
-                                </div>
-                                <span class="material-symbols-outlined text-slate-300">chevron_right</span>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="p-8 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                                <p class="text-xs font-bold text-slate-300 uppercase tracking-widest">No Recent Orders</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
+            <div>
+                <p class="label">Full Name</p>
+                <p class="value">{{ user.full_name|default:"—" }}</p>
             </div>
-        </main>
+
+            <div>
+                <p class="label">Email Address</p>
+                <p class="value">{{ user.email }}</p>
+            </div>
+
+            <div>
+                <p class="label">Phone Number</p>
+                <p class="value">{{ user.phone_number|default:"Not Provided" }}</p>
+            </div>
+
+            <div>
+                <p class="label">Location</p>
+                <p class="value">Not Set</p>
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+
+            <a href="{% url 'edit_profile' %}" class="btn-primary">
+                Edit Profile
+            </a>
+
+            <a href="{% url 'change_password' %}" class="btn-secondary">
+                Update Security Credentials
+            </a>
+
+        </div>
+
     </div>
+
 </div>
+
 {% endblock %}

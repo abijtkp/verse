@@ -1,16 +1,28 @@
 from django.db import models
-from django.conf import settings   # better than direct import
+from django.conf import settings
+from django.db.models import Q
+from django.core.validators import RegexValidator
 
-# userprofile/models.py
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+#  Phone validator
+phone_validator = RegexValidator(
+    regex=r'^\d{10}$',
+    message="Enter a valid 10-digit phone number"
+)
+
+
+#  Profile model
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    image = models.ImageField(upload_to='profiles/', default='default.png')
 
     def __str__(self):
         return self.user.email
 
+
+#  Address model
 class Address(models.Model):
+
     ADDRESS_TYPE_CHOICES = [
         ('home', 'Home'),
         ('work', 'Work'),
@@ -18,31 +30,45 @@ class Address(models.Model):
     ]
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,   #  important change
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='addresses'
     )
 
     full_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=20)
+
+    #  Correct placement
+    phone_number = models.CharField(max_length=15, validators=[phone_validator])
 
     address_line1 = models.CharField(max_length=255)
     address_line2 = models.CharField(max_length=255, blank=True, null=True)
 
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    pincode = models.CharField(max_length=20)
+    pincode = models.CharField(max_length=10)
     country = models.CharField(max_length=100)
 
     type = models.CharField(max_length=20, choices=ADDRESS_TYPE_CHOICES, default='home')
     is_default = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(auto_now_add=True)   #  added
-    updated_at = models.DateTimeField(auto_now=True)       # added
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.full_name} - {self.city}, {self.state}"
 
     class Meta:
         db_table = 'addresses'
-        ordering = ['-created_at']   #  optional but useful
+        ordering = ['-created_at']
+
+        indexes = [
+            models.Index(fields=['user']),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=Q(is_default=True),
+                name='unique_default_address_per_user'
+            )
+        ]

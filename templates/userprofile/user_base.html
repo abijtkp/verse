@@ -10,16 +10,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-
-
-
-
-
-
-
-
-
-
 <style>
 body { font-family: 'Manrope', sans-serif; }
 
@@ -60,18 +50,10 @@ body { font-family: 'Manrope', sans-serif; }
     width:100%;
     font-size:13px;
 }
-.text-red-500 {
-    margin-left: 70px;
-}
-.logo {
-    margin-left:60px;
-}
 </style>
-
 
 {% block extra_css %}{% endblock %}
 </head>
-{% block extra_js %}{% endblock %}
 
 <body class="bg-white text-black">
 
@@ -79,7 +61,7 @@ body { font-family: 'Manrope', sans-serif; }
 <header class="sticky top-0 z-50 bg-white border-b border-gray-100">
 <div class="w-full px-8 h-16 flex items-center justify-between">
 
-    <a href="/" class="logo text-2xl font-black italic tracking-tight">VERSE</a>
+    <a href="/" class="text-2xl font-black italic tracking-tight">VERSE</a>
 
     <nav class="hidden lg:flex items-center gap-10 absolute left-1/2 transform -translate-x-1/2">
         <a href="{% url 'home' %}" class="text-[13px] font-bold uppercase">Home</a>
@@ -91,7 +73,7 @@ body { font-family: 'Manrope', sans-serif; }
     <div class="flex items-center gap-6">
 
         <div class="search-box hidden md:flex">
-            <img src="{% static 'images/search.svg' %}" class="w-6 h-6">
+            🔍
             <input type="text" placeholder="Search products...">
         </div>
 
@@ -100,8 +82,8 @@ body { font-family: 'Manrope', sans-serif; }
 
             <div class="relative">
                 <img src="{% static 'images/cart.svg' %}" class="w-6 h-6">
-                <span class="absolute -top-2 -right-2  text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
-                    
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
+                    3
                 </span>
             </div>
 
@@ -114,6 +96,7 @@ body { font-family: 'Manrope', sans-serif; }
 </div>
 </header>
 
+
 <!-- ================= LAYOUT ================= -->
 <div class="flex">
 
@@ -125,8 +108,8 @@ body { font-family: 'Manrope', sans-serif; }
 
             <div class="flex items-center gap-3 mb-10">
                 <div class="w-10 h-10 rounded-full bg-gray-100 overflow-hidden">
-                    {% if user.profile.image and user.profile.image.name != 'default.png' %}
-                        <img src="{{ user.profile.image.url }}" class="w-full h-full object-cover" alt="Profile Image">
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}">
                     {% else %}
                         <img src="{% static 'images/no_profile.png' %}">
                     {% endif %}
@@ -139,11 +122,11 @@ body { font-family: 'Manrope', sans-serif; }
             </div>
 
             <nav class="space-y-2">
-                <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_prfile' %}active{% endif %}">
+                <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                     <img src="{% static 'images/profile.svg' %}" class="sidebar-icon"> Profile
                 </a>
 
-                <a href="{% url 'address_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'address_list' or request.resolver_match.url_name == 'add_address' or request.resolver_match.url_name == 'edit_address' %}active{% endif %}">
+                <a href="#" class="sidebar-link">
                     <img src="{% static 'images/location.svg' %}" class="sidebar-icon"> Address
                 </a>
 
@@ -165,7 +148,7 @@ body { font-family: 'Manrope', sans-serif; }
         <!-- BOTTOM (SIGN OUT FIXED) -->
         <form method="POST" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button class="text-red-500 text-[15px] font-bold uppercase">
+            <button class="text-red-500 text-[11px] font-bold uppercase">
                 ⏻ Sign Out
             </button>
         </form>

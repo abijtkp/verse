@@ -29,13 +29,14 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
-    username = None  # remove username
+    username = None  
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
     
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_photo = models.ImageField(upload_to='users/photos/', blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
+    bio = models.TextField(blank=True, null=True) 
     is_blocked = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     
@@ -58,6 +59,11 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['email']),  # faster authentication queries
+        ]
 
 
 class OTP(models.Model):
@@ -77,10 +83,11 @@ class OTP(models.Model):
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"OTP for {self.user.email}"
+        return f"OTP for {self.user.email if self.user else 'Unknown User'}"
 
     class Meta:
         db_table = 'otp'
         indexes = [
             models.Index(fields=['user', 'code']),
+            models.Index(fields=['expired_at']),
         ]

@@ -1,20 +1,177 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}My Addresses{% endblock %}
+{% block title %}My Addresses | VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Address Cards */
+    .address-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 32px;
+        border: 2px solid #f1f5f9;
+        transition: all 0.2s ease;
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .address-card.default {
+        border-color: #000;
+        box-shadow: 0 10px 30px -15px rgba(0,0,0,0.1);
+    }
+
+    .default-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #000;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 6px 16px;
+        border-radius: 0 22px 0 20px;
+        text-transform: uppercase;
+    }
+
+    .map-preview {
+        width: 180px;
+        height: 120px;
+        border-radius: 16px;
+        background: #f1f5f9;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .btn-add-address {
+        background: #000;
+        color: #fff;
+        padding: 12px 28px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-address:hover {
+        transform: scale(1.03);
+        background: #1a1a1a;
+    }
+
+    /* Empty State Styling */
+    .empty-address-card {
+        border: 2px dashed #e2e8f0;
+        background: #fff;
+        border-radius: 32px;
+        padding: 80px 40px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .empty-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: #f8fafc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<h2>My Addresses</h2>
-
-{% for address in addresses %}
-    <div>
-        <p>{{ address.full_name }}</p>
-        <p>{{ address.address_line1 }}</p>
-        <p>{{ address.city }}, {{ address.state }}</p>
-        <p>{{ address.pincode }}</p>
+<div class="flex-1 min-w-0">
+    
+    <div class="flex justify-between items-center mb-10">
+        <div>
+            <h1 class="text-4xl font-[900] tracking-tighter uppercase italic text-slate-900">My Addresses</h1>
+            <p class="text-slate-500 text-sm mt-1">Manage your shipping and billing locations.</p>
+        </div>
+        {% if addresses %}
+        <a href="{% url 'add_address' %}" class="btn-add-address flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Add New Address
+        </a>
+        {% endif %}
     </div>
-    <hr>
-{% empty %}
-    <p>No addresses found.</p>
-{% endfor %}
 
+    <div class="space-y-6">
+        {% if addresses %}
+            {% for address in addresses %}
+            <div class="address-card {% if address.is_default %}default{% endif %}">
+                {% if address.is_default %}
+                    <div class="default-badge">Default</div>
+                {% endif %}
+                
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-slate-400 text-lg">
+                            {% if address.type == 'home' %}{% elif address.type == 'work' %}{% else %}{% endif %}
+                        </span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ address.type }}</span>
+                    </div>
+                    
+                    <h2 class="text-xl font-extrabold text-black mb-1">{{ address.full_name }}</h2>
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                        {{ address.city }}, {{ address.state }} {{ address.pincode }}<br>
+                        {{ address.country }}
+                    </p>
+
+                    <div class="mt-4 flex items-center gap-6">
+                        <a href="{% url 'edit_address' address.pk %}" class="text-xs font-black uppercase tracking-wider text-black hover:underline flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">edit</span> 
+                        </a>
+                        
+                        {% if not address.is_default %}
+                        <form action="{% url 'set_default_address' address.pk %}" method="POST" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-black">Set as Default</button>
+                        </form>
+                        {% endif %}
+
+                        <form action="{% url 'delete_address' address.pk %}" method="POST" class="inline" onsubmit="return confirm('Delete this address?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-red-500 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">delete</span> 
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="map-preview">
+                    <img src="{% static 'images/address.png' %}" class="w-full h-full object-cover grayscale opacity-80">
+                </div>
+            </div>
+            {% endfor %}
+
+                    {% else %}
+            <div class="empty-address-card">
+                 <div class="empty-icon-wrapper">
+                    <span class="material-symbols-outlined text-3xl text-slate-400"></span>
+                </div> 
+                <h2 class="text-2xl font-[900] tracking-tight text-slate-900 uppercase italic mb-2">
+                    No Addresses Yet
+                </h2>
+                <p class="text-slate-500 text-sm mb-6 max-w-md">
+                    Add your first address to make checkout faster and easier.
+                </p>
+                <a href="{% url 'add_address' %}" class="btn-add-address inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm"></span>
+                    Add Address
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
