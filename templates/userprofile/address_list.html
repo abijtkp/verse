@@ -90,7 +90,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex-1 min-w-0">
+<div class="flex-1 min-w-0 px-4 md:px-8 py-10">
+    <div class="max-w-5xl mx-auto">
     
     <div class="flex justify-between items-center mb-10">
         <div>
@@ -99,11 +100,12 @@
         </div>
         {% if addresses %}
         <a href="{% url 'add_address' %}" class="btn-add-address flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">add</span>
+            <span class="material-symbols-outlined text-sm"></span>
             Add New Address
         </a>
         {% endif %}
     </div>
+    
 
     <div class="space-y-6">
         {% if addresses %}
@@ -173,5 +175,6 @@
             </div>
         {% endif %}
     </div>
+</div>
 </div>
 {% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | VERSE{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block breadcrumb %}Overview{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Sales</span>
+            <span class="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full">+12.5%</span>
+        </div>
+        <h3 class="text-3xl font-black">₹1,424,500</h3>
+        <div class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Growth this month</div>
+    </div>
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Orders</span>
+            <span class="text-slate-300 italic text-[10px] font-bold uppercase">Supply</span>
+        </div>
+        <h3 class="text-3xl font-black">1,240</h3>
+        <div class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Orders to process</div>
+    </div>
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Customers</span>
+            <span class="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full">+18.1%</span>
+        </div>
+        <h3 class="text-3xl font-black">856</h3>
+        <div class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">Verified Users</div>
+    </div>
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Stock Level</span>
+            <span class="text-orange-500 material-symbols-outlined text-xs">warning</span>
+        </div>
+        <h3 class="text-3xl font-black">92.4%</h3>
+        <div class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight italic">Low stock alert</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <div class="lg:col-span-2 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-black italic uppercase tracking-tight leading-none">Recent Orders</h2>
+            <a href="#" class="text-xs font-bold uppercase text-slate-400 hover:text-black">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] font-black uppercase tracking-widest text-slate-300 border-b border-slate-50">
+                        <th class="pb-4">Order ID</th>
+                        <th class="pb-4">Customer</th>
+                        <th class="pb-4">Sneaker Model</th>
+                        <th class="pb-4">Amount</th>
+                        <th class="pb-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    <tr class="border-b border-slate-50">
+                        <td class="py-4 font-black">#NK-8821</td>
+                        <td class="py-4 font-bold text-slate-600">John Doe</td>
+                        <td class="py-4 font-medium text-slate-400">Air Jordan 1 High</td>
+                        <td class="py-4 font-black">₹2800.00</td>
+                        <td class="py-4"><span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase">Delivered</span></td>
+                    </tr>
+                    <tr class="border-b border-slate-50">
+                        <td class="py-4 font-black">#NK-8822</td>
+                        <td class="py-4 font-bold text-slate-600">Sarah Smith</td>
+                        <td class="py-4 font-medium text-slate-400">Nike Dunk Low</td>
+                        <td class="py-4 font-black">₹2800.00</td>
+                        <td class="py-4"><span class="px-3 py-1 bg-slate-100 text-slate-400 text-[10px] font-black rounded-full uppercase">Processing</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+        <h2 class="text-xl font-black italic uppercase tracking-tight mb-8">Hottest Releases</h2>
+        <div class="space-y-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
+                     <img src="https://via.placeholder.com/60" class="grayscale object-contain" alt="shoe">
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-black uppercase leading-none mb-1">Air Max 270</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">850 SOLD THIS WEEK</p>
+                </div>
+                <p class="text-sm font-black">₹1800</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
+                     <img src="https://via.placeholder.com/60" class="grayscale object-contain" alt="shoe">
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-black uppercase leading-none mb-1">Nike Dunk Low</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">724 SOLD THIS WEEK</p>
+                </div>
+                <p class="text-sm font-black">₹2800</p>
+            </div>
+        </div>
+        <button class="w-full mt-10 py-4 bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 active:scale-95 transition-all">
+            Stock Replenishment Report
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h2 class="text-xl font-black italic uppercase tracking-tight leading-none">Category Distribution</h2>
+                <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Inventory volume by sneaker line</p>
+            </div>
+            <select class="text-[10px] font-black uppercase bg-slate-100 border-none rounded-lg px-2 py-1 outline-none">
+                <option>CurrentSeason</option>
+                <option>LastSeason</option>
+            </select>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-around py-4 gap-6">
+            <div class="donut-chart">
+                <div class="relative z-10 text-center">
+                    <span class="text-2xl font-black block">42%</span>
+                    <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none">Running</span>
+                </div>
+            </div>
+            <ul class="space-y-3">
+                <li class="flex items-center gap-3 text-xs font-bold">
+                    <span class="w-2.5 h-2.5 rounded-full bg-black"></span> Lifestyle (42%)
+                </li>
+                <li class="flex items-center gap-3 text-xs font-bold text-slate-400">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span> Jordan (31%)
+                </li>
+                <li class="flex items-center gap-3 text-xs font-bold text-slate-400">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Performance (27%)
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h2 class="text-xl font-black italic uppercase tracking-tight leading-none">Sales Trajectory</h2>
+                <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Quarterly revenue performance</p>
+            </div>
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button class="text-[9px] font-black uppercase px-3 py-1 bg-black text-white rounded-lg transition-all">Revenue</button>
+                <button class="text-[9px] font-black uppercase px-3 py-1 text-slate-400 hover:text-black transition-all">Orders</button>
+            </div>
+        </div>
+
+        <div class="flex items-end justify-between h-40 gap-3 px-2">
+            <div class="flex flex-col items-center flex-1 gap-3">
+                <div class="bg-slate-50 w-full h-16 rounded-t-lg transition-all hover:bg-slate-200"></div>
+                <span class="text-[9px] font-black text-slate-300 uppercase">2021</span>
+            </div>
+            <div class="flex flex-col items-center flex-1 gap-3">
+                <div class="bg-slate-100 w-full h-24 rounded-t-lg transition-all hover:bg-slate-200"></div>
+                <span class="text-[9px] font-black text-slate-300 uppercase">2022</span>
+            </div>
+            <div class="flex flex-col items-center flex-1 gap-3">
+                <div class="bg-black w-full h-36 rounded-t-lg shadow-lg"></div>
+                <span class="text-[9px] font-black text-slate-900 uppercase">2023</span>
+            </div>
+            <div class="flex flex-col items-center flex-1 gap-3">
+                <div class="bg-slate-100 w-full h-28 rounded-t-lg transition-all hover:bg-slate-200"></div>
+                <span class="text-[9px] font-black text-slate-300 uppercase">2024</span>
+            </div>
+            <div class="flex flex-col items-center flex-1 gap-3">
+                <div class="bg-slate-50 w-full h-20 rounded-t-lg transition-all hover:bg-slate-200"></div>
+                <span class="text-[9px] font-black text-slate-300 uppercase">2025</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

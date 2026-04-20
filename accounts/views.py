@@ -225,8 +225,8 @@ def resend_otp_view(request):
 
 def login_view(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password','').strip()
 
         user = authenticate(request, email=email, password=password)
 
@@ -256,10 +256,21 @@ def logout_view(request):
     return redirect('login')
 
 @never_cache
-@login_required
 def home(request):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-    return render(request, 'home.html')
+    profile = None
+    
+    if request.user.is_authenticated:
+        profile, created = Profile.objects.get_or_create(user=request.user)
+    return render(request, 'home.html',{
+        'profile':profile
+    })
+    
+def profile_access_view(request):
+    if request.user.is_authenticated:
+        return redirect('profile')
+
+    return redirect('login')
+    
 
 
 def forgot_password_view(request):
@@ -343,37 +354,3 @@ def reset_password_view(request):
 
     return render(request, 'accounts/reset_password.html')
 
-# @login_required
-# def update_security_credentials(request):
-
-#     if request.method == "POST":
-
-#         new_email = request.POST.get("email")
-        
-#         try:
-#             validate_email(new_email)
-#         except ValidationError:
-#             messages.error(request, "Invalid email format")
-#             return redirect("update_security_credentials")
-        
-#         if new_email == request.user.email:
-#             messages.error(request, "This is already your current email")
-#             return redirect("update_security_credentials")
-
-#         # prevent duplicate emails
-#         if User.objects.filter(email=new_email).exists():
-#             messages.error(request, "Email already in use")
-#             return redirect("update_security_credentials")
-        
-        
-#         request.session['otp_user_id'] = request.user.id
-#         request.session['otp_purpose'] = 'email_change'
-#         request.session["new_email"] = new_email
-
-#         otp_obj = generate_otp(request.user, purpose="email_change")
-
-#         send_otp_email(request.user, otp_obj, to_email=new_email)
-
-#         return redirect("verify_otp")
-
-#     return render(request, "accounts/update_security_credentials.html")

@@ -24,10 +24,10 @@ urlpatterns = [
     path('', include('accounts.urls')),
     path('admin/', admin.site.urls), 
     
-    path('accounts/', include('accounts.urls')),
-    path('accounts/', include('allauth.urls')),
+    path('social/', include('allauth.urls')),
     
     path('profile/', include('userprofile.urls')),
+    path('adminpanel/', include('adminpanel.urls')),
 ]
 
 if settings.DEBUG:

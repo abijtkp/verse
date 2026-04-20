@@ -1,0 +1,247 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}User Management | VERSE{% endblock %}
+
+{% block page_title %}User Management{% endblock %}
+{% block breadcrumb %}Administration{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Users</span>
+            <span class="text-slate-400 text-[10px] font-bold uppercase">Steady</span>
+        </div>
+        <h3 class="text-3xl font-black">{{ total_users }}</h3>
+    </div>
+    
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Users</span>
+            <span class="text-slate-300 text-[10px] font-bold">82% Rate</span>
+        </div>
+        <h3 class="text-3xl font-black">{{ active_users }}</h3>
+    </div>
+
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">New Users</span>
+            <span class="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full">+12%</span>
+        </div>
+        <h3 class="text-3xl font-black">{{ new_users }}</h3>
+    </div>
+
+    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Banned Users</span>
+            <span class="text-red-500 text-[10px] font-black uppercase italic">Action Required</span>
+        </div>
+        <h3 class="text-3xl font-black">{{ blocked_users }}</h3>
+    </div>
+</div>
+
+<div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm mb-8">
+
+
+
+
+
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+    <h2 class="text-xl font-black italic uppercase tracking-tight leading-none">
+        Customer Directory
+    </h2>
+
+    <form method="GET" action="{% url 'user_management' %}" class="w-full lg:w-auto">
+        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div class="relative w-full sm:w-80">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">
+                    search
+                </span>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Search by name, email, or phone"
+                    class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="px-5 py-3 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all">
+                Search
+            </button>
+
+            {% if search_query %}
+            <a
+                href="{% url 'user_management' %}"
+                class="px-5 py-3 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-50 transition-all text-center">
+                Clear
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+
+
+
+
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="text-[10px] font-black uppercase tracking-widest text-slate-300 border-b border-slate-50">
+                    <th class="pb-4">User ID</th>
+                    <th class="pb-4">Customer Name</th>
+                    <th class="pb-4">Email</th>
+                    <th class="pb-4">Total Orders</th>
+                    <th class="pb-4">Total Spend</th>
+                    <th class="pb-4">Status</th>
+                    <th class="pb-4 text-right">Actions</th>
+                </tr>
+            </thead>
+
+
+
+
+
+
+
+
+
+            <tbody class="text-sm">
+    {% for customer in page_obj %}
+    <tr class="border-b border-slate-50 group hover:bg-slate-50 transition-colors">
+        <td class="py-4 font-black text-slate-400 text-xs">
+            #USR-{{ customer.id }}
+        </td>
+
+        <td class="py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] uppercase">
+                    {{ customer.full_name|default:customer.email|slice:":2"|upper }}
+                </div>
+                <span class="font-black">
+                    {{ customer.full_name|default:"No Name" }}
+                </span>
+            </div>
+        </td>
+
+        <td class="py-4 font-bold text-slate-400">
+            {{ customer.email }}
+        </td>
+
+        <td class="py-4 font-black">
+            -
+        </td>
+
+        <td class="py-4 font-black">
+            -
+        </td>
+
+        <td class="py-4">
+            {% if customer.is_blocked %}
+                <span class="px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase">
+                    Blocked
+                </span>
+            {% else %}
+                <span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase">
+                    Active
+                </span>
+            {% endif %}
+        </td>
+
+        <td class="py-4 text-right">
+            {% if customer.is_blocked %}
+                <form method="POST" action="{% url 'unblock_user' customer.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            onclick="return confirm('Are you sure you want to unblock this user?')"
+                            class="px-3 py-2 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg hover:bg-green-200 transition-all">
+                        Unblock
+                    </button>
+                </form>
+            {% else %}
+                <form method="POST" action="{% url 'block_user' customer.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            onclick="return confirm('Are you sure you want to block this user?')"
+                            class="px-3 py-2 bg-red-100 text-red-600 text-[10px] font-black uppercase rounded-lg hover:bg-red-200 transition-all">
+                        Block
+                    </button>
+                </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7" class="py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
+            No users found
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+
+
+
+
+
+
+
+        </table>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-50">
+
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+</p>
+
+<div class="flex gap-2">
+
+    {% if page_obj.has_previous %}
+        <a href="?q={{ search_query }}&page={{ page_obj.previous_page_number }}"
+           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 material-symbols-outlined text-sm hover:bg-slate-50">
+            chevron_left
+        </a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-black text-white text-xs font-black">
+                {{ num }}
+            </span>
+        {% else %}
+            <a href="?q={{ search_query }}&page={{ num }}"
+               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 text-xs font-black hover:bg-slate-50">
+                {{ num }}
+            </a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?q={{ search_query }}&page={{ page_obj.next_page_number }}"
+           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 material-symbols-outlined text-sm hover:bg-slate-50">
+            chevron_right
+        </a>
+    {% endif %}
+
+</div>
+       
+    </div>
+</div>
+
+{% comment %} <div class="bg-black text-white p-8 rounded-[32px] flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+    <div class="relative z-10">
+        <h2 class="text-xl font-black uppercase tracking-tight italic mb-2">New Collection Launch</h2>
+        <p class="text-xs text-slate-400 font-bold max-w-md">Automate member rewards for the upcoming Air Jordan drop. 4,200 users qualify for early access.</p>
+    </div>
+    <button class="mt-6 md:mt-0 relative z-10 px-6 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 active:scale-95 transition-all">
+        Configure Rewards
+    </button>
+    <span class="absolute -right-4 -bottom-4 material-symbols-outlined text-[120px] text-slate-800 opacity-50 select-none">star</span>
+</div> {% endcomment %}
+{% endblock %}
