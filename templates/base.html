@@ -8,7 +8,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <style>
         body { 
             font-family: 'Manrope', sans-serif; 
@@ -116,12 +116,39 @@
             font-size: 13px;
             font-weight: 500;
         }
+
+        .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 500,
+        'GRAD' 0,
+        'opsz' 24;
+        }
+
+        /* Standard sizes */
+        .icon-sm {
+            font-size: 16px;
+        }
+
+        .icon-md {
+            font-size: 20px;
+        }
+
+        .icon-lg {
+            font-size: 24px;
+        }
+
+        .icon-xl {
+            font-size: 32px;
+        }
+
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 
 <body class="bg-white text-black">
+    {% include 'includes/toasts.html' %}
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
@@ -156,7 +183,7 @@
                         {% if user.is_authenticated %}
                             onclick="toggleSidebar()" 
                         {% else %}
-                            onclick="window.location.href={% url 'signup' %}"
+                            onclick="window.location.href={% url 'login' %}"
                         {% endif %}        
                             class="focus:outline-none group">
                         <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-transparent group-hover:border-black transition-all">
@@ -212,12 +239,16 @@
                 <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon"> Wallet
             </a>
         </nav>
+        
 
         <div class="mt-auto pt-6 border-t border-slate-200/50">
-            <form method="POST" action="{% url 'logout' %}">
+            <!-- fix: onclick now calls a named function — avoids HTML attribute quoting issues -->
+            <form method="POST" action="{% url 'logout' %}" id="logoutForm">
                 {% csrf_token %}
-                <button type="submit" class="w-full flex items-center justify-between px-4 py-3 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-50 rounded-xl transition-all">
-                    Sign Out 
+                <button type="button"
+                    onclick="triggerLogoutModal()"
+                    class="w-full flex items-center justify-between px-4 py-3 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-50 rounded-xl transition-all">
+                    Log Out
                     <span class="text-lg">⏻</span>
                 </button>
             </form>
@@ -299,21 +330,145 @@
     </div>
 </footer>
 
+    <!-- change 2: centralized reusable confirmation modal (matches reference image) -->
+    <div id="confirmModal"
+         class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+         style="display:none !important;"
+         role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+
+        <!-- Backdrop -->
+        <div id="confirmModalBackdrop"
+             class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+             onclick="closeConfirmModal()"></div>
+
+        <!-- Card -->
+        <div id="confirmModalCard"
+             class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center
+                    transition-all duration-300 scale-90 opacity-0">
+
+            <!-- Icon badge -->
+            <div id="confirmModalIconWrap"
+                 class="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-red-50">
+                <span id="confirmModalIcon" class="text-3xl text-red-500">🗑</span>
+            </div>
+
+            <!-- Title -->
+            <h2 id="confirmModalTitle"
+                class="text-xl font-black tracking-tight text-slate-900 mb-2"></h2>
+
+            <!-- Message -->
+            <p id="confirmModalMessage"
+               class="text-sm text-slate-500 leading-relaxed mb-7"></p>
+
+            <!-- Confirm button -->
+            <button id="confirmModalConfirmBtn"
+                    class="w-full h-12 rounded-full bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white font-black text-sm uppercase tracking-widest transition-all mb-3">
+            </button>
+
+            <!-- Cancel button -->
+            <button onclick="closeConfirmModal()"
+                    class="w-full h-12 rounded-full border-2 border-slate-200 hover:border-slate-400 text-slate-700 font-black text-sm uppercase tracking-widest transition-all">
+                Cancel
+            </button>
+        </div>
+    </div>
+
     <script>
+        // change 3: sidebar toggle (existing)
         function toggleSidebar() {
             const sidebar = document.getElementById('profileSidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            
+
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
 
-            // Handle body scroll locking
             if (sidebar.classList.contains('open')) {
                 document.body.style.overflow = 'hidden';
             } else {
                 document.body.style.overflow = '';
             }
         }
+
+        // fix: named function avoids HTML attribute single-quote escaping issues
+        function triggerLogoutModal() {
+            openConfirmModal({
+                icon: '&#128682;',
+                iconBg: 'bg-red-50',
+                iconColor: 'text-red-500',
+                title: 'Log Out?',
+                message: 'You will need to login again to access your account.',
+                confirmText: 'Yes, Log Out',
+                onConfirm: function () {
+                    document.getElementById('logoutForm').submit();
+                }
+            });
+        }
+
+        // change 4: reusable confirmation modal logic
+        let _confirmCallback = null;
+
+        /**
+         * openConfirmModal({ icon, iconBg, iconColor, title, message, confirmText, onConfirm })
+         * Call this from any template to show the modal for any destructive action.
+         */
+        function openConfirmModal(opts) {
+            const modal   = document.getElementById('confirmModal');
+            const card    = document.getElementById('confirmModalCard');
+            const iconEl  = document.getElementById('confirmModalIcon');
+            const iconWrap = document.getElementById('confirmModalIconWrap');
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl   = document.getElementById('confirmModalMessage');
+            const btnEl   = document.getElementById('confirmModalConfirmBtn');
+
+            // Populate content
+            iconEl.innerHTML   = opts.icon        || '🗑';
+            iconWrap.className = 'w-16 h-16 rounded-full flex items-center justify-center mb-5 ' + (opts.iconBg || 'bg-red-50');
+            iconEl.className   = 'text-3xl ' + (opts.iconColor || 'text-red-500');
+            titleEl.textContent = opts.title      || 'Are you sure?';
+            msgEl.textContent   = opts.message    || 'This action cannot be undone.';
+            btnEl.textContent   = opts.confirmText || 'Confirm';
+            _confirmCallback    = opts.onConfirm  || null;
+
+            // Show modal
+            modal.style.removeProperty('display');
+            document.body.style.overflow = 'hidden';
+
+            // Animate in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    card.classList.remove('scale-90', 'opacity-0');
+                    card.classList.add('scale-100', 'opacity-100');
+                });
+            });
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            const card  = document.getElementById('confirmModalCard');
+
+            // Animate out
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-90', 'opacity-0');
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+                _confirmCallback = null;
+            }, 200);
+        }
+
+        // Wire the confirm button
+        document.getElementById('confirmModalConfirmBtn').addEventListener('click', function () {
+            if (typeof _confirmCallback === 'function') {
+                _confirmCallback();
+            }
+            closeConfirmModal();
+        });
+
+        // change 5: close modal on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeConfirmModal();
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

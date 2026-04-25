@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 urlpatterns = [
     path('', views.profile_view, name='profile'),
     path('edit/', views.edit_profile_view, name='edit_profile'),
+    path('update-profile-photo/', views.update_profile_photo, name='update_profile_photo'),
+    path('remove-profile-photo/', views.remove_profile_photo, name='remove_profile_photo'),
 
     path('addresses/', views.address_list, name='address_list'),
     path('addresses/add/', views.add_address, name='add_address'),

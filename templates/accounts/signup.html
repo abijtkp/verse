@@ -68,31 +68,33 @@
         </p>
       </div>
 
-      {% if messages %}
-      <div class="mb-4 space-y-2">
-        {% for message in messages %}
-        <div class="p-3 rounded-xl text-xs font-bold {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-100{% else %}bg-green-50 text-green-600 border border-green-100{% endif %}">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+      {% include 'includes/toasts.html' %}
 
-      <form method="POST" action="{% url 'signup' %}" class="space-y-3">
+      <form method="POST" action="{% url 'signup' %}" class="space-y-3" novalidate>
         {% csrf_token %}
 
+        <!-- change 1: repopulate full_name from form_data; show field-level error below input -->
         <div class="space-y-1">
           <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
-          <input type="text" name="full_name" required 
-                 class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
+          <input type="text" name="full_name"
+                 value="{{ form_data.full_name|default:'' }}"
+                 class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.full_name %}border-red-400 focus:ring-red-400{% endif %}"
                  placeholder="Username"/>
+          {% if field_errors.full_name %}
+            <p class="text-xs text-red-500 font-semibold ml-1 mt-1">{{ field_errors.full_name }}</p>
+          {% endif %}
         </div>
 
+        <!-- change 2: repopulate email from form_data; show field-level error below input -->
         <div class="space-y-1">
           <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
-          <input type="email" name="email" required 
-                 class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
+          <input type="text" name="email"
+                 value="{{ form_data.email|default:'' }}"
+                 class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.email %}border-red-400 focus:ring-red-400{% endif %}"
                  placeholder="email@example.com"/>
+          {% if field_errors.email %}
+            <p class="text-xs text-red-500 font-semibold ml-1 mt-1">{{ field_errors.email }}</p>
+          {% endif %}
         </div>
 
 
@@ -102,33 +104,41 @@
 
 
 
+        <!-- change 3: password fields intentionally not repopulated (security best practice) -->
+        <!-- change 4: per-field errors shown below each password input -->
         <div class="grid grid-cols-2 gap-3">
-  <div class="space-y-1">
-    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
-    <div class="relative">
-      <input type="password" name="password" id="password" required 
-             class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
-             placeholder="••••••••"/>
-      <button type="button" onclick="togglePassword('password', this)" 
-              class="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
-        <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle Visibility">
-      </button>
-    </div>
-  </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
+            <div class="relative">
+              <input type="password" name="password" id="password"
+                     class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.password %}border-red-400 focus:ring-red-400{% endif %}"
+                     placeholder="••••••••"/>
+              <button type="button" onclick="togglePassword('password', this)"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
+                <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle Visibility">
+              </button>
+            </div>
+            {% if field_errors.password %}
+              <p class="text-xs text-red-500 font-semibold ml-1 mt-1">{{ field_errors.password }}</p>
+            {% endif %}
+          </div>
 
-  <div class="space-y-1">
-    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirm</label>
-    <div class="relative">
-      <input type="password" name="confirm_password" id="confirm_password" required 
-             class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
-             placeholder="••••••••"/>
-      <button type="button" onclick="togglePassword('confirm_password', this)" 
-              class="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
-        <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle Visibility">
-      </button>
-    </div>
-  </div>
-</div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirm</label>
+            <div class="relative">
+              <input type="password" name="confirm_password" id="confirm_password"
+                     class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.confirm_password %}border-red-400 focus:ring-red-400{% endif %}"
+                     placeholder="••••••••"/>
+              <button type="button" onclick="togglePassword('confirm_password', this)"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
+                <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle Visibility">
+              </button>
+            </div>
+            {% if field_errors.confirm_password %}
+              <p class="text-xs text-red-500 font-semibold ml-1 mt-1">{{ field_errors.confirm_password }}</p>
+            {% endif %}
+          </div>
+        </div>
 
 
 
@@ -137,11 +147,28 @@
 
 
 
-        <div class="flex items-start space-x-2 py-1">
-          <input type="checkbox" required class="mt-0 rounded border-slate-300 dark:bg-white/5 text-black focus:ring-black">
-          <label class="text-[11px] text-slate-500 leading-tight">
-            I agree to the <a href="#" class="font-bold underline text-black dark:text-white"> Terms and conditions</a> 
-          </label>
+        <div class="flex flex-col py-1">
+          <div class="flex items-start space-x-2">
+            <input
+              type="checkbox"
+              name="terms"
+              value="accepted"
+              class="mt-1 rounded border-slate-300 dark:bg-white/5 text-black focus:ring-black"
+              {% if form_data.terms %}checked{% endif %}>
+    
+            <label class="text-[11px] text-slate-500 leading-tight">
+              I agree to the 
+                <a href="#" class="font-bold underline text-black dark:text-white">
+                  Terms and conditions
+                </a>
+            </label>
+          </div>
+
+          {% if field_errors.terms %}
+            <p class="text-xs text-red-500 font-semibold ml-1 mt-1">
+              {{ field_errors.terms }}
+            </p>
+          {% endif %}
         </div>
 
         <button type="submit" class="w-full h-12 bg-black dark:bg-white dark:text-black text-white font-black uppercase tracking-widest text-xs rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg">
@@ -155,12 +182,13 @@
             <span class="bg-white dark:bg-[#121212] px-4 text-slate-400">Or continue with</span>
         </div>
       </div>
-
-      <a href = {% provider_login_url 'google' %}
+ 
+      <a href = "{% provider_login_url 'google' %}"
        class="w-full h-12 border border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center space-x-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-all active:scale-[0.98]">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
         <span class="text-slate-700 dark:text-white/80 font-bold text-xs">Google Account</span>
       </a>
+
 
       <div class="mt-6 text-center">
         <p class="text-slate-500 text-sm font-medium">

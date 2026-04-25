@@ -40,7 +40,7 @@ class User(AbstractUser):
     is_blocked = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     
-    #  IMPORTANT for SSO (Google)
+
     AUTH_PROVIDER_CHOICES = [
         ('email', 'Email'),
         ('google', 'Google'),
@@ -62,7 +62,7 @@ class User(AbstractUser):
     
     class Meta:
         indexes = [
-            models.Index(fields=['email']),  # faster authentication queries
+            models.Index(fields=['email']),  
         ]
 
 

@@ -23,13 +23,11 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             if existing_user.is_blocked:
                 raise PermissionDenied("This account is blocked.")
 
-            # Connect Google login to existing local user
+  
             sociallogin.connect(request, existing_user)
 
     def populate_user(self, request, sociallogin, data):
-        """
-        Fill custom user fields from Google data before saving.
-        """
+
         user = super().populate_user(request, sociallogin, data)
 
         full_name = data.get("name") or data.get("full_name") or ""
@@ -40,9 +38,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         return user
 
     def save_user(self, request, sociallogin, form=None):
-        """
-        Save user with custom project rules.
-        """
+ 
         user = super().save_user(request, sociallogin, form)
 
         if not user.full_name:

@@ -18,16 +18,15 @@ def send_otp_email(user, otp_obj, to_email=None):
     )
 
 def generate_otp(user, purpose='signup'):
-    #  Generate 6-digit OTP
     code = str(secrets.randbelow(900000) + 100000)
+    print(code)
 
-    #  Expiry time (5 minutes)
     expiry_time = timezone.now() + timedelta(minutes=5)
 
-    #  Delete old OTPs for same user & purpose
+
     OTP.objects.filter(user=user, purpose=purpose, is_used=False).delete()
 
-    #  Create new OTP record
+
     otp_obj = OTP.objects.create(
         user=user,
         code=code,

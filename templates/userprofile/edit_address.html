@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Address | VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-title {
+        font-size: 32px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+    .form-subtitle {
+        font-size: 14px;
+        color: #94a3b8;
+        margin-bottom: 40px;
+    }
+
+    .input-group {
+        margin-bottom: 24px;
+    }
+
+    .input-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .custom-input, .custom-select {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+        transition: all 0.2s ease;
+    }
+
+    .custom-input:focus, .custom-select:focus {
+        outline: none;
+        border-color: #000;
+        box-shadow: 0 0 0 1px #000;
+    }
+
+    .error-input {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 1px #ef4444 !important;
+    }
+
+    .btn-save {
+        background: #000;
+        color: #fff;
+        padding: 16px 48px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: transform 0.2s;
+    }
+
+    .btn-cancel {
+        background: #fff;
+        color: #000;
+        padding: 16px 48px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .btn-cancel:hover {
+        background: #f8fafc;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .custom-checkbox:checked {
+        background-color: #000;
+        border-color: #000;
+    }
+
+    .custom-checkbox:checked::after {
+        content: '✓';
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[800px] mx-auto py-12 px-6">
+
+    <h1 class="form-title">Edit Address</h1>
+    <p class="form-subtitle">Update your saved shipping details.</p>
+
+    <form method="POST" class="space-y-6" novalidate>
+        {% csrf_token %}
+
+        <div class="input-group">
+            <label class="input-label">Full Name</label>
+            <input type="text" name="full_name"
+                   class="custom-input {% if field_errors.full_name %}error-input{% endif %}"
+                   value="{{ form_data.full_name|default:address.full_name }}">
+
+            {% if field_errors.full_name %}
+                <p class="text-red-500 text-xs font-semibold mt-2">
+                    {{ field_errors.full_name }}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Street Address</label>
+            <input type="text" name="address_line1"
+                   class="custom-input {% if field_errors.address_line1 %}error-input{% endif %}"
+                   value="{{ form_data.address_line1|default:address.address_line1 }}">
+
+            {% if field_errors.address_line1 %}
+                <p class="text-red-500 text-xs font-semibold mt-2">
+                    {{ field_errors.address_line1 }}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Address Line 2</label>
+            <input type="text" name="address_line2"
+                   class="custom-input"
+                   value="{{ form_data.address_line2|default:address.address_line2 }}">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">City</label>
+                <input type="text" name="city"
+                       class="custom-input {% if field_errors.city %}error-input{% endif %}"
+                       value="{{ form_data.city|default:address.city }}">
+
+                {% if field_errors.city %}
+                    <p class="text-red-500 text-xs font-semibold mt-2">
+                        {{ field_errors.city }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">State</label>
+                <input type="text" name="state"
+                       class="custom-input {% if field_errors.state %}error-input{% endif %}"
+                       value="{{ form_data.state|default:address.state }}">
+
+                {% if field_errors.state %}
+                    <p class="text-red-500 text-xs font-semibold mt-2">
+                        {{ field_errors.state }}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">Pincode</label>
+                <input type="text" name="pincode"
+                       class="custom-input {% if field_errors.pincode %}error-input{% endif %}"
+                       value="{{ form_data.pincode|default:address.pincode }}">
+
+                {% if field_errors.pincode %}
+                    <p class="text-red-500 text-xs font-semibold mt-2">
+                        {{ field_errors.pincode }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Country</label>
+                <p class="text-sm font-semibold text-slate-700 px-4 py-3 bg-gray-100 rounded-xl">
+                    India
+                </p>
+                <input type="hidden" name="country" value="India">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="input-group">
+                <label class="input-label">Phone Number</label>
+                <input type="text" name="phone_number"
+                       class="custom-input {% if field_errors.phone_number %}error-input{% endif %}"
+                       value="{{ form_data.phone_number|default:address.phone_number }}">
+
+                {% if field_errors.phone_number %}
+                    <p class="text-red-500 text-xs font-semibold mt-2">
+                        {{ field_errors.phone_number }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Address Type</label>
+                <select name="address_type" class="custom-select">
+                    <option value="home"
+                        {% if form_data.address_type == "home" or not form_data.address_type and address.type == "home" %}selected{% endif %}>
+                        Home
+                    </option>
+
+                    <option value="work"
+                        {% if form_data.address_type == "work" or not form_data.address_type and address.type == "work" %}selected{% endif %}>
+                        Work
+                    </option>
+
+                    <option value="other"
+                        {% if form_data.address_type == "other" or not form_data.address_type and address.type == "other" %}selected{% endif %}>
+                        Other
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <label class="checkbox-container">
+            <input type="checkbox" name="is_default" class="custom-checkbox"
+                   {% if form_data.is_default or not form_data and address.is_default %}checked{% endif %}>
+
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-tight">
+                Set as default address
+            </span>
+        </label>
+
+        <div class="flex gap-4 pt-10 border-t border-slate-100 mt-10">
+            <button type="submit" class="btn-save">Update Address</button>
+            <a href="{% url 'address_list' %}" class="btn-cancel">Cancel</a>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

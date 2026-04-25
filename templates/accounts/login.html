@@ -59,53 +59,90 @@
         </p>
       </div>
 
-      {% if messages %}
-      <div class="mb-4 space-y-2">
-        {% for message in messages %}
-        <div class="p-3 rounded-xl text-xs font-bold bg-red-50 text-red-600 border border-red-100">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+      {% include 'includes/toasts.html' %}
 
-      <form method="POST" action="{% url 'login' %}" class="space-y-4">
-        {% csrf_token %}
+      <form method="POST" action="{% url 'login' %}" class="space-y-4" novalidate>
+  {% csrf_token %}
 
-        <div class="space-y-1">
-          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
-          <input type="email" name="email" required 
-                 class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
-                 placeholder="email@example.com"/>
-        </div>
+  {% if field_errors.general %}
+    <p class="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl px-4 py-3">
+      {{ field_errors.general }}
+    </p>
+  {% endif %}
 
-        <div class="space-y-1">
-          <div class="flex justify-between items-end mb-1">
-             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
-             <a href="{% url 'forgot_password' %}" class="text-[10px] font-black text-slate-900 dark:text-white/60 hover:underline uppercase tracking-widest">Forgot?</a>
-          </div>
-          <div class="relative">
-            <input type="password" name="password" id="password" required 
-                   class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none" 
-                   placeholder="••••••••"/>
-            <button type="button" onclick="togglePassword('password', this)" 
-                    class="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
-                <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle">
-            </button>
-          </div>
-        </div>
+  <div class="space-y-1">
+    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+      Email Address
+    </label>
 
-        <div class="flex items-center space-x-2 py-1">
-          <input type="checkbox" name="remember" id="remember" class="rounded border-slate-300 dark:bg-white/5 text-black focus:ring-black">
-          <label for="remember" class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-            Remember me
-          </label>
-        </div>
+    <input
+      type="text"
+      name="email"
+      value="{{ form_data.email|default:'' }}"
+      class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.email %}border-red-400 focus:ring-red-400{% endif %}"
+      placeholder="email@example.com"
+    />
 
-        <button type="submit" class="w-full h-12 bg-black dark:bg-white dark:text-black text-white font-black uppercase tracking-widest text-xs rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg">
-          Login
-        </button>
-      </form>
+    {% if field_errors.email %}
+      <p class="text-xs text-red-500 font-semibold ml-1 mt-1">
+        {{ field_errors.email }}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="space-y-1">
+    <div class="flex justify-between items-end mb-1">
+      <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+        Password
+      </label>
+
+      <a href="{% url 'forgot_password' %}" class="text-[10px] font-black text-slate-900 dark:text-white/60 hover:underline uppercase tracking-widest">
+        Forgot?
+      </a>
+    </div>
+
+    <div class="relative">
+      <input
+        type="password"
+        name="password"
+        id="password"
+        class="w-full h-11 pl-4 pr-10 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.password %}border-red-400 focus:ring-red-400{% endif %}"
+        placeholder="••••••••"
+      />
+
+      <button
+        type="button"
+        onclick="togglePassword('password', this)"
+        class="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"
+      >
+        <img src="{% static 'images/visibility.svg' %}" class="w-5 h-5 dark:invert" alt="Toggle">
+      </button>
+    </div>
+
+    {% if field_errors.password %}
+      <p class="text-xs text-red-500 font-semibold ml-1 mt-1">
+        {{ field_errors.password }}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="flex items-center space-x-2 py-1">
+    <input
+      type="checkbox"
+      name="remember"
+      id="remember"
+      class="rounded border-slate-300 dark:bg-white/5 text-black focus:ring-black"
+    >
+
+    <label for="remember" class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+      Remember me
+    </label>
+  </div>
+
+  <button type="submit" class="w-full h-12 bg-black dark:bg-white dark:text-black text-white font-black uppercase tracking-widest text-xs rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg">
+    Login
+  </button>
+</form>
 
       <div class="relative my-8">
         <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-100 dark:border-white/5"></span></div>

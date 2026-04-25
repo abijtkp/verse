@@ -65,15 +65,7 @@
         </p>
       </div>
 
-      {% if messages %}
-      <div class="mb-6 space-y-2">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl text-xs font-bold bg-red-50 text-red-600 border border-red-100">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+      {# change 1: removed plain inline message block — toasts are now rendered as a fixed overlay below #}
 
       <form method="POST" action="{% url 'admin_login' %}" class="space-y-5">
         {% csrf_token %}
@@ -131,6 +123,98 @@ function togglePassword(inputId, button) {
   }
 }
 </script>
+
+<!-- change 1: toast overlay — same system as admin_base.html, rendered after redirect (e.g. logout) -->
+{% if messages %}
+<div id="admin-toast-container" class="fixed top-6 right-5 z-[9999] flex flex-col items-end gap-3 w-full max-w-sm pointer-events-none">
+    {% for message in messages %}
+        <div class="admin-toast pointer-events-auto transform transition-all duration-300 -translate-y-5 scale-95 opacity-0 flex items-center w-full p-4 bg-white rounded-xl shadow-xl border-l-4
+            {% if message.tags == 'success' %}border-green-500
+            {% elif message.tags == 'error' %}border-red-500
+            {% elif message.tags == 'warning' %}border-yellow-500
+            {% elif message.tags == 'info' %}border-blue-500
+            {% else %}border-slate-400{% endif %}"
+            role="alert">
+
+            <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg
+                {% if message.tags == 'success' %}text-green-500 bg-green-100
+                {% elif message.tags == 'error' %}text-red-500 bg-red-100
+                {% elif message.tags == 'warning' %}text-yellow-500 bg-yellow-100
+                {% elif message.tags == 'info' %}text-blue-500 bg-blue-100
+                {% else %}text-slate-500 bg-slate-100{% endif %}">
+
+                {% if message.tags == 'success' %}
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                    </svg>
+                {% elif message.tags == 'error' %}
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.5a1 1 0 0 1-1.414 1.414L10 11.414l-2.086 2.086a1 1 0 0 1-1.414-1.414L8.586 10 6.5 7.914A1 1 0 0 1 7.914 6.5L10 8.586l2.086-2.086a1 1 0 0 1 1.414 1.414L11.414 10l2.086 2.086Z"/>
+                    </svg>
+                {% elif message.tags == 'warning' %}
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/>
+                    </svg>
+                {% else %}
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                {% endif %}
+            </div>
+
+            <div class="ml-3 text-sm font-medium text-slate-700">{{ message }}</div>
+
+            <button type="button" onclick="adminCloseToast(this)"
+                class="ml-auto -mx-1.5 -my-1.5 bg-white text-slate-400 hover:text-slate-900 rounded-lg focus:ring-2 focus:ring-slate-200 p-1.5 hover:bg-slate-100 inline-flex items-center justify-center h-8 w-8"
+                aria-label="Close">
+                <span class="sr-only">Close</span>
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                </svg>
+            </button>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    // change 1: toast animation + auto-dismiss logic (mirrors admin_base.html)
+    document.addEventListener("DOMContentLoaded", function () {
+        const toasts = document.querySelectorAll('.admin-toast');
+
+        toasts.forEach((toast, index) => {
+            setTimeout(() => {
+                toast.classList.remove('-translate-y-5', 'scale-95', 'opacity-0');
+                toast.classList.add('translate-y-0', 'scale-100', 'opacity-100');
+            }, 100 + (index * 100));
+
+            setTimeout(() => {
+                adminDismissToast(toast);
+            }, 4000 + (index * 100));
+        });
+    });
+
+    function adminCloseToast(button) {
+        const toast = button.closest('.admin-toast');
+        adminDismissToast(toast);
+    }
+
+    function adminDismissToast(toast) {
+        if (!toast) return;
+
+        toast.classList.remove('translate-y-0', 'scale-100', 'opacity-100');
+        toast.classList.add('-translate-y-5', 'scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            toast.remove();
+            const container = document.getElementById('admin-toast-container');
+            if (container && container.children.length === 0) {
+                container.remove();
+            }
+        }, 300);
+    }
+</script>
+{% endif %}
+<!-- end change 1 -->
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 

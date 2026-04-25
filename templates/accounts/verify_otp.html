@@ -124,15 +124,7 @@
                 <p class="text-slate-500 font-medium">We sent a 6-digit code to your email.</p>
             </div>
 
-            {% if messages %}
-            <div class="mb-6 space-y-2">
-                {% for message in messages %}
-                <div class="p-4 rounded-xl text-sm font-bold shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-100{% else %}bg-green-50 text-green-600 border border-green-100{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+            {% include 'includes/toasts.html' %}
 
             <form method="POST" action="{% url 'verify_otp' %}" class="space-y-8">
                 {% csrf_token %}
@@ -163,27 +155,40 @@
                 </button>
             </form>
 
+
+
+
+
+
+
+
+
             <div class="mt-10 pt-8 border-t border-slate-100">
                 <div class="flex items-center justify-between text-sm font-bold">
+                    <p class="text-slate-500">
+                        Didn't get it?
+                    </p>
+
                     <form method="POST" action="{% url 'resend_otp' %}">
                         {% csrf_token %}
-                        <p class="text-slate-500">
-                            Didn't get it? 
-                            <button id="resendBtn" type="submit" class="text-black hover:underline ml-1">Resend</button>
-                        </p>
+                        <button id="resendBtn" type="submit" class="text-black hover:underline ml-1">
+                            Resend
+                        </button>
                     </form>
+
                     <div class="text-accent flex items-center">
                         <span id="timer">00:30</span>
                     </div>
                 </div>
-
-                <div class="mt-8 text-center">
-                    <a href="{% url 'login' %}" class="text-xs font-extrabold text-slate-400 hover:text-black transition-colors flex items-center justify-center uppercase tracking-tighter">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
-                        Back to Login
-                    </a>
-                </div>
             </div>
+
+
+
+
+
+
+
+
 
         </div>
     </div>
@@ -194,36 +199,20 @@
     const resendBtn = document.getElementById('resendBtn');
 
     let timeLeft = 30;
-    let countdown;
 
-    function startTimer() {
-        resendBtn.disabled = true;
-        resendBtn.classList.add("opacity-50", "cursor-not-allowed");
+    resendBtn.disabled = true;
+    resendBtn.classList.add("opacity-50", "cursor-not-allowed");
 
-        countdown = setInterval(() => {
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
+    const countdown = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            timerDisplay.innerHTML = "Resend available";
+            resendBtn.disabled = false;
+            resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            return;
+        }
 
-                timerDisplay.innerHTML = "Resend available";
-
-                resendBtn.disabled = false;
-                resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
-                return;
-            }
-
-            timerDisplay.innerHTML = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-            timeLeft--;
-        }, 1000);
-    }
-
-    // Start on page load
-    startTimer();
-
-    // When resend clicked
-    resendBtn.addEventListener('click', () => {
-        clearInterval(countdown);  // stop old timer
-        timeLeft = 30;
-        startTimer();              // restart properly
-    });
+        timerDisplay.innerHTML = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        timeLeft--;
+    }, 1000);
 </script>

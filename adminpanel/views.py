@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
 
+
+
 def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -20,7 +22,7 @@ def admin_required(view_func):
 
         if not request.user.is_staff:
             messages.error(request, "You are not authorized to access admin panel")
-            return redirect('admin_login')
+            return redirect('home')
         
         if request.user.is_blocked:
             logout(request)

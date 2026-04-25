@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <style>
-    /* Address Cards */
     .address-card {
         background: #fff;
         border-radius: 24px;
@@ -63,7 +62,6 @@
         background: #1a1a1a;
     }
 
-    /* Empty State Styling */
     .empty-address-card {
         border: 2px dashed #e2e8f0;
         background: #fff;
@@ -92,89 +90,134 @@
 {% block content %}
 <div class="flex-1 min-w-0 px-4 md:px-8 py-10">
     <div class="max-w-5xl mx-auto">
-    
-    <div class="flex justify-between items-center mb-10">
-        <div>
-            <h1 class="text-4xl font-[900] tracking-tighter uppercase italic text-slate-900">My Addresses</h1>
-            <p class="text-slate-500 text-sm mt-1">Manage your shipping and billing locations.</p>
+
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-4xl font-[900] tracking-tighter uppercase italic text-slate-900">
+                    My Addresses
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">
+                    Manage your shipping and billing locations.
+                </p>
+            </div>
+
+            {% if addresses %}
+                <a href="{% url 'add_address' %}" class="btn-add-address flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    Add New Address
+                </a>
+            {% endif %}
         </div>
-        {% if addresses %}
-        <a href="{% url 'add_address' %}" class="btn-add-address flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm"></span>
-            Add New Address
-        </a>
-        {% endif %}
-    </div>
-    
 
-    <div class="space-y-6">
-        {% if addresses %}
-            {% for address in addresses %}
-            <div class="address-card {% if address.is_default %}default{% endif %}">
-                {% if address.is_default %}
-                    <div class="default-badge">Default</div>
-                {% endif %}
-                
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="material-symbols-outlined text-slate-400 text-lg">
-                            {% if address.type == 'home' %}{% elif address.type == 'work' %}{% else %}{% endif %}
-                        </span>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ address.type }}</span>
-                    </div>
-                    
-                    <h2 class="text-xl font-extrabold text-black mb-1">{{ address.full_name }}</h2>
-                    <p class="text-slate-500 text-sm leading-relaxed">
-                        {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
-                        {{ address.city }}, {{ address.state }} {{ address.pincode }}<br>
-                        {{ address.country }}
-                    </p>
-
-                    <div class="mt-4 flex items-center gap-6">
-                        <a href="{% url 'edit_address' address.pk %}" class="text-xs font-black uppercase tracking-wider text-black hover:underline flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">edit</span> 
-                        </a>
-                        
-                        {% if not address.is_default %}
-                        <form action="{% url 'set_default_address' address.pk %}" method="POST" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-black">Set as Default</button>
-                        </form>
+        <div class="space-y-6">
+            {% if addresses %}
+                {% for address in addresses %}
+                    <div class="address-card {% if address.is_default %}default{% endif %}">
+                        {% if address.is_default %}
+                            <div class="default-badge">Default</div>
                         {% endif %}
 
-                        <form action="{% url 'delete_address' address.pk %}" method="POST" class="inline" onsubmit="return confirm('Delete this address?')">
-                            {% csrf_token %}
-                            <button type="submit" class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-red-500 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-sm">delete</span> 
-                            </button>
-                        </form>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="material-symbols-outlined icon-md text-slate-400">
+                                    {% if address.type == 'home' %}
+                                        home
+                                    {% elif address.type == 'work' %}
+                                        work
+                                    {% else %}
+                                        location_on
+                                    {% endif %}
+                                </span>
+
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    {{ address.type }}
+                                </span>
+                            </div>
+
+                            <h2 class="text-xl font-extrabold text-black mb-1">
+                                {{ address.full_name }}
+                            </h2>
+
+                            <p class="text-slate-500 text-sm leading-relaxed">
+                                {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                                {{ address.city }}, {{ address.state }} {{ address.pincode }}<br>
+                                {{ address.country }}
+                            </p>
+
+                            <p class="text-slate-500 text-sm mt-2">
+                                Phone: {{ address.phone_number }}
+                            </p>
+
+                            <div class="mt-4 flex items-center gap-6">
+                                <a href="{% url 'edit_address' address.pk %}"
+                                   class="text-xs font-black uppercase tracking-wider text-black hover:underline flex items-center gap-1">
+                                    <span class="material-symbols-outlined icon-sm">edit</span>
+                                </a>
+
+                                {% if not address.is_default %}
+                                    <form action="{% url 'set_default_address' address.pk %}" method="POST" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-black">
+                                            Set as Default
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <form id="deleteForm-{{ address.pk }}"
+                                      action="{% url 'delete_address' address.pk %}"
+                                      method="POST"
+                                      class="hidden">
+                                    {% csrf_token %}
+                                </form>
+
+                                <button type="button"
+                                    onclick="openConfirmModal({
+                                        icon: '&#128465;',
+                                        iconBg: 'bg-red-50',
+                                        iconColor: 'text-red-500',
+                                        title: 'Delete Address?',
+                                        message: 'Are you sure you want to remove this shipping address? This action cannot be undone.',
+                                        confirmText: 'Yes, Delete',
+                                        onConfirm: function(){ document.getElementById('deleteForm-{{ address.pk }}').submit(); }
+                                    })"
+                                    class="text-xs font-black uppercase tracking-wider text-slate-300 hover:text-red-500 flex items-center gap-1 transition-colors">
+                                    <span class="material-symbols-outlined icon-sm">delete</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="map-preview">
+                            <img src="{% static 'images/address.png' %}"
+                                 class="w-full h-full object-cover grayscale opacity-80"
+                                 alt="Address preview">
+                        </div>
                     </div>
-                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-address-card">
+                    <div class="empty-icon-wrapper">
+                        <span class="material-symbols-outlined icon-xl text-slate-400">
+                            location_off
+                        </span>
+                    </div>
 
-                <div class="map-preview">
-                    <img src="{% static 'images/address.png' %}" class="w-full h-full object-cover grayscale opacity-80">
-                </div>
-            </div>
-            {% endfor %}
+                    <h2 class="text-2xl font-[900] tracking-tight text-slate-900 uppercase italic mb-2">
+                        No Addresses Yet
+                    </h2>
 
-                    {% else %}
-            <div class="empty-address-card">
-                 <div class="empty-icon-wrapper">
-                    <span class="material-symbols-outlined text-3xl text-slate-400"></span>
-                </div> 
-                <h2 class="text-2xl font-[900] tracking-tight text-slate-900 uppercase italic mb-2">
-                    No Addresses Yet
-                </h2>
-                <p class="text-slate-500 text-sm mb-6 max-w-md">
-                    Add your first address to make checkout faster and easier.
-                </p>
-                <a href="{% url 'add_address' %}" class="btn-add-address inline-flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm"></span>
-                    Add Address
-                </a>
-            </div>
-        {% endif %}
+                    <p class="text-slate-500 text-sm mb-6 max-w-md">
+                        Add your first address to make checkout faster and easier.
+                    </p>
+
+                    <a href="{% url 'add_address' %}" class="btn-add-address inline-flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">add_location_alt</span>
+                        Add Address
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
     </div>
-</div>
 </div>
 {% endblock %}

@@ -120,9 +120,15 @@
 
         <td class="py-4">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] uppercase">
-                    {{ customer.full_name|default:customer.email|slice:":2"|upper }}
-                </div>
+                {% if customer.profile.image and customer.profile.image.name != 'default.png' %}
+                    <img src="{{ customer.profile.image.url }}"
+                         class="w-8 h-8 rounded-full object-cover"
+                         alt="{{ customer.full_name|default:customer.email }}">
+                {% else %}
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] uppercase">
+                        {{ customer.full_name|default:customer.email|slice:":2"|upper }}
+                    </div>
+                {% endif %}
                 <span class="font-black">
                     {{ customer.full_name|default:"No Name" }}
                 </span>
@@ -155,23 +161,27 @@
 
         <td class="py-4 text-right">
             {% if customer.is_blocked %}
-                <form method="POST" action="{% url 'unblock_user' customer.id %}" class="inline">
-                    {% csrf_token %}
-                    <button type="submit"
-                            onclick="return confirm('Are you sure you want to unblock this user?')"
-                            class="px-3 py-2 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg hover:bg-green-200 transition-all">
-                        Unblock
-                    </button>
-                </form>
+                <form id="unblock-form-{{ customer.id }}" method="POST" action="{% url 'unblock_user' customer.id %}" class="hidden">{% csrf_token %}</form>
+                <button type="button"
+                        class="px-3 py-2 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-lg hover:bg-green-200 transition-all"
+                        data-confirm-modal
+                        data-modal-title="Unblock User?"
+                        data-modal-message="This user will regain access to their account. Are you sure?"
+                        data-modal-confirm-text="Unblock"
+                        data-modal-form-id="unblock-form-{{ customer.id }}">
+                    Unblock
+                </button>
             {% else %}
-                <form method="POST" action="{% url 'block_user' customer.id %}" class="inline">
-                    {% csrf_token %}
-                    <button type="submit"
-                            onclick="return confirm('Are you sure you want to block this user?')"
-                            class="px-3 py-2 bg-red-100 text-red-600 text-[10px] font-black uppercase rounded-lg hover:bg-red-200 transition-all">
-                        Block
-                    </button>
-                </form>
+                <form id="block-form-{{ customer.id }}" method="POST" action="{% url 'block_user' customer.id %}" class="hidden">{% csrf_token %}</form>
+                <button type="button"
+                        class="px-3 py-2 bg-red-100 text-red-600 text-[10px] font-black uppercase rounded-lg hover:bg-red-200 transition-all"
+                        data-confirm-modal
+                        data-modal-title="Block User?"
+                        data-modal-message="This user will not be able to access their account. Are you sure?"
+                        data-modal-confirm-text="Block"
+                        data-modal-form-id="block-form-{{ customer.id }}">
+                    Block
+                </button>
             {% endif %}
         </td>
     </tr>

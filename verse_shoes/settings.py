@@ -181,20 +181,38 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_USERNAME_REQUIRED = False
 
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
+
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*']
+
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET")
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
+
 
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
+    "google": {
+        "APPS": [
+            {
+                "client_id": GOOGLE_CLIENT_ID,
+                "secret": GOOGLE_CLIENT_SECRET,
+                "key": "",
+                "settings": {
+                    "scope": ["profile", "email"],
+                    "auth_params": {
+                        "access_type": "online",
+                        "prompt":"select_account"
+                    },
+                },
+            }
+        ]
     }
 }
 
-SOCIALACCOUNT_AUTO_SIGNUP = True
 
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
