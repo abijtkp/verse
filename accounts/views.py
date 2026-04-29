@@ -48,10 +48,13 @@ def signup_view(request):
                 field_errors['email'] = "An account with this email already exists."
 
         password_errors = []
+        
+        temp_user = User(email=email, full_name=full_name)
+        
         try:
-            validate_password(password)
+            validate_password(password, user=temp_user)
         except ValidationError as e:
-            password_errors = list(e)
+            password_errors = e.messages
 
         if password_errors:
             field_errors['password'] = password_errors[0]  
@@ -282,6 +285,7 @@ def login_view(request):
             return redirect('verify_otp')
 
         login(request, user)
+        messages.success(request, "Logged in successfully,")
         return redirect('home')
 
 
@@ -290,6 +294,7 @@ def login_view(request):
 @never_cache
 def logout_view(request):
     logout(request)
+    messages.success(request, "Logged out successfully.")
     return redirect('login')
 
 @never_cache

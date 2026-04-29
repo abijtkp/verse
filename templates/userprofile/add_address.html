@@ -75,6 +75,7 @@
         margin-top: 8px;
     }
 </style>
+
 {% endblock %}
 
 {% block content %}
@@ -93,7 +94,7 @@
                 value="{{ form_data.full_name|default:'' }}">
 
             {% if field_errors.full_name %}
-                <p class="text-red-500 text-xs mt-2">{{ field_errors.full_name }}</p>
+                <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.full_name }}</p>
             {% endif %}
         </div>
 
@@ -104,7 +105,7 @@
                 value="{{ form_data.address_line1|default:'' }}">
 
             {% if field_errors.address_line1 %}
-                <p class="text-red-500 text-xs mt-2">{{ field_errors.address_line1 }}</p>
+                <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.address_line1 }}</p>
             {% endif %}
         </div>
 
@@ -123,7 +124,7 @@
                     value="{{ form_data.city|default:'' }}">
 
                 {% if field_errors.city %}
-                    <p class="text-red-500 text-xs mt-2">{{ field_errors.city }}</p>
+                    <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.city }}</p>
                 {% endif %}
             </div>
 
@@ -134,7 +135,7 @@
                     value="{{ form_data.state|default:'' }}">
 
                 {% if field_errors.state %}
-                    <p class="text-red-500 text-xs mt-2">{{ field_errors.state }}</p>
+                    <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.state }}</p>
                 {% endif %}
             </div>
         </div>
@@ -147,7 +148,7 @@
                     value="{{ form_data.pincode|default:'' }}">
 
                 {% if field_errors.pincode %}
-                    <p class="text-red-500 text-xs mt-2">{{ field_errors.pincode }}</p>
+                    <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.pincode }}</p>
                 {% endif %}
             </div>
 
@@ -165,7 +166,7 @@
                 value="{{ form_data.phone_number|default:'' }}">
 
             {% if field_errors.phone_number %}
-                <p class="text-red-500 text-xs mt-2">{{ field_errors.phone_number }}</p>
+                <p class="field-error text-red-500 text-xs mt-2">{{ field_errors.phone_number }}</p>
             {% endif %}
         </div>
 
@@ -188,4 +189,36 @@
 
     </form>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const fields = document.querySelectorAll("input, select, textarea");
+
+  fields.forEach(function (field) {
+    field.addEventListener("input", function () {
+      clearFieldError(field);
+    });
+
+    field.addEventListener("focus", function () {
+      clearFieldError(field);
+    });
+
+    field.addEventListener("change", function () {
+      clearFieldError(field);
+    });
+  });
+
+  function clearFieldError(field) {
+    const wrapper = field.closest(".input-group, .checkbox-container");
+
+    if (!wrapper) return;
+
+    const errors = wrapper.querySelectorAll(".field-error");
+    errors.forEach(function (error) {
+      error.remove();
+    });
+
+    field.classList.remove("error-input");
+  }
+});
+</script>
 {% endblock %}

@@ -72,8 +72,6 @@ def edit_profile_view(request):
         else:
             user.date_of_birth = None
 
-        
-
         user.save()
 
         messages.success(request, "Profile updated successfully")
@@ -139,15 +137,6 @@ def remove_profile_photo(request):
     messages.success(request, "Profile photo removed successfully.")
     return redirect('edit_profile')
     
-    
-    
-    
-    
-    
-    
-    
-    
-     
  
 @user_required
 def add_address(request):
@@ -156,12 +145,12 @@ def add_address(request):
         phone_number = request.POST.get('phone_number', '').strip()
         address_line1 = request.POST.get('address_line1', '').strip()
         address_line2 = request.POST.get('address_line2', '').strip()  
-        city         = request.POST.get('city', '').strip()
-        state        = request.POST.get('state', '').strip()
-        pincode      = request.POST.get('pincode', '').strip()
-        country      = "India"
+        city = request.POST.get('city', '').strip()
+        state = request.POST.get('state', '').strip()
+        pincode = request.POST.get('pincode', '').strip()
+        country = "India"
         address_type = request.POST.get('address_type', 'home').strip()
-        is_default   = request.POST.get('is_default') == 'on'
+        is_default = request.POST.get('is_default') == 'on'
         
         
         form_data = {
@@ -217,6 +206,18 @@ def add_address(request):
         elif len(pincode) != 6:
             field_errors['pincode'] = "Pincode must be exactly 6 digits."
         
+        if not field_errors:
+            duplicate_address = Address.objects.filter(
+                user = request.user,
+                address_line1__iexact = address_line1,
+                city__iexact = city,
+                state__iexact = state,
+                pincode = pincode,
+            ).exists()
+            
+            if duplicate_address:
+                field_errors['address_line1'] = "This address already exists."
+            
         
         if field_errors:
             return render(request, 'userprofile/add_address.html', {
@@ -263,7 +264,6 @@ def address_list(request):
         'addresses': addresses
     })    
  
-
 @user_required
 def edit_address(request, pk):
     address = get_object_or_404(Address, pk=pk, user=request.user)
@@ -338,7 +338,18 @@ def edit_address(request, pk):
         elif len(pincode) != 6:
             field_errors['pincode'] = "Pincode must be exactly 6 digits."
             
-        
+        if not field_errors:
+            duplicate_address = Address.objects.filter(
+                user = request.user,
+                address_line1__iexact = address_line1,
+                city__iexact = city,
+                state__iexact = state,
+                pincode = pincode,
+            ).exclude(id=address.id).exists()
+            
+            if duplicate_address:
+                field_errors['duplicate'] = "This address already exists."
+            
             
         if field_errors:
             return render(request, 'userprofile/edit_address.html',{

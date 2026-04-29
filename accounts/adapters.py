@@ -1,29 +1,29 @@
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.contrib.auth import logout
-from django.core.exceptions import PermissionDenied
+from allauth.exceptions import ImmediateHttpResponse
+from django.shortcuts import redirect
+from django.contrib import messages
 from accounts.models import User
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    
     def pre_social_login(self, request, sociallogin):
-        """
-        Runs before social login is processed.
-        If a local user with the same email already exists, connect to that user.
-        Also block users marked as blocked.
-        """
         user = sociallogin.user
         email = user.email
 
         if not email:
-            return
+            messages.error(request, "Google login failed.")
+            raise ImmediateHttpResponse(redirect('login'))
 
         existing_user = User.objects.filter(email=email).first()
 
         if existing_user:
             if existing_user.is_blocked:
-                raise PermissionDenied("This account is blocked.")
+                messages.error(
+                    request,
+                    "Your account has been blocked.")
+                raise ImmediateHttpResponse(redirect('login'))
 
-  
             sociallogin.connect(request, existing_user)
 
     def populate_user(self, request, sociallogin, data):
@@ -31,11 +31,13 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         user = super().populate_user(request, sociallogin, data)
 
         full_name = data.get("name") or data.get("full_name") or ""
+        
         if full_name:
             user.full_name = full_name
 
         user.is_verified = True
         return user
+    
 
     def save_user(self, request, sociallogin, form=None):
  

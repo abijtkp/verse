@@ -65,7 +65,7 @@
   {% csrf_token %}
 
   {% if field_errors.general %}
-    <p class="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl px-4 py-3">
+    <p class="field-error text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl px-4 py-3">
       {{ field_errors.general }}
     </p>
   {% endif %}
@@ -84,7 +84,7 @@
     />
 
     {% if field_errors.email %}
-      <p class="text-xs text-red-500 font-semibold ml-1 mt-1">
+      <p class="field-error text-xs text-red-500 font-semibold ml-1 mt-1">
         {{ field_errors.email }}
       </p>
     {% endif %}
@@ -120,7 +120,7 @@
     </div>
 
     {% if field_errors.password %}
-      <p class="text-xs text-red-500 font-semibold ml-1 mt-1">
+      <p class="field-error text-xs text-red-500 font-semibold ml-1 mt-1">
         {{ field_errors.password }}
       </p>
     {% endif %}
@@ -179,6 +179,36 @@ function togglePassword(inputId, button) {
     button.classList.remove('opacity-100');
   }
 }
+document.addEventListener("DOMContentLoaded", function () {
+  const fields = document.querySelectorAll("input, select, textarea");
+
+  fields.forEach(function (field) {
+    field.addEventListener("input", function () {
+      clearFieldError(field);
+    });
+
+    field.addEventListener("focus", function () {
+      clearFieldError(field);
+    });
+
+    field.addEventListener("change", function () {
+      clearFieldError(field);
+    });
+  });
+
+  function clearFieldError(field) {
+    const wrapper = field.closest(".space-y-1, .flex-col");
+
+    if (!wrapper) return;
+
+    const errors = wrapper.querySelectorAll(".field-error");
+    errors.forEach(function (error) {
+      error.remove();
+    });
+
+    field.classList.remove("border-red-400", "focus:ring-red-400");
+  }
+});
 </script>
 
 </body>

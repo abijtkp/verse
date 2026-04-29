@@ -25,7 +25,15 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "rl33h1fn-8000.inc1.devtunnels.ms",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://rl33h1fn-8000.inc1.devtunnels.ms",
+]
 
 AUTH_USER_MODEL = 'accounts.User'
 # Application definition
@@ -115,12 +123,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        'NAME': 'accounts.validators.StrongPasswordValidator'
     },
 ]
 
@@ -181,9 +195,6 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-# ACCOUNT_USERNAME_REQUIRED = False
-
-# ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*']
 

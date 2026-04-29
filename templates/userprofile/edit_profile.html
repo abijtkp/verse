@@ -254,7 +254,7 @@
             {# Photo area with Instagram-style dropdown #}
             <div class="photo-upload-container" id="photo-container">
                 <div class="photo-preview">
-                    {% if profile.image %}
+                    {% if profile.image and profile.image.name != 'default.png' %}
                         <img id="img-preview" src="{{ profile.image.url }}" class="w-full h-full object-cover">
                     {% else %}
                         <img id="img-preview" src="{% static 'images/no_profile.png' %}" class="w-full h-full object-cover">
@@ -267,7 +267,7 @@
 
                 <div class="photo-dropdown" id="photo-dropdown">
                     <button type="button" id="btn-change-photo">Change Photo</button>
-                    {% if profile.image %}
+                    {% if profile.image and profile.image.name != 'default.png' %}
                     <button type="button" id="btn-remove-photo" class="danger">Remove Photo</button>
                     {% endif %}
                 </div>
