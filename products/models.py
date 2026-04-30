@@ -6,6 +6,8 @@ class Category(models.Model):
     description   = models.TextField(blank=True, null=True)
     is_active     = models.BooleanField(default=True)
     is_deleted    = models.BooleanField(default=False)
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.category_name

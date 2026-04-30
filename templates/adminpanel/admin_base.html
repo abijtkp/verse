@@ -11,20 +11,34 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     
     <style>
-        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
         .sidebar-link.active { background: #f1f5f9; border-radius: 12px; color: #000; font-weight: 800; }
         .sidebar-link { transition: all 0.2s ease; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Mobile Drawer Logic */
+        @media (max-width: 1024px) {
+            #admin-sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            #admin-sidebar.open { transform: translateX(0); }
+            #sidebar-overlay.visible { opacity: 1; visibility: visible; }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="flex min-h-screen">
+<body class="min-h-screen bg-[#f8fafc]">
 
-    <aside class="w-64 bg-white border-r border-slate-100 p-6 flex flex-col fixed h-full z-10 overflow-y-auto no-scrollbar">
-        <div class="mb-10">
-            <h1 class="text-2xl font-black tracking-tighter uppercase italic leading-none">VERSE</h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Premium Store</p>
+    <!-- Sidebar Overlay (Mobile Only) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 opacity-0 invisible transition-all duration-300 lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar / Mobile Drawer -->
+    <aside id="admin-sidebar" class="w-72 bg-white border-r border-slate-100 p-6 flex flex-col fixed h-full z-50 overflow-y-auto no-scrollbar lg:translate-x-0">
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter uppercase italic leading-none">VERSE</h1>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Premium Store</p>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden material-symbols-outlined text-slate-400">close</button>
         </div>
 
         <nav class="space-y-1 flex-1">
@@ -36,38 +50,28 @@
                 <span class="material-symbols-outlined text-xl">trending_up</span> 
                 <span class="text-sm font-semibold">Sales</span>
             </a>
-            <a href="{% url 'user_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'user_management' %} active {% endif %}flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+            <a href="{% url 'user_management' %}" class="sidebar-link {% if request.resolver_match.url_name == 'user_management' %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
                 <span class="material-symbols-outlined text-xl">group</span> 
                 <span class="text-sm font-semibold">Users</span>
+            </a>
+            <a href="{% url 'category_list' %}" class="sidebar-link {% if 'category' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+                <span class="material-symbols-outlined text-xl">category</span> 
+                <span class="text-sm font-semibold">Categories</span>
             </a>
             <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
                 <span class="material-symbols-outlined text-xl">inventory_2</span> 
                 <span class="text-sm font-semibold">Products</span>
             </a>
-            <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
-                <span class="material-symbols-outlined text-xl">category</span> 
-                <span class="text-sm font-semibold">Categories</span>
-            </a>
-            <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
-                <span class="material-symbols-outlined text-xl">grade</span> 
-                <span class="text-sm font-semibold">Reviews</span>
-            </a>
-            <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
-                <span class="material-symbols-outlined text-xl">local_offer</span> 
-                <span class="text-sm font-semibold">Offers</span>
-            </a>
-            <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
-                <span class="material-symbols-outlined text-xl">confirmation_number</span> 
-                <span class="text-sm font-semibold">Coupons</span>
-            </a>
         </nav>
 
+        <!-- Fixed Footer/Logout Area -->
         <div class="mt-auto pt-6 border-t border-slate-50 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">M</div>
-            <div>
-                <p class="text-xs font-black uppercase">admin</p>
-                <p class="text-[10px] text-slate-400 font-bold uppercase">Admin Account</p>
+            <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold shrink-0">M</div>
+            <div class="overflow-hidden">
+                <p class="text-xs font-black uppercase truncate">admin</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase">Superuser</p>
             </div>
+            
             <form id="admin-logout-form" method="POST" action="{% url 'admin_logout' %}" class="hidden">{% csrf_token %}</form>
             <button type="button"
                     class="ml-auto material-symbols-outlined text-slate-300 hover:text-red-500"
@@ -81,29 +85,46 @@
         </div>
     </aside>
 
-    <main class="flex-1 ml-64 p-8 bg-[#f8fafc]">
-        <header class="flex justify-between items-center mb-10">
-            <div>
-                <h2 class="text-xs font-black uppercase tracking-widest text-slate-400">Admin</h2>
-                <h1 class="text-2xl font-black tracking-tight text-slate-900 leading-none mt-1">
-                    {% block page_title %}Dashboard{% endblock %}
-                </h1>
+    <!-- Main Content Wrapper -->
+    <div class="lg:ml-72 flex flex-col min-h-screen transition-all duration-300">
+        
+        <!-- Header -->
+        <header class="sticky top-0 z-30 bg-[#f8fafc]/80 backdrop-blur-md px-4 py-4 md:px-8 md:py-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                
+                <div>
+                    <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Management</h2>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-none mt-1">
+                        {% block page_title %}Dashboard{% endblock %}
+                    </h1>
+                </div>
             </div>
             
-            <div class="flex items-center gap-4">
-                <div class="relative">
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="relative hidden md:block">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
-                    <input type="text" placeholder="Search..." class="bg-white border border-slate-100 rounded-full py-2 pl-10 pr-6 text-sm focus:ring-1 focus:ring-black w-64 outline-none shadow-sm">
+                    <input type="text" placeholder="Search..." class="bg-white border border-slate-100 rounded-full py-2 pl-10 pr-6 text-sm focus:ring-1 focus:ring-black w-48 xl:w-64 outline-none shadow-sm transition-all">
                 </div>
-                <button class="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-black transition-all shadow-sm">
+                <button class="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-black shadow-sm">
                     <span class="material-symbols-outlined">notifications</span>
                 </button>
             </div>
         </header>
 
-        {% block content %}
-        {% endblock %}
-    </main>
+        <!-- Dynamic Content Area -->
+        <main class="flex-1 p-4 md:p-8">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="p-8 pt-0 mt-auto">
+            <p class="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 VERSE PREMIUM ARCHIVE</p>
+        </footer>
+    </div>
+
+    <!-- ===== FUNCTIONAL COMPONENTS (TOASTS & MODALS) ===== -->
 
     {% if messages %}
     <div id="admin-toast-container" class="fixed top-6 right-5 z-[9999] flex flex-col items-end gap-3 w-full max-w-sm pointer-events-none">
@@ -111,177 +132,93 @@
             <div class="admin-toast pointer-events-auto transform transition-all duration-300 -translate-y-5 scale-95 opacity-0 flex items-center w-full p-4 bg-white rounded-xl shadow-xl border-l-4
                 {% if message.tags == 'success' %}border-green-500
                 {% elif message.tags == 'error' %}border-red-500
-                {% elif message.tags == 'warning' %}border-yellow-500
-                {% elif message.tags == 'info' %}border-blue-500
-                {% else %}border-slate-400{% endif %}"
-                role="alert">
-
-                <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg
-                    {% if message.tags == 'success' %}text-green-500 bg-green-100
-                    {% elif message.tags == 'error' %}text-red-500 bg-red-100
-                    {% elif message.tags == 'warning' %}text-yellow-500 bg-yellow-100
-                    {% elif message.tags == 'info' %}text-blue-500 bg-blue-100
-                    {% else %}text-slate-500 bg-slate-100{% endif %}">
-
-                    {% if message.tags == 'success' %}
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
-                        </svg>
-                    {% elif message.tags == 'error' %}
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.5a1 1 0 0 1-1.414 1.414L10 11.414l-2.086 2.086a1 1 0 0 1-1.414-1.414L8.586 10 6.5 7.914A1 1 0 0 1 7.914 6.5L10 8.586l2.086-2.086a1 1 0 0 1 1.414 1.414L11.414 10l2.086 2.086Z"/>
-                        </svg>
-                    {% elif message.tags == 'warning' %}
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/>
-                        </svg>
-                    {% else %}
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                        </svg>
-                    {% endif %}
-                </div>
-
+                {% else %}border-slate-400{% endif %}" role="alert">
                 <div class="ml-3 text-sm font-medium text-slate-700">{{ message }}</div>
-
-                <button type="button" onclick="adminCloseToast(this)"
-                    class="ml-auto -mx-1.5 -my-1.5 bg-white text-slate-400 hover:text-slate-900 rounded-lg focus:ring-2 focus:ring-slate-200 p-1.5 hover:bg-slate-100 inline-flex items-center justify-center h-8 w-8"
-                    aria-label="Close">
-                    <span class="sr-only">Close</span>
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-                    </svg>
+                <button type="button" onclick="adminCloseToast(this)" class="ml-auto text-slate-400 hover:text-slate-900 inline-flex items-center justify-center h-8 w-8">
+                    <span class="material-symbols-outlined text-sm">close</span>
                 </button>
             </div>
         {% endfor %}
     </div>
+    {% endif %}
 
+    <div id="admin-confirm-modal" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4">
+        <div id="admin-modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="adminCloseModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm z-10">
+            <h3 id="admin-modal-title" class="text-lg font-black uppercase tracking-tight text-slate-900 mb-2"></h3>
+            <p id="admin-modal-message" class="text-sm font-medium text-slate-500 mb-8"></p>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="adminCloseModal()" class="px-5 py-2 border border-slate-200 rounded-xl text-xs font-black">Cancel</button>
+                <button type="button" id="admin-modal-confirm-btn" class="px-5 py-2 bg-black text-white rounded-xl text-xs font-black">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
     <script>
+        // Sidebar Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('admin-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+            overlay.classList.toggle('opacity-0');
+            overlay.classList.toggle('invisible');
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        }
+
+        // Toast Logic
         document.addEventListener("DOMContentLoaded", function () {
             const toasts = document.querySelectorAll('.admin-toast');
-
             toasts.forEach((toast, index) => {
                 setTimeout(() => {
                     toast.classList.remove('-translate-y-5', 'scale-95', 'opacity-0');
                     toast.classList.add('translate-y-0', 'scale-100', 'opacity-100');
                 }, 100 + (index * 100));
-
-                setTimeout(() => {
-                    adminDismissToast(toast);
-                }, 4000 + (index * 100));
+                setTimeout(() => adminDismissToast(toast), 4000 + (index * 100));
             });
         });
 
-        function adminCloseToast(button) {
-            const toast = button.closest('.admin-toast');
-            adminDismissToast(toast);
-        }
-
+        function adminCloseToast(button) { adminDismissToast(button.closest('.admin-toast')); }
         function adminDismissToast(toast) {
             if (!toast) return;
-
-            toast.classList.remove('translate-y-0', 'scale-100', 'opacity-100');
             toast.classList.add('-translate-y-5', 'scale-95', 'opacity-0');
-
-            setTimeout(() => {
-                toast.remove();
-
-                const container = document.getElementById('admin-toast-container');
-                if (container && container.children.length === 0) {
-                    container.remove();
-                }
-            }, 300);
+            setTimeout(() => toast.remove(), 300);
         }
-    </script>
-    {% endif %}
 
-    {# ===== ADMIN CONFIRMATION MODAL ===== #}
-    <div id="admin-confirm-modal"
-         class="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-         style="display:none !important;">
-
-        {# Backdrop #}
-        <div id="admin-modal-backdrop"
-             class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-             onclick="adminCloseModal()"></div>
-
-        {# Dialog #}
-        <div class="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm z-10">
-            <button type="button"
-                    onclick="adminCloseModal()"
-                    class="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors material-symbols-outlined text-xl">
-                close
-            </button>
-
-            <h3 id="admin-modal-title"
-                class="text-lg font-black uppercase tracking-tight text-slate-900 mb-2"></h3>
-            <p id="admin-modal-message"
-               class="text-sm font-medium text-slate-500 mb-8"></p>
-
-            <div class="flex gap-3 justify-end">
-                <button type="button"
-                        onclick="adminCloseModal()"
-                        class="px-5 py-2 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-50 transition-all">
-                    Cancel
-                </button>
-                <button type="button"
-                        id="admin-modal-confirm-btn"
-                        class="px-5 py-2 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-80 transition-all">
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
+        // Modal Logic
         (function () {
-            var modal = document.getElementById('admin-confirm-modal');
-            var modalTitle = document.getElementById('admin-modal-title');
-            var modalMessage = document.getElementById('admin-modal-message');
-            var confirmBtn = document.getElementById('admin-modal-confirm-btn');
-            var pendingFormId = null;
+            const modal = document.getElementById('admin-confirm-modal');
+            const confirmBtn = document.getElementById('admin-modal-confirm-btn');
+            let pendingFormId = null;
 
-            function openAdminModal(title, message, confirmText, formId) {
-                modalTitle.textContent = title;
-                modalMessage.textContent = message;
+            window.openAdminModal = function (title, message, confirmText, formId) {
+                document.getElementById('admin-modal-title').textContent = title;
+                document.getElementById('admin-modal-message').textContent = message;
                 confirmBtn.textContent = confirmText;
                 pendingFormId = formId;
-                modal.style.removeProperty('display');
-                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
             }
 
             window.adminCloseModal = function () {
-                modal.style.display = 'none';
-                pendingFormId = null;
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             };
 
-            confirmBtn.addEventListener('click', function () {
-                if (pendingFormId) {
-                    var form = document.getElementById(pendingFormId);
-                    if (form) form.submit();
-                }
-                window.adminCloseModal();
+            confirmBtn.addEventListener('click', () => {
+                if (pendingFormId) document.getElementById(pendingFormId).submit();
+                adminCloseModal();
             });
 
-            // Close on Escape
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') window.adminCloseModal();
-            });
-
-            // Wire up all [data-confirm-modal] triggers
-            document.addEventListener('click', function (e) {
-                var trigger = e.target.closest('[data-confirm-modal]');
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('[data-confirm-modal]');
                 if (!trigger) return;
                 e.preventDefault();
-                openAdminModal(
-                    trigger.dataset.modalTitle,
-                    trigger.dataset.modalMessage,
-                    trigger.dataset.modalConfirmText,
-                    trigger.dataset.modalFormId
-                );
+                openAdminModal(trigger.dataset.modalTitle, trigger.dataset.modalMessage, trigger.dataset.modalConfirmText, trigger.dataset.modalFormId);
             });
         })();
     </script>
-
     {% block extra_js %}{% endblock %}
 </body>
 </html>
