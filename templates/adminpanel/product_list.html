@@ -1,0 +1,243 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}VERSE | Product Management{% endblock %}
+
+{% block page_title %}Product Management{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+        <div>
+            <p class="text-sm font-medium text-slate-500">
+                Global footwear inventory and stock distribution across 24 regions.
+            </p>
+        </div>
+
+        <a href="{% url 'add_product' %}"
+           class="w-full sm:w-auto justify-center bg-black text-white px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-black/10">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Add Product
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-900">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                </div>
+                <span class="text-[10px] font-black text-green-500 bg-green-50 px-2 py-1 rounded-full">+12%</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Products</p>
+            <h3 class="text-3xl font-black mt-1">{{ page_obj.paginator.count }}</h3>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
+                    <span class="material-symbols-outlined">warning</span>
+                </div>
+                <span class="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-full">Stable</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Low Stock</p>
+            <h3 class="text-3xl font-black mt-1">12</h3>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-red-500">
+                    <span class="material-symbols-outlined">error</span>
+                </div>
+                <span class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-full">+1%</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Out of Stock</p>
+            <h3 class="text-3xl font-black mt-1">5</h3>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-blue-500">
+                    <span class="material-symbols-outlined">verified</span>
+                </div>
+                <span class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-full">-5%</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New Arrivals</p>
+            <h3 class="text-3xl font-black mt-1">48</h3>
+        </div>
+    </div>
+
+    <!-- Category Quick Filters (From Figma) -->
+    {% comment %} <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <a href="?category=all" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-black text-white">All Sneakers</a>
+        {% for cat in categories %}
+            <a href="?category={{ cat.id }}" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-slate-100 text-slate-500 hover:bg-slate-200">{{ cat.category_name }}</a>
+        {% endfor %}
+    </div> {% endcomment %}
+
+    <!-- Table Container -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        
+        <!-- Toolbar -->
+        <div class="p-5 sm:p-6 border-b border-slate-50 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+            <form method="GET" action="{% url 'product_list' %}" class="relative w-full lg:max-w-md flex items-center gap-2">
+                <div class="relative flex-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search inventory, SKUs..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all">
+                </div>
+                <button type="submit" class="px-4 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all">
+                    Search
+                </button>
+            </form>
+
+            <!-- Filter & Sort Group (From Figma) -->
+            <div class="flex items-center gap-2">
+                <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                    <span class="material-symbols-outlined text-sm">filter_list</span> Filter
+                </button>
+                <div class="relative">
+                    <select onchange="location = this.value;" class="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none hover:bg-slate-50 transition-all cursor-pointer">
+                        <option value="?sort=latest" {% if sort_by == 'latest' %}selected{% endif %}>Sort By: Latest</option>
+                        <option value="?sort=oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                        <option value="?sort=name_az" {% if sort_by == 'name_az' %}selected{% endif %}>Name A-Z</option>
+                        <option value="?sort=name_za" {% if sort_by == 'name_za' %}selected{% endif %}>Name Z-A</option>
+                    </select>
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm pointer-events-none">swap_vert</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updated Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[1000px] text-left border-collapse">
+                <thead>
+                    <tr class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 border-b border-slate-50">
+                        <th class="px-6 sm:px-8 py-5">Product</th>
+                        {% comment %} <th class="px-6 py-5">SKU</th> {% endcomment %}
+                        <th class="px-6 py-5">Category</th>
+                        {% comment %} <th class="px-6 py-5">Price</th> {% endcomment %}
+                        {% comment %} <th class="px-6 py-5">Stock</th> {% endcomment %}
+                        <th class="px-6 py-5">Status</th>
+                        <th class="px-6 sm:px-8 py-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for product in page_obj %}
+                    <tr class="group hover:bg-slate-50/60 transition-colors">
+                        <td class="px-6 sm:px-8 py-5">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                    {% with product.images.all|first as first_image %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image_url.url }}" alt="{{ product.product_name }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <span class="material-symbols-outlined text-slate-300">image</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div>
+                                    <span class="text-sm font-bold text-slate-900 block leading-tight">{{ product.product_name }}</span>
+                                    <span class="text-[10px] text-slate-400 font-medium italic">'{{ product.description|truncatechars:20 }}'</span>
+                                </div>
+                            </div>
+                        </td>
+                        {% comment %} <td class="px-6 py-5">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">DZ5485-612</span> <!-- Placeholder SKU -->
+                        </td> {% endcomment %}
+                        <td class="px-6 py-5">
+                            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-wider rounded">
+                                {{ product.category.category_name|default:"General" }}
+                            </span>
+                        </td>
+                        {% comment %} <td class="px-6 py-5">
+                            <span class="text-xs font-black text-slate-900">₹{{ product.price|default:"1800.00" }}</span>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="bg-black h-full" style="width: 70%"></div> <!-- Dynamic logic can go here -->
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-900">142</span> <!-- Placeholder Stock -->
+                            </div>
+                        </td> {% endcomment %}
+                        <td class="px-6 py-5">
+                            {% if product.is_active %}
+                                <span class="px-2 py-1 bg-green-50 text-green-500 text-[9px] font-black uppercase rounded">
+                                    • Active
+                                </span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-red-50 text-red-400 text-[9px] font-black uppercase rounded">
+                                    • Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+
+
+
+
+
+
+
+
+
+                        <td class="px-6 sm:px-8 py-5 text-right">
+                            <div class="flex items-center justify-end gap-2">
+
+                                <!-- Edit Product -->
+                                <a href="{% url 'edit_product' product.id %}" 
+                                    class="p-2 text-slate-300 hover:text-black transition-colors">
+                                        <span class="material-symbols-outlined text-xl">edit</span>
+                                </a>
+
+                                <!-- Deactivate Product -->
+                                {% if product.is_active %}
+                                    <form id="deactivate-product-form-{{ product.id }}" 
+                                        action="{% url 'delete_product' product.id %}" 
+                                        method="POST" 
+                                        class="hidden">
+                                        {% csrf_token %}
+                                    </form>
+
+                                    <button type="button"
+                                            data-confirm-modal
+                                            data-modal-title="Deactivate Product"
+                                            data-modal-message="Are you sure you want to deactivate '{{ product.product_name }}'? It will remain in the product list but become inactive."
+                                            data-modal-confirm-text="Deactivate"
+                                            data-modal-form-id="deactivate-product-form-{{ product.id }}"
+                                            class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                        <span class="material-symbols-outlined text-xl">block</span>
+                                    </button>
+                                {% endif %}
+
+                            </div>
+                        </td>
+
+
+
+
+
+
+
+
+
+                    </tr>
+                    {% empty %}
+                    <!-- Existing Empty State -->
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section (Existing) -->
+    </div>
+</div>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}
