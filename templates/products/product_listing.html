@@ -1,0 +1,593 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Collections — VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Filter Drawer ── */
+    .filter-drawer {
+        position: fixed;
+        top: 0;
+        right: -360px;
+        height: 100vh;
+        width: 340px;
+        z-index: 1000;
+        background-color: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: -10px 0 40px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .filter-drawer.open {
+        right: 0;
+    }
+
+    .filter-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .filter-drawer-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* ── Product Card ── */
+    .product-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: #fafafa;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.10);
+        background: #fff;
+    }
+
+    .product-card-img-wrap {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%;
+        overflow: hidden;
+        background: #f1f5f9;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .product-card-img-wrap img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .product-card:hover .product-card-img-wrap img {
+        transform: scale(1.06);
+    }
+
+    /* ── Sort Dropdown ── */
+    .sort-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+    }
+
+    /* ── Price Input ── */
+    .price-input {
+        width: 100%;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: 'Manrope', sans-serif;
+        outline: none;
+        transition: border-color 0.2s;
+        background: #f8fafc;
+    }
+
+    .price-input:focus {
+        border-color: #000;
+        background: #fff;
+    }
+
+    /* ── Category Checkbox ── */
+    .cat-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+
+    .cat-label:hover { background: #f1f5f9; color: #000; }
+    .cat-label input[type="radio"] { display: none; }
+    .cat-dot {
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        border: 2px solid #cbd5e1;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .cat-label input:checked ~ .cat-dot {
+        border-color: #000;
+        background: #000;
+    }
+    .cat-dot::after {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .cat-label input:checked ~ .cat-dot::after { opacity: 1; }
+
+    /* ── Active Filter Chip ── */
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #000;
+        color: #fff;
+        border-radius: 999px;
+        padding: 5px 12px 5px 14px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .filter-chip button {
+        display: flex;
+        align-items: center;
+        opacity: 0.7;
+        transition: opacity 0.15s;
+    }
+
+    .filter-chip button:hover { opacity: 1; }
+
+    /* ── Pagination ── */
+    .page-btn {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 800;
+        transition: all 0.2s;
+        border: 1.5px solid #e2e8f0;
+        color: #475569;
+    }
+    .page-btn:hover { border-color: #000; color: #000; background: #f8fafc; }
+    .page-btn.active { background: #000; color: #fff; border-color: #000; }
+    .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+    /* ── Empty State ── */
+    .empty-state-icon {
+        width: 80px; height: 80px;
+        border-radius: 24px;
+        background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 32px;
+    }
+
+    /* ── Stock Badge ── */
+    .stock-badge {
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 999px;
+    }
+
+    /* ── Search input in page ── */
+    .listing-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 9px 18px;
+        background: #f8fafc;
+        transition: all 0.2s;
+        min-width: 260px;
+    }
+    .listing-search:focus-within {
+        border-color: #000;
+        background: #fff;
+    }
+    .listing-search input {
+        border: none; outline: none; background: transparent;
+        width: 100%; font-size: 13px; font-weight: 500;
+        font-family: 'Manrope', sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Drawer Overlay -->
+<div class="filter-drawer-overlay" id="filterOverlay" onclick="toggleFilterDrawer()"></div>
+
+<!-- ═══════════════════════════════════════════════
+     FILTER DRAWER
+═══════════════════════════════════════════════ -->
+<aside id="filterDrawer" class="filter-drawer">
+
+    <!-- Drawer Header -->
+    <div class="flex items-center justify-between px-7 py-6 border-b border-slate-100">
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">Refine</p>
+            <h3 class="text-lg font-black uppercase tracking-tight">Filters</h3>
+        </div>
+        <button onclick="toggleFilterDrawer()"
+                class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-black hover:text-white transition-all">
+            <span class="material-symbols-outlined icon-md">close</span>
+        </button>
+    </div>
+
+    <!-- Drawer Body -->
+    <form method="GET" action="" id="filterForm" class="flex flex-col flex-1 overflow-y-auto">
+
+        <!-- Preserve search & sort -->
+        {% if search_query %}
+            <input type="hidden" name="q" value="{{ search_query }}">
+        {% endif %}
+        {% if sort_by %}
+            <input type="hidden" name="sort" value="{{ sort_by }}">
+        {% endif %}
+
+        <div class="px-7 py-6 space-y-7 flex-1">
+
+            <!-- Category -->
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Category</p>
+                <div class="space-y-1">
+                    <label class="cat-label">
+                        <input type="radio" name="category" value=""
+                            {% if not selected_category %}checked{% endif %}>
+                        <span class="cat-dot"></span>
+                        All Categories
+                    </label>
+                    {% for cat in categories %}
+                    <label class="cat-label">
+                        <input type="radio" name="category" value="{{ cat.id }}"
+                            {% if selected_category == cat.id|stringformat:"s" %}checked{% endif %}>
+                        <span class="cat-dot"></span>
+                        {{ cat.category_name }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Price Range -->
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Price Range</p>
+                <div class="flex items-center gap-3">
+                    <div class="flex-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">Min</label>
+                        <input type="number" name="min_price" class="price-input"
+                               placeholder="₹0" min="0"
+                               value="{{ min_price|default:'' }}">
+                    </div>
+                    <div class="w-5 h-px bg-slate-300 mt-4 flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">Max</label>
+                        <input type="number" name="max_price" class="price-input"
+                               placeholder="₹99999" min="0"
+                               value="{{ max_price|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Drawer Footer Actions -->
+        <div class="px-7 py-6 border-t border-slate-100 space-y-3">
+            <button type="submit"
+                    class="w-full h-12 rounded-full bg-black text-white font-black text-[11px] uppercase tracking-widest hover:bg-zinc-800 active:scale-[0.98] transition-all">
+                Apply Filters
+            </button>
+            <a href="{% url 'product_listing' %}"
+               class="w-full h-12 rounded-full border-2 border-slate-200 hover:border-slate-400 text-slate-600 font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center">
+                Clear Filters
+            </a>
+        </div>
+    </form>
+</aside>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE HERO
+═══════════════════════════════════════════════ -->
+<section class="px-6 md:px-10 lg:px-16 pt-12 pb-8">
+    <div class="max-w-screen-xl mx-auto">
+        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">VERSE / Shop</p>
+        <h1 class="text-5xl md:text-7xl font-[900] uppercase italic tracking-tighter leading-none mb-3">
+            The<br>Collection
+        </h1>
+        <p class="text-sm text-slate-500 font-medium max-w-md">
+            Push your boundaries with our latest performance and lifestyle drops. Engineered for greatness.
+        </p>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CONTROLS BAR
+═══════════════════════════════════════════════ -->
+<section class="sticky top-20 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 md:px-10 lg:px-16 py-4">
+    <div class="max-w-screen-xl mx-auto">
+        <form method="GET" action="" id="searchSortForm">
+            <!-- Preserve filter params -->
+            {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+            {% if min_price %}
+                <input type="hidden" name="min_price" value="{{ min_price }}">
+            {% endif %}
+            {% if max_price %}
+                <input type="hidden" name="max_price" value="{{ max_price }}">
+            {% endif %}
+
+            <div class="flex flex-wrap items-center gap-3">
+
+                <!-- Search -->
+                <div class="listing-search flex-1 min-w-[200px] max-w-xs">
+                    <span class="material-symbols-outlined icon-sm text-slate-400">search</span>
+                    <input type="text" name="q" placeholder="Search products..."
+                           value="{{ search_query|default:'' }}">
+                    {% if search_query %}
+                    <button type="button" onclick="clearSearch()"
+                            class="flex-shrink-0 text-slate-400 hover:text-black transition-colors">
+                        <span class="material-symbols-outlined icon-sm">close</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Active Filter Chips -->
+                <div class="flex flex-wrap items-center gap-2">
+                    {% if search_query %}
+                    <span class="filter-chip">
+                        "{{ search_query }}"
+                        <button type="button" onclick="clearSearch()">
+                            <span class="material-symbols-outlined" style="font-size:13px;">close</span>
+                        </button>
+                    </span>
+                    {% endif %}
+                    {% if selected_category %}
+                    <span class="filter-chip">
+                        {% for cat in categories %}{% if cat.id|stringformat:"s" == selected_category %}{{ cat.category_name }}{% endif %}{% endfor %}
+                        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}{% endif %}">
+                            <span class="material-symbols-outlined" style="font-size:13px;">close</span>
+                        </a>
+                    </span>
+                    {% endif %}
+                    {% if min_price or max_price %}
+                    <span class="filter-chip">
+                        ₹{{ min_price|default:"0" }} – ₹{{ max_price|default:"∞" }}
+                        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}{% if selected_category %}category={{ selected_category }}{% endif %}">
+                            <span class="material-symbols-outlined" style="font-size:13px;">close</span>
+                        </a>
+                    </span>
+                    {% endif %}
+                    {% if search_query or selected_category or min_price or max_price %}
+                    <a href="{% url 'product_listing' %}"
+                       class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors ml-1">
+                        Clear all
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-2 ml-auto">
+                    <!-- Sort -->
+                    <select name="sort" onchange="this.form.submit()"
+                            class="sort-select h-10 pl-4 pr-9 rounded-full border-2 border-slate-200 text-[11px] font-black uppercase tracking-wider bg-white focus:outline-none focus:border-black transition-colors cursor-pointer">
+                        <option value="newest" {% if sort_by == 'newest' or not sort_by %}selected{% endif %}>
+                            Newest
+                        </option>
+
+                        <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>
+                            Price: Low to High
+                        </option>
+
+                        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>
+                            Price: High to Low
+                        </option>
+
+                        <option value="stock_desc" {% if sort_by == 'stock_desc' %}selected{% endif %}>
+                            In Stock First
+                        </option>
+                        
+                    </select>
+
+                    <!-- Filter Button -->
+                    <button type="button" onclick="toggleFilterDrawer()"
+                            class="flex items-center gap-2 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider transition-all">
+                        <span class="material-symbols-outlined icon-sm">tune</span>
+                        Filters
+                        {% if selected_category or min_price or max_price %}
+                        <span class="w-2 h-2 rounded-full bg-black flex-shrink-0 -ml-0.5"></span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     PRODUCT GRID
+═══════════════════════════════════════════════ -->
+<section class="px-6 md:px-10 lg:px-16 py-10">
+    <div class="max-w-screen-xl mx-auto">
+
+        {% if variants %}
+
+        <!-- Result count -->
+        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
+            {{ variants.paginator.count }} result{{ variants.paginator.count|pluralize }}
+        </p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {% for variant in variants %}
+            <a href="#" class="product-card group block">
+
+                <!-- Image -->
+                <div class="product-card-img-wrap">
+                    {% with img=variant.images.first %}
+                        {% if img %}
+                            <img src="{{ img.image_url.url }}" alt="{{ variant.product.product_name }}">
+                        {% else %}
+                            <img src="{% static 'images/no_product.png' %}" alt="{{ variant.product.product_name }}">
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Stock Badge -->
+                    {% if variant.stock == 0 %}
+                    <span class="stock-badge absolute top-3 left-3 bg-red-500 text-white">Out of Stock</span>
+                    {% elif variant.stock <= 5 %}
+                    <span class="stock-badge absolute top-3 left-3 bg-amber-400 text-black">Only {{ variant.stock }} left</span>
+                    {% endif %}
+
+                    <!-- Wishlist button -->
+                    <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:scale-110"
+                            onclick="event.preventDefault();">
+                        <span class="material-symbols-outlined icon-sm text-slate-500">favorite</span>
+                    </button>
+                </div>
+
+                <!-- Info -->
+                <div class="p-4">
+                    <p class="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">
+                        {{ variant.product.category.category_name }}
+                    </p>
+                    <h3 class="text-sm font-black uppercase tracking-tight leading-tight mb-1 line-clamp-2">
+                        {{ variant.product.product_name }}
+                    </h3>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
+                        <span>{{ variant.color }}</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span>Size {{ variant.size }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-base font-black">₹{{ variant.price }}</span>
+                        <span class="material-symbols-outlined icon-sm text-slate-300 group-hover:text-black transition-colors">arrow_forward</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- ── Pagination ── -->
+        {% if variants.has_other_pages %}
+        <div class="flex items-center justify-center gap-2 mt-14">
+
+            <!-- Build the base query string (without page) -->
+            {% with q=search_query sort=sort_by cat=selected_category mn=min_price mx=max_price %}
+
+            <!-- Previous -->
+            <a {% if variants.has_previous %}
+                   href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ variants.previous_page_number }}"
+               {% else %}
+                   href="#"
+               {% endif %}
+               class="page-btn {% if not variants.has_previous %}disabled{% endif %}">
+                <span class="material-symbols-outlined icon-sm">chevron_left</span>
+            </a>
+
+            <!-- Page Numbers -->
+            {% for num in variants.paginator.page_range %}
+                {% if variants.number == num %}
+                    <span class="page-btn active">{{ num }}</span>
+                {% elif num >= variants.number|add:"-2" and num <= variants.number|add:"2" %}
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ num }}"
+                       class="page-btn">{{ num }}</a>
+                {% elif num == 1 or num == variants.paginator.num_pages %}
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ num }}"
+                       class="page-btn">{{ num }}</a>
+                {% elif num == variants.number|add:"-3" or num == variants.number|add:"3" %}
+                    <span class="page-btn" style="border:none;cursor:default;">…</span>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next -->
+            <a {% if variants.has_next %}
+                   href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ variants.next_page_number }}"
+               {% else %}
+                   href="#"
+               {% endif %}
+               class="page-btn {% if not variants.has_next %}disabled{% endif %}">
+                <span class="material-symbols-outlined icon-sm">chevron_right</span>
+            </a>
+
+            {% endwith %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- ── Empty State ── -->
+        <div class="flex flex-col items-center justify-center text-center py-24">
+            <div class="empty-state-icon">👟</div>
+            <h2 class="text-2xl font-black uppercase italic tracking-tight mb-2">No Products Found</h2>
+            <p class="text-sm text-slate-500 font-medium max-w-sm mb-8">
+                We couldn't find anything matching your search. Try adjusting your filters or explore all products.
+            </p>
+            <a href="{% url 'product_listing' %}"
+               class="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-black text-white font-black text-[11px] uppercase tracking-widest hover:bg-zinc-800 transition-all">
+                <span class="material-symbols-outlined icon-sm">restart_alt</span>
+                Browse All
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleFilterDrawer() {
+        const drawer  = document.getElementById('filterDrawer');
+        const overlay = document.getElementById('filterOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('active');
+        document.body.style.overflow = drawer.classList.contains('open') ? 'hidden' : '';
+    }
+
+    function clearSearch() {
+        const form = document.getElementById('searchSortForm');
+        const input = form.querySelector('input[name="q"]');
+        if (input) input.value = '';
+        form.submit();
+    }
+</script>
+{% endblock %}

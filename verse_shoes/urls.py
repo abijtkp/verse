@@ -22,10 +22,10 @@ from django.contrib import admin
 urlpatterns = [
     
     path('', include('accounts.urls')),
+    path('', include('products.urls')),
+    
     path('admin/', admin.site.urls), 
-    
     path('social/', include('allauth.urls')),
-    
     path('profile/', include('userprofile.urls')),
     path('adminpanel/', include('adminpanel.urls')),
 ]
