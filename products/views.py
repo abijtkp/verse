@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.core.paginator import Paginator
 from .models import Category, Variant
+from django.shortcuts import get_object_or_404
 
 
 def product_listing_view(request):
@@ -58,7 +59,7 @@ def product_listing_view(request):
         variants = variants.order_by('-product__product_name', 'color', 'size')   
         
     elif sort_by == 'stock_desc':
-        variants = variants.order_by('product__product_name')
+        variants = variants.order_by('-stock')
         
     else:
         variants = variants.order_by('-created_at')
@@ -104,3 +105,67 @@ def product_listing_view(request):
         'selected_sizes': selected_sizes,
         'selected_colors': selected_colors,
     })
+
+
+def product_detail_view(request, variant_id):
+
+    variant = get_object_or_404(
+        Variant.objects.select_related(
+            'product',
+            'product__category'
+        ).prefetch_related(
+            'images'
+        ),
+        id=variant_id,
+        is_active=True,
+        product__is_active=True,
+        product__is_deleted=False,
+        product__category__is_active=True,
+        product__category__is_deleted=False,
+    )
+
+    same_product_variants = Variant.objects.filter(
+        product=variant.product,
+        is_active=True,
+        product__is_active=True,
+        product__is_deleted=False,
+        product__category__is_active=True,
+        product__category__is_deleted=False,
+    ).exclude(
+        id=variant.id
+    ).order_by('color', 'size')
+
+    size_variants = Variant.objects.filter(
+        product=variant.product,
+        color=variant.color,
+        is_active=True,
+        product__is_active=True,
+        product__is_deleted=False,
+        product__category__is_active=True,
+        product__category__is_deleted=False,
+    ).order_by('size')
+
+    related_products = Variant.objects.filter(
+        product__category=variant.product.category,
+        is_active=True,
+        product__is_active=True,
+        product__is_deleted=False,
+        product__category__is_active=True,
+        product__category__is_deleted=False,
+    ).exclude(
+        product=variant.product
+    )[:4]
+
+    context = {
+        'variant': variant,
+        'same_product_variants': same_product_variants,
+        'size_variants': size_variants,
+        'related_products': related_products,
+    }
+
+    return render(
+        request,
+        'products/product_detail.html',
+        context
+    )
+    

@@ -1,0 +1,787 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ variant.product.product_name }} — VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Gallery ── */
+    .thumb-btn {
+        width: 72px;
+        height: 72px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        background: #f1f5f9;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .thumb-btn:hover { border-color: #94a3b8; }
+    .thumb-btn.active { border-color: #000; }
+    .thumb-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .thumb-btn:hover img { transform: scale(1.06); }
+
+    /* FIX 1: overflow removed — lens must not be clipped by the wrapper */
+    .main-img-wrap {
+        position: relative;
+        width: 100%;
+        border-radius: 24px;
+        background: #f8fafc;
+        aspect-ratio: 1 / 1;
+        /* overflow:hidden intentionally omitted */
+    }
+
+    /* Apply border-radius + clip to the image itself, not the wrapper */
+    .main-img-wrap > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 24px;
+        transition: opacity 0.25s ease;
+        display: block;
+        cursor: zoom-in;
+    }
+
+    /* ── Size buttons ── */
+    .size-btn {
+        min-width: 52px;
+        height: 48px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        background: #fff;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .size-btn:hover:not(.disabled-size) { border-color: #000; color: #000; background: #f8fafc; }
+    .size-btn.active-size { background: #000; color: #fff; border-color: #000; }
+    .size-btn.disabled-size {
+        background: #f8fafc;
+        color: #cbd5e1;
+        cursor: not-allowed;
+        position: relative;
+        overflow: hidden;
+    }
+    .size-btn.disabled-size::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 0;
+        width: 100%; height: 1.5px;
+        background: #e2e8f0;
+        transform: rotate(-12deg);
+    }
+
+    /* ── Color swatches ── */
+    .color-swatch {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 0 0 0px #000;
+        position: relative;
+    }
+    .color-swatch.active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000; }
+    .color-swatch:hover:not(.active) { transform: scale(1.1); }
+
+    /* ── CTA buttons ── */
+    .btn-primary {
+        height: 56px;
+        border-radius: 999px;
+        background: #000;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%;
+    }
+    .btn-primary:hover { background: #1a1a1a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+
+    .btn-outline {
+        height: 56px;
+        border-radius: 999px;
+        border: 2px solid #e2e8f0;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-outline:hover { border-color: #000; color: #000; }
+
+    /* ── Highlights card ── */
+    .highlight-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px;
+        background: #f8fafc;
+        border-radius: 18px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+    .highlight-card:hover { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-color: #e2e8f0; }
+
+    /* ── Related product card ── */
+    .related-card {
+        border-radius: 20px;
+        background: #fafafa;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        cursor: pointer;
+    }
+    .related-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.10); background: #fff; }
+    .related-card-img {
+        width: 100%; aspect-ratio: 1/1;
+        object-fit: cover;
+        background: #f1f5f9;
+        transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    }
+    .related-card:hover .related-card-img { transform: scale(1.06); }
+
+    /* ── Accordion ── */
+    .accordion-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .accordion-body.open { max-height: 600px; }
+    .accordion-icon { transition: transform 0.3s ease; }
+    .accordion-icon.rotated { transform: rotate(45deg); }
+
+    /* ── Sticky mobile CTA ── */
+    @media (max-width: 767px) {
+        .sticky-mobile-cta {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 200;
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #f1f5f9;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.08);
+        }
+    }
+
+    /* ── Image fade ── */
+    @keyframes imgFade { from { opacity: 0.5; } to { opacity: 1; } }
+    .img-fade { animation: imgFade 0.25s ease; }
+
+    /* ── Stars ── */
+    .stars { color: #000; letter-spacing: 1px; }
+
+    /* ════════════════════════════════════
+       LENS ZOOM — all fixes consolidated
+    ════════════════════════════════════ */
+
+    /* The square lens that tracks the cursor over the main image */
+    .zoom-lens {
+        position: absolute;          /* anchors to .main-img-wrap */
+        width: 130px;
+        height: 130px;
+        border: 2px solid rgba(0, 0, 0, 0.28);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(0.5px);
+        border-radius: 6px;
+        pointer-events: none;
+        display: none;
+        z-index: 20;                 /* above image, below badges */
+        box-shadow:
+            0 0 0 1px rgba(255,255,255,0.45),
+            inset 0 0 0 1px rgba(255,255,255,0.25);
+    }
+
+    /* FIX 2: position:absolute + correct left/top + all semicolons present */
+    .zoom-preview-box {
+        position: absolute;          /* anchors to .gallery-col (position:relative) */
+        left: calc(100% + 64px);     /* right of the gallery column */
+        top: 25px;
+        width: 350px;
+        height: 350px;
+        border-radius: 20px;
+        overflow: hidden;
+        display: none;
+        z-index: 300;                /* clears the right product-info column */
+        background: #f8fafc;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.07);
+        pointer-events: none;
+        isolation: isolate;
+    }
+
+    /* FIX 3: semicolons on every property, max-width/height:none so image isn't constrained */
+    .zoom-preview-box img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        max-width: none;
+        max-height: none;
+        transform-origin: 0 0;
+        /* width + height set dynamically by JS */
+    }
+
+    /* Hide on touch screens */
+    @media (hover: none) {
+        .zoom-lens,
+        .zoom-preview-box { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════
+     BREADCRUMBS
+══════════════════════════════════════ -->
+<section class="px-6 md:px-10 lg:px-16 pt-6 pb-2">
+    <div class="max-w-screen-xl mx-auto">
+        <nav class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
+            <span class="material-symbols-outlined" style="font-size:12px;">chevron_right</span>
+            <a href="{% url 'product_listing' %}" class="hover:text-black transition-colors">Collections</a>
+            <span class="material-symbols-outlined" style="font-size:12px;">chevron_right</span>
+            <span class="text-black">{{ variant.product.product_name }}</span>
+        </nav>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     MAIN PRODUCT SECTION
+══════════════════════════════════════ -->
+<section class="px-6 md:px-10 lg:px-16 py-8">
+    <div class="max-w-screen-xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16">
+
+            <!-- ── LEFT: GALLERY ──
+                 FIX 4: position:relative here so .zoom-preview-box
+                 (position:absolute; left:100%) anchors correctly to this column,
+                 not to a distant ancestor. sticky still works fine with position:relative.
+            -->
+            <div class="flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24 lg:self-start"
+                 id="galleryCol"
+                 style="position: relative;">
+
+                <!-- Thumbnails -->
+                <div class="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[520px] pb-1 md:pb-0"
+                     id="thumbList">
+                    {% for image in variant.images.all %}
+                    <button class="thumb-btn {% if forloop.first %}active{% endif %}"
+                            onclick="switchImage('{{ image.image_url.url }}', this)"
+                            type="button">
+                        <img src="{{ image.image_url.url }}"
+                             alt="{{ variant.product.product_name }} view {{ forloop.counter }}">
+                    </button>
+                    {% empty %}
+                    <button class="thumb-btn active" type="button">
+                        <img src="{% static 'images/no_product.png' %}" alt="No image">
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <!-- Main image + lens -->
+                <div class="flex-1">
+                    <div class="main-img-wrap" id="mainImgWrapper">
+
+                        <!-- Main product image -->
+                        {% with first=variant.images.first %}
+                        <img id="mainProductImg"
+                             src="{% if first %}{{ first.image_url.url }}{% else %}{% static 'images/no_product.png' %}{% endif %}"
+                             alt="{{ variant.product.product_name }}"
+                             >
+                        {% endwith %}
+
+                        <!-- Lens — position:absolute anchors to .main-img-wrap -->
+                        <div class="zoom-lens" id="zoomLens"></div>
+
+                        <!-- Stock badges sit above lens -->
+                        {% if variant.stock == 0 %}
+                        <span class="absolute top-4 left-4 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full" style="z-index:25;">
+                            Out of Stock
+                        </span>
+                        {% elif variant.stock <= 5 %}
+                        <span class="absolute top-4 left-4 bg-amber-400 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full" style="z-index:25;">
+                            Only {{ variant.stock }} left
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Preview box — sibling of thumb+image row, child of galleryCol.
+                     position:absolute; left:100% pushes it to the right of galleryCol. -->
+                <div class="zoom-preview-box" id="zoomPreviewBox">
+                    <img id="zoomPreviewImg" src="" alt="Zoom preview">
+                </div>
+
+            </div><!-- end galleryCol -->
+
+            <!-- ── RIGHT: PRODUCT INFO ── -->
+            <div class="flex flex-col gap-7 pb-24 md:pb-0">
+
+                <!-- Category tag -->
+                <div>
+                    <span class="inline-block text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 border border-slate-200 rounded-full px-3 py-1">
+                        {{ variant.product.category.category_name }}
+                    </span>
+                </div>
+
+                <!-- Title -->
+                <div>
+                    <h1 class="text-3xl md:text-4xl xl:text-5xl font-[900] uppercase italic tracking-tighter leading-none mb-2">
+                        {{ variant.product.product_name }}
+                    </h1>
+                    {% if variant.product.subtitle %}
+                    <p class="text-sm text-slate-500 font-medium">{{ variant.product.subtitle }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Price -->
+                <div class="flex items-center gap-4">
+                    <span class="text-3xl font-black tracking-tight">₹{{ variant.price }}</span>
+                    {% if variant.original_price and variant.original_price > variant.price %}
+                    <span class="text-lg font-bold text-slate-400 line-through">₹{{ variant.original_price }}</span>
+                    <span class="bg-red-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Sale</span>
+                    {% endif %}
+                </div>
+
+                <!-- Stock indicator -->
+                <div class="flex items-center gap-2">
+                    {% if variant.stock == 0 %}
+                        <span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+                        <span class="text-[11px] font-black uppercase tracking-widest text-red-500">Out of Stock</span>
+                    {% elif variant.stock <= 5 %}
+                        <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                        <span class="text-[11px] font-black uppercase tracking-widest text-amber-600">Only {{ variant.stock }} left</span>
+                    {% else %}
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                        <span class="text-[11px] font-black uppercase tracking-widest text-emerald-600">In Stock</span>
+                    {% endif %}
+                </div>
+
+                <div class="h-px bg-slate-100"></div>
+
+                <!-- Color swatches -->
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+                        Color — <span class="text-black">{{ variant.color }}</span>
+                    </p>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        {% for related in same_product_variants %}
+                        <a href="{% url 'product_detail' related.id %}"
+                           title="{{ related.color }}"
+                           class="color-swatch {% if related.id == variant.id %}active{% endif %}"
+                           style="background-color:
+                            {% if related.color|lower == 'black' %}#000
+                            {% elif related.color|lower == 'white' %}#e2e8f0
+                            {% elif related.color|lower == 'red' %}#ef4444
+                            {% elif related.color|lower == 'blue' %}#3b82f6
+                            {% elif related.color|lower == 'green' %}#22c55e
+                            {% elif related.color|lower == 'yellow' %}#eab308
+                            {% elif related.color|lower == 'grey' or related.color|lower == 'gray' %}#6b7280
+                            {% elif related.color|lower == 'brown' %}#92400e
+                            {% elif related.color|lower == 'orange' %}#f97316
+                            {% elif related.color|lower == 'pink' %}#ec4899
+                            {% elif related.color|lower == 'purple' %}#a855f7
+                            {% elif related.color|lower == 'navy' %}#1e3a5f
+                            {% elif related.color|lower == 'beige' or related.color|lower == 'cream' %}#d6cfc4
+                            {% else %}#d1d5db
+                            {% endif %};">
+                        </a>
+                        {% empty %}
+                        <span class="color-swatch active" style="background-color:#d1d5db;" title="{{ variant.color }}"></span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Size selection -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            Size — <span class="text-black">{{ variant.size }}</span>
+                        </p>
+                        <button type="button"
+                                class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black underline underline-offset-2 transition-colors">
+                            Size Guide
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for sv in size_variants %}
+                        <button type="button"
+                                class="size-btn {% if sv.id == variant.id %}active-size{% elif sv.stock == 0 %}disabled-size{% endif %}"
+                                {% if sv.stock > 0 %}onclick="window.location.href='{% url 'product_detail' sv.id %}'"{% else %}disabled{% endif %}>
+                            {{ sv.size }}
+                        </button>
+                        {% empty %}
+                        <button type="button" class="size-btn active-size">{{ variant.size }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="h-px bg-slate-100"></div>
+
+                <!-- CTA (desktop) -->
+                <div class="hidden md:flex flex-col gap-3">
+                    <form method="POST" action="#" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary"
+                                {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
+                            <span class="material-symbols-outlined" style="font-size:18px;">shopping_bag</span>
+                            {% if variant.stock == 0 %}Unavailable{% else %}Add to Cart{% endif %}
+                        </button>
+                    </form>
+                    <div class="flex gap-3">
+                        <button type="button" class="btn-outline flex-1">
+                            <span class="material-symbols-outlined" style="font-size:18px;">favorite</span>
+                            Wishlist
+                        </button>
+                        <button type="button" class="btn-outline w-14 flex-shrink-0">
+                            <span class="material-symbols-outlined" style="font-size:18px;">share</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trust badges -->
+                <div class="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined" style="font-size:14px;">local_shipping</span>
+                        Free Delivery
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined" style="font-size:14px;">autorenew</span>
+                        Easy Returns
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined" style="font-size:14px;">verified</span>
+                        Authentic
+                    </span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     ACCORDIONS
+══════════════════════════════════════ -->
+<section class="px-6 md:px-10 lg:px-16 py-10 border-t border-slate-100">
+    <div class="max-w-screen-xl mx-auto">
+        <div class="max-w-3xl">
+
+            <div class="border-b border-slate-100 mb-2">
+                <button type="button" onclick="toggleAccordion('desc')"
+                        class="w-full flex items-center justify-between py-5 text-left">
+                    <span class="text-sm font-black uppercase tracking-[0.18em]">Product Description</span>
+                    <span class="accordion-icon material-symbols-outlined" id="icon-desc" style="font-size:20px;">add</span>
+                </button>
+                <div class="accordion-body open" id="body-desc">
+                    <div class="pb-6 text-sm text-slate-600 leading-relaxed font-medium">
+                        {% if variant.product.description %}
+                            {{ variant.product.description }}
+                        {% else %}
+                            The {{ variant.product.product_name }} is engineered for the modern athlete who demands performance without compromise. Built with revolutionary responsive cushioning and premium materials, this silhouette delivers unmatched comfort from morning runs to weekend adventures. Every detail is considered, every stitch deliberate — because greatness lives in the details.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-100 mb-2">
+                <button type="button" onclick="toggleAccordion('highlights')"
+                        class="w-full flex items-center justify-between py-5 text-left">
+                    <span class="text-sm font-black uppercase tracking-[0.18em]">Highlights</span>
+                    <span class="accordion-icon material-symbols-outlined" id="icon-highlights" style="font-size:20px;">add</span>
+                </button>
+                <div class="accordion-body" id="body-highlights">
+                    <div class="pb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">bolt</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Lightweight Build</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Feather-light foam upper keeps fatigue minimal over long wear.</p>
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">spa</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Premium Grip</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Durable high-grip rubber outsole engineered for traction on any surface.</p>
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">air</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Engineered Mesh</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Advanced breathable mesh keeps airflow optimal through every stride.</p>
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">self_improvement</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Responsive Comfort</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Precision-calibrated cushioning adapts to your foot's natural motion.</p>
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">architecture</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Minimalist Design</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Sleek silhouette moves seamlessly from training to street style.</p>
+                            </div>
+                        </div>
+                        <div class="highlight-card">
+                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">verified</span>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Durable Materials</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Engineered to last — premium quality that stands up to every challenge.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-100">
+                <button type="button" onclick="toggleAccordion('shipping')"
+                        class="w-full flex items-center justify-between py-5 text-left">
+                    <span class="text-sm font-black uppercase tracking-[0.18em]">Shipping & Returns</span>
+                    <span class="accordion-icon material-symbols-outlined" id="icon-shipping" style="font-size:20px;">add</span>
+                </button>
+                <div class="accordion-body" id="body-shipping">
+                    <div class="pb-6 space-y-3 text-sm text-slate-600 font-medium leading-relaxed">
+                        <p class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-slate-400" style="font-size:16px;">local_shipping</span>
+                            Free standard delivery on all orders above ₹999.
+                        </p>
+                        <p class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-slate-400" style="font-size:16px;">schedule</span>
+                            Delivered within 3–7 business days across India.
+                        </p>
+                        <p class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-slate-400" style="font-size:16px;">autorenew</span>
+                            Hassle-free returns within 30 days of delivery.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     RELATED PRODUCTS
+══════════════════════════════════════ -->
+{% if related_products %}
+<section class="px-6 md:px-10 lg:px-16 py-12 border-t border-slate-100">
+    <div class="max-w-screen-xl mx-auto">
+
+        <div class="flex items-end justify-between mb-8">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">You Might Also Like</p>
+                <h2 class="text-2xl md:text-3xl font-[900] uppercase italic tracking-tighter">View Similar</h2>
+            </div>
+            <a href="{% url 'product_listing' %}"
+               class="hidden md:flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">
+                All Products
+                <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {% for item in related_products %}
+            <a href="{% url 'product_detail' item.id %}" class="related-card group block">
+                <div class="relative overflow-hidden rounded-t-[20px]">
+                    {% with img=item.images.first %}
+                    <img class="related-card-img"
+                         src="{% if img %}{{ img.image_url.url }}{% else %}{% static 'images/no_product.png' %}{% endif %}"
+                         alt="{{ item.product.product_name }}">
+                    {% endwith %}
+                    <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:scale-110"
+                            onclick="event.preventDefault();">
+                        <span class="material-symbols-outlined text-slate-500" style="font-size:16px;">favorite</span>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <p class="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">
+                        {{ item.product.category.category_name }}
+                    </p>
+                    <h3 class="text-sm font-black uppercase tracking-tight leading-tight mb-1 line-clamp-2">
+                        {{ item.product.product_name }}
+                    </h3>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
+                        <span>{{ item.color }}</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span>Size {{ item.size }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-base font-black">₹{{ item.price }}</span>
+                        <span class="material-symbols-outlined text-slate-300 group-hover:text-black transition-colors" style="font-size:16px;">arrow_forward</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+{% endif %}
+
+<!-- ══════════════════════════════════════
+     STICKY MOBILE CTA
+══════════════════════════════════════ -->
+<div class="sticky-mobile-cta md:hidden">
+    <div class="flex gap-3">
+        <form method="POST" action="#" class="flex-1">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary"
+                    {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
+                <span class="material-symbols-outlined" style="font-size:18px;">shopping_bag</span>
+                {% if variant.stock == 0 %}Unavailable{% else %}Add to Cart{% endif %}
+            </button>
+        </form>
+        <button type="button" class="btn-outline w-14 flex-shrink-0">
+            <span class="material-symbols-outlined" style="font-size:18px;">favorite</span>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FULLSCREEN ZOOM MODAL (click)
+══════════════════════════════════════ -->
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ── Image switcher ───────────────────────────────────────
+    function switchImage(src, thumbEl) {
+        const main = document.getElementById('mainProductImg');
+        main.classList.remove('img-fade');
+        void main.offsetWidth;
+        main.classList.add('img-fade');
+        main.src = src;
+        document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+        thumbEl.classList.add('active');
+    }
+
+    // ── Accordion ────────────────────────────────────────────
+    function toggleAccordion(id) {
+        const body = document.getElementById('body-' + id);
+        const icon = document.getElementById('icon-' + id);
+        const isOpen = body.classList.contains('open');
+        body.classList.toggle('open', !isOpen);
+        icon.classList.toggle('rotated', !isOpen);
+    }
+
+    // ── Fullscreen zoom modal ────────────────────────────────
+    
+
+    // ── Nike-style Lens Zoom ─────────────────────────────────
+    (function () {
+        const LENS_W    = 130;   // lens square width  (px)
+        const LENS_H    = 130;   // lens square height (px)
+        const PREVIEW_W = 350;   // preview box width  (px)
+        const PREVIEW_H = 350;   // preview box height (px)
+
+        // Magnification = preview / lens
+        const ratioX = PREVIEW_W / LENS_W;   // ≈ 2.92×
+        const ratioY = PREVIEW_H / LENS_H;
+
+        const wrapper    = document.getElementById('mainImgWrapper');
+        const mainImg    = document.getElementById('mainProductImg');
+        const lens       = document.getElementById('zoomLens');
+        const previewBox = document.getElementById('zoomPreviewBox');
+        const previewImg = document.getElementById('zoomPreviewImg');
+
+        // Abort if any element is missing
+        if (!wrapper || !mainImg || !lens || !previewBox || !previewImg) return;
+
+        // Disable on touch-only devices
+        if (!window.matchMedia('(hover: hover)').matches) return;
+
+        function syncSrc() {
+            if (previewImg.src !== mainImg.src) previewImg.src = mainImg.src;
+        }
+
+        function setupPreview() {
+            syncSrc();
+            const imgW = mainImg.offsetWidth;
+            const imgH = mainImg.offsetHeight;
+            if (!imgW || !imgH) return;   // image not laid out yet — skip
+
+            // Scale the preview image so one lens-sized region fills the entire preview box.
+            // Formula: previewImg.size = renderedImg.size × magnification
+            previewImg.style.width  = (imgW * ratioX) + 'px';
+            previewImg.style.height = (imgH * ratioY) + 'px';
+
+            previewBox.style.width  = PREVIEW_W + 'px';
+            previewBox.style.height = PREVIEW_H + 'px';
+        }
+
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(v, hi)); }
+
+        function onMouseMove(e) {
+            const rect = mainImg.getBoundingClientRect();
+            const imgW = rect.width;
+            const imgH = rect.height;
+
+            // Cursor position relative to the rendered image element
+            const cursorX = e.clientX - rect.left;
+            const cursorY = e.clientY - rect.top;
+
+            // Lens top-left corner — clamped so lens never leaves the image
+            const lensX = clamp(cursorX - LENS_W / 2, 0, imgW - LENS_W);
+            const lensY = clamp(cursorY - LENS_H / 2, 0, imgH - LENS_H);
+
+            // Move the lens square to follow cursor
+            lens.style.left = lensX + 'px';
+            lens.style.top  = lensY + 'px';
+
+            // Shift the oversized preview image so the area under the lens
+            // is exactly what fills the preview box.
+            // previewImg offset = lensTopLeft × magnification (negative because we translate left/up)
+            previewImg.style.left = (-lensX * ratioX) + 'px';
+            previewImg.style.top  = (-lensY * ratioY) + 'px';
+        }
+
+        wrapper.addEventListener('mouseenter', function () {
+            setupPreview();
+            lens.style.display       = 'block';
+            previewBox.style.display = 'block';
+        });
+
+        wrapper.addEventListener('mousemove', onMouseMove);
+
+        wrapper.addEventListener('mouseleave', function () {
+            lens.style.display       = 'none';
+            previewBox.style.display = 'none';
+        });
+
+        // Re-sync when thumbnail click changes mainImg.src
+        new MutationObserver(function () {
+            syncSrc();
+            if (previewBox.style.display !== 'none') setupPreview();
+        }).observe(mainImg, { attributes: true, attributeFilter: ['src'] });
+
+    }());
+    // ── End Lens Zoom ────────────────────────────────────────
+</script>
+{% endblock %}

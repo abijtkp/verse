@@ -712,7 +712,7 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {% for variant in variants %}
-            <a href="#" class="product-card group block">
+            <a href="{% url 'product_detail' variant.id %}" class="product-card group block">
 
                 <!-- Image -->
                 <div class="product-card-img-wrap">
@@ -824,6 +824,8 @@
 
     </div>
 </section>
+
+
 
 {% endblock %}
 
