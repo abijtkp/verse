@@ -1,10 +1,15 @@
 {% extends 'adminpanel/admin_base.html' %}
 {% load static %}
 
+
 {% block title %}VERSE | Variant Management{% endblock %}
 {% block page_title %}Variant Management{% endblock %}
 
 {% block content %}
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+
 <div class="flex flex-col gap-8">
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -17,24 +22,26 @@
         </nav>
 
         <a href="{% url 'product_list' %}"
-           class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+           class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
             <span class="material-symbols-outlined text-sm">arrow_back</span>
             Back to Products
         </a>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-8">
-        <div class="w-48 h-48 rounded-3xl bg-slate-50 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
+    <div class="bg-white p-5 sm:p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6 md:gap-8">
+        <div class="w-40 h-40 sm:w-48 sm:h-48 rounded-3xl bg-slate-50 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
             {% with first_variant=variants|first %}
                 {% if first_variant %}
-                    {% with first_image=first_variant.images.all|first %}
-                        {% if first_image %}
-                            <img src="{{ first_image.image_url.url }}"
-                                 alt="{{ product.product_name }}"
-                                 class="w-full h-full object-cover">
-                        {% else %}
+                    {% with all_images=first_variant.images.all %}
+                        {% for image in all_images %}
+                            {% if image.is_primary %}
+                                <img src="{{ image.image_url.url }}"
+                                     alt="{{ product.product_name }}"
+                                     class="w-full h-full object-cover">
+                            {% endif %}
+                        {% empty %}
                             <span class="material-symbols-outlined text-slate-200 text-6xl">image</span>
-                        {% endif %}
+                        {% endfor %}
                     {% endwith %}
                 {% else %}
                     <span class="material-symbols-outlined text-slate-200 text-6xl">image</span>
@@ -42,7 +49,7 @@
             {% endwith %}
         </div>
 
-        <div class="flex-1 text-center md:text-left">
+        <div class="flex-1 text-center md:text-left w-full">
             <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-2">
                 <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                     Featured Product
@@ -59,11 +66,11 @@
                 {% endif %}
             </div>
 
-            <h1 class="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-4">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-4 break-words">
                 {{ product.product_name }}
             </h1>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-50">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-6 border-t border-slate-50">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Category</p>
                     <p class="text-sm font-black text-slate-900">
@@ -85,7 +92,7 @@
     </div>
 
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div class="relative flex-1 max-w-md">
+        <div class="relative flex-1 max-w-full lg:max-w-md">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">
                 search
             </span>
@@ -94,14 +101,15 @@
                    class="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-12 pr-6 text-sm focus:ring-1 focus:ring-black outline-none shadow-sm transition-all">
         </div>
 
-        <button onclick="toggleAddModal(true)"
+        <button type="button"
+                onclick="toggleAddModal(true)"
                 class="flex items-center justify-center gap-2 bg-black text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-black/10 transition-all">
             <span class="material-symbols-outlined text-sm">add</span>
             Add Variant
         </button>
     </div>
 
-    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
@@ -120,9 +128,7 @@
                     {% for variant in variants %}
                         <tr class="group hover:bg-slate-50/50 transition-colors">
                             <td class="px-8 py-5">
-                                <span class="text-sm font-black text-slate-900">
-                                    {{ variant.size }}
-                                </span>
+                                <span class="text-sm font-black text-slate-900">{{ variant.size }}</span>
                             </td>
 
                             <td class="px-6 py-5">
@@ -142,10 +148,20 @@
                                             {% for image in variant.images.all|slice:":3" %}
                                                 <img src="{{ image.image_url.url }}"
                                                      alt="{{ variant.color }}"
-                                                     class="w-7 h-7 rounded-md object-cover border border-slate-100">
+                                                     class="w-7 h-7 rounded-md object-cover border {% if image.is_primary %}border-black{% else %}border-slate-100{% endif %}">
                                             {% empty %}
                                                 <span class="text-[9px] font-bold text-slate-300 uppercase">
                                                     No images
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+
+                                        <div class="hidden">
+                                            {% for image in variant.images.all %}
+                                                <span data-variant-image="{{ variant.id }}"
+                                                      data-image-id="{{ image.id }}"
+                                                      data-image-url="{{ image.image_url.url }}"
+                                                      data-is-primary="{% if image.is_primary %}true{% else %}false{% endif %}">
                                                 </span>
                                             {% endfor %}
                                         </div>
@@ -166,9 +182,7 @@
                             </td>
 
                             <td class="px-6 py-5">
-                                <span class="text-sm font-black text-slate-900">
-                                    ₹{{ variant.price }}
-                                </span>
+                                <span class="text-sm font-black text-slate-900">₹{{ variant.price }}</span>
                             </td>
 
                             <td class="px-6 py-5">
@@ -185,7 +199,15 @@
 
                             <td class="px-8 py-5 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button onclick="toggleEditModal(true)"
+                                    <button type="button"
+                                            onclick="openEditVariantModal(
+                                                '{{ variant.id }}',
+                                                '{{ variant.color|escapejs }}',
+                                                '{{ variant.size|escapejs }}',
+                                                '{{ variant.stock }}',
+                                                '{{ variant.price }}',
+                                                '{% if variant.is_active %}active{% else %}inactive{% endif %}'
+                                            )"
                                             class="p-2 text-slate-300 hover:text-black transition-colors">
                                         <span class="material-symbols-outlined text-lg">edit</span>
                                     </button>
@@ -228,15 +250,15 @@
 </div>
 
 <div id="add-variant-modal"
-     class="fixed inset-0 z-[100] {% if errors %}flex{% else %}hidden{% endif %} items-center justify-center p-4">
+     class="fixed inset-0 z-[100] {% if errors %}flex{% else %}hidden{% endif %} items-center justify-center p-3 sm:p-4">
 
     <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleAddModal(false)"></div>
 
-    <div class="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+    <div class="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
 
-        <div class="p-8 border-b border-slate-50 flex items-center justify-between shrink-0">
+        <div class="p-5 sm:p-6 md:p-8 border-b border-slate-50 flex items-center justify-between shrink-0">
             <div>
-                <h3 class="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                <h3 class="text-lg sm:text-xl font-black uppercase italic tracking-tighter text-slate-900">
                     Add New Variant
                 </h3>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
@@ -244,7 +266,8 @@
                 </p>
             </div>
 
-            <button onclick="toggleAddModal(false)"
+            <button type="button"
+                    onclick="toggleAddModal(false)"
                     class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-black transition-all">
                 <span class="material-symbols-outlined">close</span>
             </button>
@@ -253,14 +276,12 @@
         <form method="POST"
               action="{% url 'variant_management' product.id %}"
               enctype="multipart/form-data"
-              class="flex-1 overflow-y-auto p-8 no-scrollbar">
+              class="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 no-scrollbar">
 
             {% csrf_token %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <div class="space-y-6">
-
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                             Color Name
@@ -278,7 +299,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                                 Size
@@ -288,12 +309,6 @@
                                    value="{{ form_data.size|default:'' }}"
                                    placeholder="e.g. 8"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.size %}border-red-500{% endif %}">
-
-                            {% if errors.size %}
-                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
-                                    {{ errors.size }}
-                                </p>
-                            {% endif %}
                         </div>
 
                         <div class="space-y-2">
@@ -305,16 +320,10 @@
                                    value="{{ form_data.sku_suffix|default:'' }}"
                                    placeholder="e.g. BLK8"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.sku_suffix %}border-red-500{% endif %}">
-
-                            {% if errors.sku_suffix %}
-                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
-                                    {{ errors.sku_suffix }}
-                                </p>
-                            {% endif %}
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                                 Price ₹
@@ -325,12 +334,6 @@
                                    value="{{ form_data.price|default:'' }}"
                                    placeholder="0.00"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.price %}border-red-500{% endif %}">
-
-                            {% if errors.price %}
-                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
-                                    {{ errors.price }}
-                                </p>
-                            {% endif %}
                         </div>
 
                         <div class="space-y-2">
@@ -342,12 +345,6 @@
                                    value="{{ form_data.stock|default:'' }}"
                                    placeholder="0"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.stock %}border-red-500{% endif %}">
-
-                            {% if errors.stock %}
-                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
-                                    {{ errors.stock }}
-                                </p>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -358,24 +355,20 @@
 
                         <select name="stock_status"
                                 class="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer">
-                            <option value="active" {% if form_data.stock_status == 'active' %}selected{% endif %}>
-                                Active
-                            </option>
-                            <option value="inactive" {% if form_data.stock_status == 'inactive' %}selected{% endif %}>
-                                Draft
-                            </option>
+                            <option value="active" {% if form_data.stock_status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if form_data.stock_status == 'inactive' %}selected{% endif %}>Draft</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="space-y-6">
                     <div class="space-y-2">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-3">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                                 Variant Images
                             </label>
                             <span id="image-count-badge"
-                                  class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
+                                  class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 whitespace-nowrap">
                                 0 SELECTED
                             </span>
                         </div>
@@ -388,10 +381,8 @@
                                    accept="image/*"
                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
 
-                            <div class="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center gap-3 group-hover:bg-slate-50 transition-all {% if errors.variant_images %}border-red-200 bg-red-50/50{% endif %}">
-                                <span class="material-symbols-outlined text-3xl text-slate-300">
-                                    cloud_upload
-                                </span>
+                            <div class="border-2 border-dashed border-slate-100 rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center gap-3 group-hover:bg-slate-50 transition-all {% if errors.variant_images %}border-red-200 bg-red-50/50{% endif %}">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">cloud_upload</span>
 
                                 <div class="text-center">
                                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-900">
@@ -403,15 +394,9 @@
                                 </div>
                             </div>
                         </div>
-
-                        {% if errors.variant_images %}
-                            <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
-                                {{ errors.variant_images }}
-                            </p>
-                        {% endif %}
                     </div>
 
-                    <div id="image-preview-grid" class="grid grid-cols-3 gap-3"></div>
+                    <div id="image-preview-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
 
                     <div id="image-warning" class="hidden p-4 bg-orange-50 rounded-2xl border border-orange-100">
                         <div class="flex gap-3">
@@ -424,7 +409,7 @@
                 </div>
             </div>
 
-            <div class="mt-12 flex gap-4 shrink-0">
+            <div class="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-4 shrink-0">
                 <button type="button"
                         onclick="toggleAddModal(false)"
                         class="flex-1 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
@@ -440,43 +425,307 @@
     </div>
 </div>
 
-<div id="edit-variant-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleEditModal(false)"></div>
+<div id="edit-variant-modal"
+     class="fixed inset-0 z-[100] hidden items-center justify-center p-3 sm:p-4">
 
-    <div class="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-black uppercase italic tracking-tighter text-slate-900">
-                Update Variant
-            </h3>
-            <span class="px-3 py-1 bg-orange-50 text-orange-500 text-[8px] font-black uppercase rounded-full">
-                UI Ready
-            </span>
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md"
+         onclick="toggleEditModal(false)"></div>
+
+    <div class="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+
+        <div class="p-5 sm:p-6 md:p-8 border-b border-slate-50 flex items-center justify-between shrink-0">
+            <div>
+                <h3 class="text-lg sm:text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                    Edit Variant
+                </h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Update variant details and manage images
+                </p>
+            </div>
+
+            <button type="button"
+                    onclick="toggleEditModal(false)"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-black transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
 
-        <div class="space-y-6">
-            <p class="text-xs font-bold text-slate-400 uppercase">
-                Backend integration for variant update is pending.
-            </p>
+        <form id="edit-variant-form" method="POST" class="hidden">
+            {% csrf_token %}
+        </form>
 
-            <div class="pt-6 flex gap-3">
-                <button onclick="toggleEditModal(false)"
-                        class="flex-1 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest">
-                    Cancel
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 no-scrollbar">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                            Color Name
+                        </label>
+                        <input type="text"
+                               id="edit-variant-name"
+                               name="variant_name"
+                               form="edit-variant-form"
+                               placeholder="e.g. Black"
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Size
+                            </label>
+                            <input type="text"
+                                   id="edit-size"
+                                   name="size"
+                                   form="edit-variant-form"
+                                   placeholder="e.g. 8"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Stock
+                            </label>
+                            <input type="number"
+                                   id="edit-stock"
+                                   name="stock"
+                                   form="edit-variant-form"
+                                   min="0"
+                                   placeholder="0"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                            Price ₹
+                        </label>
+                        <input type="number"
+                               id="edit-price"
+                               name="price"
+                               form="edit-variant-form"
+                               step="0.01"
+                               min="0"
+                               placeholder="0.00"
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all">
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Inventory Status
+                        </span>
+
+                        <select id="edit-stock-status"
+                                name="stock_status"
+                                form="edit-variant-form"
+                                class="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer">
+                            <option value="active">Active</option>
+                            <option value="inactive">Draft</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Current Images
+                            </label>
+                            <span id="edit-image-count-badge"
+                                  class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 whitespace-nowrap">
+                                0 IMAGES
+                            </span>
+                        </div>
+
+                        <div id="edit-current-images"
+                             class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        </div>
+                    </div>
+
+                    <form id="add-images-form"
+                          method="POST"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <input type="file"
+                               id="edit-add-images-input"
+                               name="variant_images"
+                               multiple
+                               accept="image/*"
+                               class="hidden">
+
+                        <button type="button"
+                                onclick="document.getElementById('edit-add-images-input').click()"
+                                class="w-full py-4 border border-dashed border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                            + Add More Images
+                        </button>
+                    </form>
+
+                    <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-orange-500 text-sm">info</span>
+                            <p class="text-[9px] font-bold text-orange-600 leading-normal uppercase">
+                                Minimum 3 images must remain. Upload another image before deleting if only 3 exist.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col sm:flex-row gap-4">
+                <button type="button"
+                        onclick="toggleEditModal(false)"
+                        class="flex-1 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                    Close
                 </button>
 
-                <button disabled
-                        class="flex-1 py-4 bg-slate-200 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
-                    Update
+                <button type="submit"
+                        form="edit-variant-form"
+                        class="flex-1 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-black/20 transition-all">
+                    Update Variant Details
                 </button>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+
+
+<div id="cropper-modal"
+     class="fixed inset-0 z-[200] hidden items-center justify-center p-3 sm:p-4">
+
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+
+    <div class="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-black uppercase italic tracking-tighter text-slate-900">
+                    Crop Image
+                </h3>
+
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Adjust image before upload
+                </p>
+            </div>
+
+            <button type="button"
+                    onclick="closeCropperModal()"
+                    class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-all">
+
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-5">
+
+            <div class="bg-black rounded-3xl h-[520px] flex items-center justify-center overflow-hidden">
+
+                <img id="cropper-image"
+                    src=""
+                    class="block max-w-full max-h-full">
+            </div>
+
+            <div class="space-y-5">
+
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Aspect Ratio
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-2">
+
+                        <button type="button"
+                                onclick="setCropAspect(1)"
+                                class="crop-ratio-btn px-3 py-3 rounded-xl bg-black text-white text-[10px] font-black">
+                            1:1
+                        </button>
+
+                        <button type="button"
+                                onclick="setCropAspect(4/5)"
+                                class="crop-ratio-btn px-3 py-3 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-black">
+                            4:5
+                        </button>
+
+                        <button type="button"
+                                onclick="setCropAspect(16/9)"
+                                class="crop-ratio-btn px-3 py-3 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-black">
+                            16:9
+                        </button>
+
+                        <button type="button"
+                                onclick="setCropAspect(NaN)"
+                                class="crop-ratio-btn px-3 py-3 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-black">
+                            Free
+                        </button>
+
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Controls
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-2">
+
+                        <button type="button"
+                                onclick="cropperZoom(0.1)"
+                                class="px-3 py-3 rounded-xl bg-slate-100 text-[10px] font-black hover:bg-slate-200 transition-all">
+                            Zoom +
+                        </button>
+
+                        <button type="button"
+                                onclick="cropperZoom(-0.1)"
+                                class="px-3 py-3 rounded-xl bg-slate-100 text-[10px] font-black hover:bg-slate-200 transition-all">
+                            Zoom -
+                        </button>
+
+                        <button type="button"
+                                onclick="resetCropper()"
+                                class="col-span-2 px-3 py-3 rounded-xl bg-slate-100 text-[10px] font-black hover:bg-slate-200 transition-all">
+                            Reset
+                        </button>
+
+                    </div>
+                </div>
+
+                <div class="pt-4 flex flex-col gap-3">
+
+                    <button type="button"
+                            onclick="saveCroppedImage()"
+                            class="w-full py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all">
+                        Save Crop
+                    </button>
+
+                    <button type="button"
+                            onclick="closeCropperModal()"
+                            class="w-full py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 <script>
+    function getCsrfToken() {
+        const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        return tokenInput ? tokenInput.value : '';
+    }
+
     function toggleAddModal(show) {
         const modal = document.getElementById('add-variant-modal');
-
         modal.classList.toggle('hidden', !show);
         modal.classList.toggle('flex', show);
 
@@ -487,17 +736,115 @@
 
     function toggleEditModal(show) {
         const modal = document.getElementById('edit-variant-modal');
-
         modal.classList.toggle('hidden', !show);
         modal.classList.toggle('flex', show);
     }
+
+    function openEditVariantModal(variantId, color, size, stock, price, status) {
+        const form = document.getElementById('edit-variant-form');
+        const addImagesForm = document.getElementById('add-images-form');
+        const imageGrid = document.getElementById('edit-current-images');
+        const imageBadge = document.getElementById('edit-image-count-badge');
+
+        form.action = `/adminpanel/products/{{ product.id }}/variants/${variantId}/edit/`;
+        addImagesForm.action = `/adminpanel/variants/${variantId}/images/add/`;
+
+        document.getElementById('edit-variant-name').value = color;
+        document.getElementById('edit-size').value = size;
+        document.getElementById('edit-stock').value = stock;
+        document.getElementById('edit-price').value = price;
+        document.getElementById('edit-stock-status').value = status;
+
+        imageGrid.innerHTML = '';
+
+        const images = document.querySelectorAll(`[data-variant-image="${variantId}"]`);
+        imageBadge.textContent = `${images.length} IMAGES`;
+
+        if (images.length === 0) {
+            imageGrid.innerHTML = `
+                <div class="col-span-2 sm:col-span-3 p-8 rounded-[2rem] bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-4xl text-slate-200">image</span>
+                    <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest">No images found</p>
+                </div>
+            `;
+        }
+
+        images.forEach((image) => {
+            const wrapper = document.createElement('div');
+            const isPrimary = image.dataset.isPrimary === 'true';
+
+            wrapper.className = 'relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50 group/image';
+
+            wrapper.innerHTML = `
+                <img src="${image.dataset.imageUrl}" class="w-full h-full object-cover">
+
+                <div class="absolute inset-x-0 top-0 p-2 flex items-start justify-between gap-2">
+                    ${isPrimary ? `
+                        <span class="px-2 py-1 rounded-full bg-black text-white text-[7px] font-black uppercase tracking-widest shadow-sm">
+                            Primary
+                        </span>
+                    ` : `
+                        <form method="POST" action="/adminpanel/variant-images/${image.dataset.imageId}/set-primary/">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrfToken()}">
+                            <button type="submit" class="px-2 py-1 rounded-full bg-white/90 text-black border border-slate-200 text-[7px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm">
+                                Set Primary
+                            </button>
+                        </form>
+                    `}
+
+                    <form method="POST" action="/adminpanel/variant-images/${image.dataset.imageId}/delete/">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrfToken()}">
+                        <button type="submit" class="w-6 h-6 flex items-center justify-center text-black text-lg font-black hover:scale-110 transition-all" title="Delete image">
+                            ×
+                        </button>
+                    </form>
+                </div>
+            `;
+
+            imageGrid.appendChild(wrapper);
+        });
+
+        toggleEditModal(true);
+    }
+
+
+
+
+
+
+    const editAddImagesInput = document.getElementById('edit-add-images-input');
+
+    let cropMode = 'add';
+
+    if (editAddImagesInput) {
+        editAddImagesInput.addEventListener('change', function() {
+            const newFiles = Array.from(editAddImagesInput.files).filter(file => file.type.startsWith('image/'));
+
+            if (newFiles.length === 0) return;
+
+            cropMode = 'edit';
+            pendingCropFiles = newFiles;
+            openNextCropFile();
+        });
+    }
+
+
+
+
+
 
     const imageInput = document.getElementById('variant-images-input');
     const previewGrid = document.getElementById('image-preview-grid');
     const badge = document.getElementById('image-count-badge');
     const warning = document.getElementById('image-warning');
 
+    const cropperModal = document.getElementById('cropper-modal');
+    const cropperImage = document.getElementById('cropper-image');
+
     let selectedFiles = [];
+    let pendingCropFiles = [];
+    let currentCropFile = null;
+    let cropper = null;
 
     function refreshImageInput() {
         const dataTransfer = new DataTransfer();
@@ -511,7 +858,6 @@
 
     function renderPreviews() {
         previewGrid.innerHTML = '';
-
         badge.textContent = `${selectedFiles.length} SELECTED`;
 
         if (selectedFiles.length > 0 && selectedFiles.length < 3) {
@@ -526,8 +872,7 @@
             reader.onload = function(e) {
                 const wrapper = document.createElement('div');
 
-                wrapper.className =
-                    'relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50';
+                wrapper.className = 'relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50';
 
                 wrapper.innerHTML = `
                     <img src="${e.target.result}" class="w-full h-full object-cover">
@@ -546,24 +891,142 @@
         });
     }
 
-    if (imageInput) {
-        imageInput.addEventListener('change', function() {
-            const newFiles = Array.from(imageInput.files);
+    function openNextCropFile() {
+        if (pendingCropFiles.length === 0) {
+            refreshImageInput();
+            return;
+        }
 
-            newFiles.forEach(file => {
-                const alreadyExists = selectedFiles.some(existingFile =>
-                    existingFile.name === file.name &&
-                    existingFile.size === file.size &&
-                    existingFile.lastModified === file.lastModified
-                );
+        currentCropFile = pendingCropFiles.shift();
 
-                if (!alreadyExists && file.type.startsWith('image/')) {
-                    selectedFiles.push(file);
-                }
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            cropperImage.src = e.target.result;
+
+            cropperModal.classList.remove('hidden');
+            cropperModal.classList.add('flex');
+
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.75,
+                responsive: true,
+                background: false,
+                guides: true,
+                center: true,
+                highlight: true,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
             });
+        };
+
+        reader.readAsDataURL(currentCropFile);
+    }
+
+    function closeCropperModal() {
+        cropperModal.classList.add('hidden');
+        cropperModal.classList.remove('flex');
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+
+        cropperImage.src = '';
+        currentCropFile = null;
+        pendingCropFiles = [];
+        imageInput.value = '';
+    }
+
+    function setCropAspect(ratio) {
+        if (!cropper) return;
+        cropper.setAspectRatio(ratio);
+
+        document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
+            btn.classList.remove('bg-black', 'text-white');
+            btn.classList.add('bg-slate-100', 'text-slate-600');
+        });
+
+        event.target.classList.remove('bg-slate-100', 'text-slate-600');
+        event.target.classList.add('bg-black', 'text-white');
+    }
+
+    function cropperZoom(value) {
+        if (cropper) {
+            cropper.zoom(value);
+        }
+    }
+
+    function resetCropper() {
+        if (cropper) {
+            cropper.reset();
+        }
+    }
+
+    function saveCroppedImage() {
+        if (!cropper || !currentCropFile) return;
+
+        cropper.getCroppedCanvas({
+            width: 860,
+            height: 860,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob(function(blob) {
+            const croppedFile = new File(
+                [blob],
+                `cropped-${Date.now()}-${currentCropFile.name}`,
+                { type: currentCropFile.type || 'image/jpeg' }
+            );
+
+            selectedFiles.push(croppedFile);
+
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+
+            cropperModal.classList.add('hidden');
+            cropperModal.classList.remove('flex');
+            cropperImage.src = '';
+            currentCropFile = null;
+
+            if (pendingCropFiles.length > 0) {
+                openNextCropFile();
+                return;
+            }
+
+            if (cropMode === 'edit') {
+                const dataTransfer = new DataTransfer();
+
+                selectedFiles.forEach(file => {
+                    dataTransfer.items.add(file);
+                });
+
+                editAddImagesInput.files = dataTransfer.files;
+                selectedFiles = [];
+
+                document.getElementById('add-images-form').submit();
+                return;
+            }
 
             refreshImageInput();
             renderPreviews();
+        }, currentCropFile.type || 'image/jpeg', 0.92);
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            const newFiles = Array.from(imageInput.files).filter(file => file.type.startsWith('image/'));
+
+            pendingCropFiles = newFiles;
+            openNextCropFile();
         });
     }
 
@@ -574,7 +1037,6 @@
             if (!button) return;
 
             const index = Number(button.dataset.index);
-
             selectedFiles.splice(index, 1);
 
             refreshImageInput();
@@ -582,5 +1044,16 @@
         });
     }
 </script>
+
+<style>
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
 
 {% endblock %}

@@ -21,5 +21,11 @@ urlpatterns = [
     path('products/delete/<int:product_id>/', views.delete_product_view, name='delete_product'),
     
     path('products/<int:product_id>/variants/', views.variant_management_view, name='variant_management'),
+    path('products/<int:product_id>/variants/<int:variant_id>/edit/', views.edit_variant_view, name='edit_variant'),
+
+    path('variants/<int:variant_id>/images/add/', views.add_variant_image_view, name='add_variant_image'),
+    path('variant-images/<int:image_id>/delete/', views.delete_variant_image_view, name='delete_variant_image'),
+    path('variant-images/<int:image_id>/set-primary/', views.set_primary_variant_image_view, name='set_primary_variant_image'),
+
     path('variants/delete/<int:variant_id>/', views.delete_variant_view, name='delete_variant'),
 ]

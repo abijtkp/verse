@@ -24,6 +24,9 @@ def product_list_view(request):
             Q(category__category_name__icontains=search_query) 
         )
     
+    if selected_category:
+        products = products.filter(category_id=selected_category)    
+    
     if sort_by == 'oldest':
         products = products.order_by('created_at')
         
@@ -172,15 +175,15 @@ def delete_product_view(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_deleted=False)
 
     if request.method == 'POST':
-        product.is_deleted = not product.is_active
+        product.is_active = not product.is_active
         product.save(update_fields=['is_active', 'updated_at'])
         
         if product.is_active:
             messages.success(request, "Product activated successfully.")
         else:
-            messages.success(request, "Product deactivated succesfully.")
+            messages.success(request, "Product deactivated successfully.")
             
-            return redirect('product_list')
+        return redirect('product_list')
 
     messages.error(request, 'Invalid request.')
     return redirect('product_list')
