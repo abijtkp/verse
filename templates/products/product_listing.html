@@ -230,6 +230,117 @@
         width: 100%; font-size: 13px; font-weight: 500;
         font-family: 'Manrope', sans-serif;
     }
+
+
+/* Nike-style sort menu */
+.sort-wrapper {
+    position: relative;
+}
+
+.sort-menu {
+    position: absolute;
+    right: 0;
+    top: 48px;
+    width: 210px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.12);
+    padding: 14px 0;
+    z-index: 80;
+    display: none;
+}
+
+.sort-menu.open {
+    display: block;
+}
+
+.sort-menu button {
+    width: 100%;
+    text-align: right;
+    padding: 9px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+}
+
+.sort-menu button:hover {
+    background: #f8fafc;
+}
+
+/* Color filter grid */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 10px;
+}
+
+.color-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    color: #111;
+}
+
+.color-option input {
+    display: none;
+}
+
+.color-dot-large {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.color-option input:checked + .color-dot-large {
+    outline: 2px solid #000;
+    outline-offset: 3px;
+}
+
+/* Responsive controls fix */
+@media (max-width: 640px) {
+    .listing-search {
+        max-width: none !important;
+        width: 100%;
+    }
+
+    .listing-controls-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .listing-actions {
+        margin-left: 0 !important;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .sort-wrapper,
+    .filter-mobile-btn {
+        flex: 1;
+    }
+
+    .sort-trigger,
+    .filter-mobile-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sort-menu {
+        left: 0;
+        right: auto;
+        width: 100%;
+    }
+}
+
+
+
 </style>
 {% endblock %}
 
@@ -269,45 +380,147 @@
         <div class="px-7 py-6 space-y-7 flex-1">
 
             <!-- Category -->
+
+
+
+
+
+
+
+            <!-- Category -->
             <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Category</p>
-                <div class="space-y-1">
+                <button type="button"
+                        onclick="toggleFilterSection('categoryFilterBody', 'categoryFilterIcon')"
+                        class="w-full flex items-center justify-between mb-4">
+                    <span class="text-base font-bold text-black">Category</span>
+                    <span id="categoryFilterIcon" class="material-symbols-outlined text-lg">expand_more</span>
+                </button>
+
+                <div id="categoryFilterBody" class="hidden space-y-1">
                     <label class="cat-label">
                         <input type="radio" name="category" value=""
                             {% if not selected_category %}checked{% endif %}>
                         <span class="cat-dot"></span>
                         All Categories
                     </label>
+
                     {% for cat in categories %}
-                    <label class="cat-label">
-                        <input type="radio" name="category" value="{{ cat.id }}"
-                            {% if selected_category == cat.id|stringformat:"s" %}checked{% endif %}>
-                        <span class="cat-dot"></span>
-                        {{ cat.category_name }}
-                    </label>
+                        <label class="cat-label">
+                            <input type="radio" name="category" value="{{ cat.id }}"
+                                {% if selected_category == cat.id|stringformat:"s" %}checked{% endif %}>
+                            <span class="cat-dot"></span>
+                            {{ cat.category_name }}
+                        </label>
                     {% endfor %}
                 </div>
             </div>
 
             <!-- Price Range -->
             <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Price Range</p>
-                <div class="flex items-center gap-3">
+                <button type="button"
+                        onclick="toggleFilterSection('priceFilterBody', 'priceFilterIcon')"
+                        class="w-full flex items-center justify-between mb-4">
+                    <span class="text-base font-bold text-black">Price Range</span>
+                    <span id="priceFilterIcon" class="material-symbols-outlined text-lg">expand_less</span>
+                </button>
+
+                <div id="priceFilterBody" class="hidden flex items-center gap-3">
                     <div class="flex-1">
-                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">Min</label>
-                        <input type="number" name="min_price" class="price-input"
-                               placeholder="₹0" min="0"
-                               value="{{ min_price|default:'' }}">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">
+                            Min
+                        </label>
+                        <input type="number"
+                            name="min_price"
+                            class="price-input"
+                            placeholder="₹0"
+                            min="0"
+                            value="{{ min_price|default:'' }}">
                     </div>
+
                     <div class="w-5 h-px bg-slate-300 mt-4 flex-shrink-0"></div>
+
                     <div class="flex-1">
-                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">Max</label>
-                        <input type="number" name="max_price" class="price-input"
-                               placeholder="₹99999" min="0"
-                               value="{{ max_price|default:'' }}">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">
+                            Max
+                        </label>
+                        <input type="number"
+                            name="max_price"
+                            class="price-input"
+                            placeholder="₹99999"
+                            min="0"
+                            value="{{ max_price|default:'' }}">
                     </div>
                 </div>
             </div>
+                   
+           <!-- Sizes -->
+            <div>
+                <button type="button"
+                        onclick="toggleFilterSection('sizeFilterBody', 'sizeFilterIcon')"
+                        class="w-full flex items-center justify-between mb-4">
+                    <span class="text-base font-bold text-black">Sizes</span>
+                    <span id="sizeFilterIcon" class="material-symbols-outlined text-lg">expand_more</span>
+                </button>
+
+                <div id="sizeFilterBody" class="hidden grid grid-cols-3 gap-1.5">
+                    {% for size in available_sizes %}
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                name="size"
+                                value="{{ size }}"
+                                class="hidden peer"
+                                {% if size in selected_sizes %}checked{% endif %}>
+
+                            <span class="h-9 rounded-lg border border-slate-200 flex items-center justify-center text-[11px] font-bold peer-checked:bg-black peer-checked:text-white peer-checked:border-black hover:border-black transition-all">
+                                {{ size }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+    
+            <!-- Colors -->
+            <div>
+                <button type="button"
+                        onclick="toggleFilterSection('colorFilterBody', 'colorFilterIcon')"
+                        class="w-full flex items-center justify-between mb-4">
+                    <span class="text-base font-bold text-black">Color</span>
+                    <span id="colorFilterIcon" class="material-symbols-outlined text-lg">expand_more</span>
+                </button>
+
+                <div id="colorFilterBody" class="hidden color-grid">
+                    {% for color in available_colors %}
+                        <label class="color-option">
+                            <input type="checkbox"
+                                name="color"
+                                value="{{ color }}"
+                                {% if color in selected_colors %}checked{% endif %}>
+
+                        <span class="color-dot-large"
+                                style="
+                                    {% if color|lower == 'black' %}background:#000;
+                                    {% elif color|lower == 'blue' %}background:#4f7cff;
+                                    {% elif color|lower == 'brown' %}background:#7a3f00;
+                                    {% elif color|lower == 'green' %}background:#0abf5b;
+                                    {% elif color|lower == 'grey' or color|lower == 'gray' %}background:#808080;
+                                    {% elif color|lower == 'pink' %}background:#f48bab;
+                                    {% elif color|lower == 'purple' %}background:#7a137d;
+                                    {% elif color|lower == 'red' %}background:#ff1717;
+                                    {% elif color|lower == 'white' %}background:#fff; border-color:#999;
+                                    {% elif color|lower == 'yellow' %}background:#ffe600;
+                                    {% else %}background:#e5e7eb;
+                                    {% endif %}
+                                ">
+                            </span>
+
+                            <span>{{ color }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+
 
         </div>
 
@@ -357,7 +570,23 @@
                 <input type="hidden" name="max_price" value="{{ max_price }}">
             {% endif %}
 
-            <div class="flex flex-wrap items-center gap-3">
+
+            
+            {% for size in selected_sizes %}
+                <input type="hidden" name="size" value="{{ size }}">
+            {% endfor %}
+
+            {% for color in selected_colors %}
+                <input type="hidden" name="color" value="{{ color }}">
+            {% endfor %}
+
+
+
+
+
+
+
+            <div class="listing-controls-row flex flex-wrap items-center gap-3">
 
                 <!-- Search -->
                 <div class="listing-search flex-1 min-w-[200px] max-w-xs">
@@ -406,34 +635,59 @@
                     {% endif %}
                 </div>
 
-                <div class="flex items-center gap-2 ml-auto">
+                <div class="listing-actions flex items-center gap-2 ml-auto">
                     <!-- Sort -->
-                    <select name="sort" onchange="this.form.submit()"
-                            class="sort-select h-10 pl-4 pr-9 rounded-full border-2 border-slate-200 text-[11px] font-black uppercase tracking-wider bg-white focus:outline-none focus:border-black transition-colors cursor-pointer">
-                        <option value="newest" {% if sort_by == 'newest' or not sort_by %}selected{% endif %}>
-                            Newest
-                        </option>
 
-                        <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>
-                            Price: Low to High
-                        </option>
 
-                        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>
-                            Price: High to Low
-                        </option>
 
-                        <option value="stock_desc" {% if sort_by == 'stock_desc' %}selected{% endif %}>
-                            In Stock First
-                        </option>
-                        
-                    </select>
+
+                    
+                    <div class="sort-wrapper">
+                        <button type="button"
+                                onclick="toggleSortMenu()"
+                                class="sort-trigger flex items-center justify-between gap-3 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider bg-white transition-all">
+                            <span>
+                                {% if sort_by == 'price_desc' %}
+                                    Price: High-Low
+                                {% elif sort_by == 'price_asc' %}
+                                    Price: Low-High
+                                {% elif sort_by == 'name_asc' %}
+                                    A - Z
+                                {% elif sort_by == 'name_desc' %}
+                                    Z - A
+                                {% elif sort_by == 'stock_desc' %}
+                                    In Stock First
+                                {% else %}
+                                    Newest
+                                {% endif %}
+                            </span>
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </button>
+
+                        <div id="sortMenu" class="sort-menu">
+                            <button type="button" onclick="applySort('newest')">Newest</button>
+                            <button type="button" onclick="applySort('price_desc')">Price: High-Low</button>
+                            <button type="button" onclick="applySort('price_asc')">Price: Low-High</button>
+                            <button type="button" onclick="applySort('name_asc')">A - Z</button>
+                            <button type="button" onclick="applySort('name_desc')">Z - A</button>
+                            <button type="button" onclick="applySort('stock_desc')">In Stock First</button>
+                        </div>
+
+                        <input type="hidden" name="sort" id="sortInput" value="{{ sort_by|default:'newest' }}">
+                    </div>
+
+
+
+
+
+
 
                     <!-- Filter Button -->
                     <button type="button" onclick="toggleFilterDrawer()"
-                            class="flex items-center gap-2 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider transition-all">
+                            class="filter-mobile-btn flex items-center gap-2 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider transition-all">
                         <span class="material-symbols-outlined icon-sm">tune</span>
                         Filters
-                        {% if selected_category or min_price or max_price %}
+                        {% if selected_category or min_price or max_price or selected_sizes or selected_colors %}
                         <span class="w-2 h-2 rounded-full bg-black flex-shrink-0 -ml-0.5"></span>
                         {% endif %}
                     </button>
@@ -589,5 +843,40 @@
         if (input) input.value = '';
         form.submit();
     }
+
+    function toggleSortMenu() {
+        const menu = document.getElementById('sortMenu');
+        menu.classList.toggle('open');
+    }
+
+    function applySort(value) {
+        const input = document.getElementById('sortInput');
+        const form = document.getElementById('searchSortForm');
+
+        input.value = value;
+        form.submit();
+    }
+
+    function toggleFilterSection(bodyId, iconId) {
+        const body = document.getElementById(bodyId);
+        const icon = document.getElementById(iconId);
+
+        body.classList.toggle('hidden');
+
+        if (body.classList.contains('hidden')) {
+            icon.textContent = 'expand_more';
+        } else {
+            icon.textContent = 'expand_less';
+        }
+    }
+
+    document.addEventListener('click', function(event) {
+        const sortWrapper = event.target.closest('.sort-wrapper');
+        const sortMenu = document.getElementById('sortMenu');
+
+        if (!sortWrapper && sortMenu) {
+            sortMenu.classList.remove('open');
+        }
+    });
 </script>
 {% endblock %}
