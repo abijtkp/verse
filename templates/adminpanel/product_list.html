@@ -131,13 +131,31 @@
                         <td class="px-6 sm:px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                    {% with product.images.all|first as first_image %}
-                                        {% if first_image %}
-                                            <img src="{{ first_image.image_url.url }}" alt="{{ product.product_name }}" class="w-full h-full object-cover">
+                                   
+                                   
+                                   
+                                   
+                                   
+                                    {% with first_variant=product.variants.all|first %}
+                                        {% if first_variant %}
+                                            {% with first_image=first_variant.images.all|first %}
+                                                {% if first_image %}
+                                                    <img src="{{ first_image.image_url.url }}"
+                                                        alt="{{ product.product_name }}"
+                                                        class="w-full h-full object-cover">
+                                                {% else %}
+                                                    <span class="material-symbols-outlined text-slate-300">image</span>
+                                                {% endif %}
+                                            {% endwith %}
                                         {% else %}
                                             <span class="material-symbols-outlined text-slate-300">image</span>
                                         {% endif %}
                                     {% endwith %}
+
+
+
+
+
                                 </div>
                                 <div>
                                     <span class="text-sm font-bold text-slate-900 block leading-tight">{{ product.product_name }}</span>
@@ -176,16 +194,16 @@
                             {% endif %}
                         </td>
 
-
-
-
-
-
-
-
-
                         <td class="px-6 sm:px-8 py-5 text-right">
                             <div class="flex items-center justify-end gap-2">
+                                
+                                <!--  Manage variant -->
+                                <a href="{% url 'variant_management' product.id %}"
+                                    class="p-2 text-slate-300 hover:text-blue-500 transition-colors"
+                                    title="Manage Variants">
+                                        <span class="material-symbols-outlined text-xl">inventory_2</span>
+                                </a>
+
 
                                 <!-- Edit Product -->
                                 <a href="{% url 'edit_product' product.id %}" 
@@ -215,13 +233,6 @@
 
                             </div>
                         </td>
-
-
-
-
-
-
-
 
 
                     </tr>

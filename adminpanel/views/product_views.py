@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.views.decorators.cache import never_cache
 
-from products.models import Product, Category, ProductImage
+from products.models import Product, Category
 from .core_views import admin_required
 
 
@@ -15,7 +15,7 @@ def product_list_view(request):
     selected_category = request.GET.get('category', '').strip()
     sort_by = request.GET.get('sort', 'latest').strip()
 
-    products = Product.objects.filter(is_deleted=False).select_related('category').prefetch_related('images')
+    products = Product.objects.filter(is_deleted=False).select_related('category').prefetch_related('variants__images')
 
     if search_query:
         products = products.filter(
@@ -122,8 +122,7 @@ def edit_product_view(request, product_id):
         description = request.POST.get('description', '').strip()
         category_id = request.POST.get('category', '').strip()
         is_active = request.POST.get('is_active') == 'on'
-        images = request.FILES.getlist('product_images')
-
+ 
         errors = {}
 
         if not product_name:
@@ -157,16 +156,7 @@ def edit_product_view(request, product_id):
         product.is_active = is_active
         product.save()
         
-        if images:
-            has_primary = product.images.filter(is_primary=True).exists()
-            
-            for index, image in enumerate(images):
-                ProductImage.objects.create(
-                    product=product,
-                    image_url=image,
-                    is_primary=(not has_primary and index == 0)
-                )
-
+        
         messages.success(request, 'Product updated successfully.')
         return redirect('product_list')
 
@@ -182,11 +172,15 @@ def delete_product_view(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_deleted=False)
 
     if request.method == 'POST':
-        product.is_active = False
+        product.is_deleted = not product.is_active
         product.save(update_fields=['is_active', 'updated_at'])
-
-        messages.success(request, 'Product deactivated successfully.')
-        return redirect('product_list')
+        
+        if product.is_active:
+            messages.success(request, "Product activated successfully.")
+        else:
+            messages.success(request, "Product deactivated succesfully.")
+            
+            return redirect('product_list')
 
     messages.error(request, 'Invalid request.')
     return redirect('product_list')

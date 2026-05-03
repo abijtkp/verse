@@ -301,14 +301,6 @@ def logout_view(request):
 def home(request):
     profile = None
     
-    ticker_labels = [
-    "Free Shipping",
-    "Crystal Air Unit",
-    "Chrome Hardware",
-    "240+ Styles",
-    "12K Members",
-    "Verified Authentic",
-] * 2
 
     
     if request.user.is_authenticated:

@@ -123,28 +123,48 @@ def edit_category_view(request, category_id):
                 }
             })
 
+        old_name = category.category_name
+        old_description = category.description or ''
+        old_status = category.is_active
+
         category.category_name = category_name
         category.description = description
         category.is_active = is_active
         category.save()
 
-        messages.success(request, 'Category updated successfully.')
+        only_status_changed = (
+            old_name == category_name and
+            old_description == description and
+            old_status != is_active
+        )
+
+        if only_status_changed:
+            if is_active:
+                messages.success(request, 'Category activated successfully.')
+            else:
+                messages.success(request, 'Category deactivated successfully.')
+        else:
+            messages.success(request, 'Category updated successfully.')
+            
         return redirect('category_list')
 
     return render(request, 'adminpanel/edit_category.html', {
-        'category': category
-    })
+               'category': category
+            })
 
 
 @require_POST
 @never_cache
 @admin_required
-def delete_category_view(request, category_id):
+def toggle_category_status_view(request, category_id):
     category = get_object_or_404(Category, id=category_id, is_deleted=False)
+    
+    category.is_active = not category.is_active
+    category.save(update_fields=['is_active', 'updated_at'])
+    
+    if category.is_active:
+        messages.success(request, 'Category activated successfully.')
+    else:
+        messages.success(request, 'Category deactivated successfully.')
 
-    category.is_deleted = True
-    category.is_active = False
-    category.save()
-
-    messages.success(request, 'Category deleted successfully.')
     return redirect('category_list')

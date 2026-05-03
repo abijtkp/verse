@@ -1,0 +1,586 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}VERSE | Variant Management{% endblock %}
+{% block page_title %}Variant Management{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <nav class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <a href="{% url 'product_list' %}" class="hover:text-black">Inventory</a>
+            <span class="material-symbols-outlined text-xs">chevron_right</span>
+            <a href="{% url 'edit_product' product.id %}" class="hover:text-black">Product</a>
+            <span class="material-symbols-outlined text-xs">chevron_right</span>
+            <span class="text-black">Variants</span>
+        </nav>
+
+        <a href="{% url 'product_list' %}"
+           class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            Back to Products
+        </a>
+    </div>
+
+    <div class="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-8">
+        <div class="w-48 h-48 rounded-3xl bg-slate-50 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
+            {% with first_variant=variants|first %}
+                {% if first_variant %}
+                    {% with first_image=first_variant.images.all|first %}
+                        {% if first_image %}
+                            <img src="{{ first_image.image_url.url }}"
+                                 alt="{{ product.product_name }}"
+                                 class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="material-symbols-outlined text-slate-200 text-6xl">image</span>
+                        {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <span class="material-symbols-outlined text-slate-200 text-6xl">image</span>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="flex-1 text-center md:text-left">
+            <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-2">
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Featured Product
+                </span>
+
+                {% if product.is_active %}
+                    <span class="px-2 py-0.5 bg-green-50 text-green-500 text-[9px] font-black uppercase rounded-full">
+                        Active
+                    </span>
+                {% else %}
+                    <span class="px-2 py-0.5 bg-red-50 text-red-500 text-[9px] font-black uppercase rounded-full">
+                        Inactive
+                    </span>
+                {% endif %}
+            </div>
+
+            <h1 class="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-4">
+                {{ product.product_name }}
+            </h1>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-50">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Category</p>
+                    <p class="text-sm font-black text-slate-900">
+                        {{ product.category.category_name|default:"No Category" }}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Variants</p>
+                    <p class="text-sm font-black text-slate-900">{{ variants.count }}</p>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base ID</p>
+                    <p class="text-sm font-black text-slate-900">#{{ product.id }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="relative flex-1 max-w-md">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">
+                search
+            </span>
+            <input type="text"
+                   placeholder="Search size or colorway..."
+                   class="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-12 pr-6 text-sm focus:ring-1 focus:ring-black outline-none shadow-sm transition-all">
+        </div>
+
+        <button onclick="toggleAddModal(true)"
+                class="flex items-center justify-center gap-2 bg-black text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-black/10 transition-all">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Add Variant
+        </button>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[1000px]">
+                <thead>
+                    <tr class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50">
+                        <th class="px-8 py-6">Size</th>
+                        <th class="px-6 py-6">Color</th>
+                        <th class="px-6 py-6">SKU</th>
+                        <th class="px-6 py-6 text-center">Stock</th>
+                        <th class="px-6 py-6">Price</th>
+                        <th class="px-6 py-6">Status</th>
+                        <th class="px-8 py-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-50">
+                    {% for variant in variants %}
+                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                            <td class="px-8 py-5">
+                                <span class="text-sm font-black text-slate-900">
+                                    {{ variant.size }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full border border-slate-100 bg-slate-300"></div>
+
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase text-slate-900 leading-none">
+                                            {{ variant.color }}
+                                        </p>
+
+                                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
+                                            {{ variant.images.count }} Images
+                                        </p>
+
+                                        <div class="flex items-center gap-1 mt-2">
+                                            {% for image in variant.images.all|slice:":3" %}
+                                                <img src="{{ image.image_url.url }}"
+                                                     alt="{{ variant.color }}"
+                                                     class="w-7 h-7 rounded-md object-cover border border-slate-100">
+                                            {% empty %}
+                                                <span class="text-[9px] font-bold text-slate-300 uppercase">
+                                                    No images
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-5">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {{ variant.sku }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-5 text-center">
+                                <span class="text-sm font-black {% if variant.stock < 10 %}text-red-500{% else %}text-slate-900{% endif %}">
+                                    {{ variant.stock }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-5">
+                                <span class="text-sm font-black text-slate-900">
+                                    ₹{{ variant.price }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-5">
+                                {% if variant.is_active %}
+                                    <span class="px-2.5 py-1 bg-green-50 text-green-500 text-[9px] font-black uppercase rounded">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 bg-slate-100 text-slate-400 text-[9px] font-black uppercase rounded">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-8 py-5 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick="toggleEditModal(true)"
+                                            class="p-2 text-slate-300 hover:text-black transition-colors">
+                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+
+                                    <form id="delete-variant-form-{{ variant.id }}"
+                                          action="{% url 'delete_variant' variant.id %}"
+                                          method="POST"
+                                          class="hidden">
+                                        {% csrf_token %}
+                                    </form>
+
+                                    <button type="button"
+                                            class="p-2 text-slate-200 hover:text-red-500 transition-colors"
+                                            data-confirm-modal
+                                            data-modal-title="Delete Variant"
+                                            data-modal-message="Are you sure you want to delete {{ variant.color }} / Size {{ variant.size }}?"
+                                            data-modal-confirm-text="Delete"
+                                            data-modal-form-id="delete-variant-form-{{ variant.id }}">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="py-20 text-center">
+                                <div class="flex flex-col items-center gap-3">
+                                    <span class="material-symbols-outlined text-5xl text-slate-200">inventory</span>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                        No variants found for this product.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="add-variant-modal"
+     class="fixed inset-0 z-[100] {% if errors %}flex{% else %}hidden{% endif %} items-center justify-center p-4">
+
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleAddModal(false)"></div>
+
+    <div class="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+
+        <div class="p-8 border-b border-slate-50 flex items-center justify-between shrink-0">
+            <div>
+                <h3 class="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                    Add New Variant
+                </h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Create color and size combination
+                </p>
+            </div>
+
+            <button onclick="toggleAddModal(false)"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-black transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form method="POST"
+              action="{% url 'variant_management' product.id %}"
+              enctype="multipart/form-data"
+              class="flex-1 overflow-y-auto p-8 no-scrollbar">
+
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                <div class="space-y-6">
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                            Color Name
+                        </label>
+                        <input type="text"
+                               name="variant_name"
+                               value="{{ form_data.variant_name|default:'' }}"
+                               placeholder="e.g. Black"
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.variant_name %}border-red-500{% endif %}">
+
+                        {% if errors.variant_name %}
+                            <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                {{ errors.variant_name }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Size
+                            </label>
+                            <input type="text"
+                                   name="size"
+                                   value="{{ form_data.size|default:'' }}"
+                                   placeholder="e.g. 8"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.size %}border-red-500{% endif %}">
+
+                            {% if errors.size %}
+                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                    {{ errors.size }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                SKU Suffix
+                            </label>
+                            <input type="text"
+                                   name="sku_suffix"
+                                   value="{{ form_data.sku_suffix|default:'' }}"
+                                   placeholder="e.g. BLK8"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.sku_suffix %}border-red-500{% endif %}">
+
+                            {% if errors.sku_suffix %}
+                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                    {{ errors.sku_suffix }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Price ₹
+                            </label>
+                            <input type="number"
+                                   step="0.01"
+                                   name="price"
+                                   value="{{ form_data.price|default:'' }}"
+                                   placeholder="0.00"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.price %}border-red-500{% endif %}">
+
+                            {% if errors.price %}
+                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                    {{ errors.price }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Initial Stock
+                            </label>
+                            <input type="number"
+                                   name="stock"
+                                   value="{{ form_data.stock|default:'' }}"
+                                   placeholder="0"
+                                   class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.stock %}border-red-500{% endif %}">
+
+                            {% if errors.stock %}
+                                <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                    {{ errors.stock }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Inventory Status
+                        </span>
+
+                        <select name="stock_status"
+                                class="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer">
+                            <option value="active" {% if form_data.stock_status == 'active' %}selected{% endif %}>
+                                Active
+                            </option>
+                            <option value="inactive" {% if form_data.stock_status == 'inactive' %}selected{% endif %}>
+                                Draft
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Variant Images
+                            </label>
+                            <span id="image-count-badge"
+                                  class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
+                                0 SELECTED
+                            </span>
+                        </div>
+
+                        <div class="relative group">
+                            <input type="file"
+                                   name="variant_images"
+                                   id="variant-images-input"
+                                   multiple
+                                   accept="image/*"
+                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+                            <div class="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center gap-3 group-hover:bg-slate-50 transition-all {% if errors.variant_images %}border-red-200 bg-red-50/50{% endif %}">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">
+                                    cloud_upload
+                                </span>
+
+                                <div class="text-center">
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-900">
+                                        Drag or click to upload
+                                    </p>
+                                    <p class="text-[9px] font-bold text-red-400 mt-1 uppercase tracking-tight">
+                                        Minimum 3 images required
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if errors.variant_images %}
+                            <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                {{ errors.variant_images }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <div id="image-preview-grid" class="grid grid-cols-3 gap-3"></div>
+
+                    <div id="image-warning" class="hidden p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-orange-500 text-sm">warning</span>
+                            <p class="text-[9px] font-bold text-orange-600 leading-normal uppercase">
+                                Please select at least 3 images.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 flex gap-4 shrink-0">
+                <button type="button"
+                        onclick="toggleAddModal(false)"
+                        class="flex-1 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                    Discard
+                </button>
+
+                <button type="submit"
+                        class="flex-1 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-black/20 transition-all">
+                    Complete Variant
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="edit-variant-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleEditModal(false)"></div>
+
+    <div class="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div class="flex items-center justify-between mb-8">
+            <h3 class="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                Update Variant
+            </h3>
+            <span class="px-3 py-1 bg-orange-50 text-orange-500 text-[8px] font-black uppercase rounded-full">
+                UI Ready
+            </span>
+        </div>
+
+        <div class="space-y-6">
+            <p class="text-xs font-bold text-slate-400 uppercase">
+                Backend integration for variant update is pending.
+            </p>
+
+            <div class="pt-6 flex gap-3">
+                <button onclick="toggleEditModal(false)"
+                        class="flex-1 py-4 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                    Cancel
+                </button>
+
+                <button disabled
+                        class="flex-1 py-4 bg-slate-200 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+                    Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAddModal(show) {
+        const modal = document.getElementById('add-variant-modal');
+
+        modal.classList.toggle('hidden', !show);
+        modal.classList.toggle('flex', show);
+
+        if (!show) {
+            window.location.href = "{% url 'variant_management' product.id %}";
+        }
+    }
+
+    function toggleEditModal(show) {
+        const modal = document.getElementById('edit-variant-modal');
+
+        modal.classList.toggle('hidden', !show);
+        modal.classList.toggle('flex', show);
+    }
+
+    const imageInput = document.getElementById('variant-images-input');
+    const previewGrid = document.getElementById('image-preview-grid');
+    const badge = document.getElementById('image-count-badge');
+    const warning = document.getElementById('image-warning');
+
+    let selectedFiles = [];
+
+    function refreshImageInput() {
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        imageInput.files = dataTransfer.files;
+    }
+
+    function renderPreviews() {
+        previewGrid.innerHTML = '';
+
+        badge.textContent = `${selectedFiles.length} SELECTED`;
+
+        if (selectedFiles.length > 0 && selectedFiles.length < 3) {
+            warning.classList.remove('hidden');
+        } else {
+            warning.classList.add('hidden');
+        }
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const wrapper = document.createElement('div');
+
+                wrapper.className =
+                    'relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50';
+
+                wrapper.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover">
+
+                    <button type="button"
+                            data-index="${index}"
+                            class="remove-preview absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 text-white flex items-center justify-center text-xs font-bold hover:bg-red-500 transition-all">
+                        ×
+                    </button>
+                `;
+
+                previewGrid.appendChild(wrapper);
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            const newFiles = Array.from(imageInput.files);
+
+            newFiles.forEach(file => {
+                const alreadyExists = selectedFiles.some(existingFile =>
+                    existingFile.name === file.name &&
+                    existingFile.size === file.size &&
+                    existingFile.lastModified === file.lastModified
+                );
+
+                if (!alreadyExists && file.type.startsWith('image/')) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            refreshImageInput();
+            renderPreviews();
+        });
+    }
+
+    if (previewGrid) {
+        previewGrid.addEventListener('click', function(event) {
+            const button = event.target.closest('.remove-preview');
+
+            if (!button) return;
+
+            const index = Number(button.dataset.index);
+
+            selectedFiles.splice(index, 1);
+
+            refreshImageInput();
+            renderPreviews();
+        });
+    }
+</script>
+
+{% endblock %}
