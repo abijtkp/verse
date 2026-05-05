@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist — VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wishlist-card {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    }
+    .wishlist-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .wishlist-card:hover .card-image {
+        transform: scale(1.04);
+    }
+    .card-image {
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-cart {
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-cart::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.4s ease, height 0.4s ease;
+    }
+    .btn-cart:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    .remove-btn {
+        transition: all 0.2s ease;
+    }
+    .remove-btn:hover {
+        color: #ef4444;
+        background: #fef2f2;
+    }
+    .stock-badge {
+        animation: pulse-soft 2s ease-in-out infinite;
+    }
+    @keyframes pulse-soft {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .empty-icon {
+        animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+    }
+    .page-fade-in {
+        animation: fadeInUp 0.5s ease both;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .card-stagger:nth-child(1) { animation-delay: 0.05s; }
+    .card-stagger:nth-child(2) { animation-delay: 0.10s; }
+    .card-stagger:nth-child(3) { animation-delay: 0.15s; }
+    .card-stagger:nth-child(4) { animation-delay: 0.20s; }
+    .card-stagger:nth-child(5) { animation-delay: 0.25s; }
+    .card-stagger:nth-child(6) { animation-delay: 0.30s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f8f9fb]">
+
+    <!-- Page Header -->
+    <div class="bg-white border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            <!-- Breadcrumb -->
+            <nav class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
+                <span class="text-slate-300">/</span>
+                <span class="text-black">Wishlist</span>
+            </nav>
+
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-[900] uppercase italic tracking-tighter text-black leading-none">
+                        My Wishlist
+                    </h1>
+                    {% if wishlist_items %}
+                    <p class="text-[11px] font-semibold text-slate-400 mt-2 uppercase tracking-wider">
+                        {{ wishlist_items|length }} saved item{% if wishlist_items|length != 1 %}s{% endif %} &mdash; manage your saved picks below
+                    </p>
+                    {% else %}
+                    <p class="text-[11px] font-semibold text-slate-400 mt-2 uppercase tracking-wider">
+                        Your saved items will appear here
+                    </p>
+                    {% endif %}
+                </div>
+
+                {% if wishlist_items %}
+                <a href="{% url 'product_listing' %}"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-black text-black font-black text-[10px] uppercase tracking-widest rounded-full hover:bg-black hover:text-white transition-all duration-200 self-start sm:self-auto">
+                    <span class="material-symbols-outlined icon-sm">add</span>
+                    Add More
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        {% if wishlist_items %}
+
+        <!-- Product Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-6">
+            {% for item in wishlist_items %}
+            <div class="wishlist-card page-fade-in card-stagger bg-white rounded-2xl overflow-hidden border border-gray-100 flex flex-col">
+
+                <!-- Image Area -->
+                <div class="relative overflow-hidden bg-[#f4f4f4] aspect-square">
+
+                    <a href="{% url 'product_detail' item.variant.id %}" class="block w-full h-full">
+                        {% with primary_image=item.variant.images.first %}
+                            {% if primary_image and primary_image.image_url %}
+                                <img src="{{ primary_image.image_url.url }}"
+                                    alt="{{ item.variant.product.product_name }}"
+                                    class="card-image w-full h-full object-cover object-center">
+                            {% else %}
+                                <div class="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                    <span class="material-symbols-outlined" style="font-size:48px;">image_not_supported</span>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest mt-2">No Image</span>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+
+                    <!-- Status badges -->
+                    <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                        {% if item.variant.stock == 0 %}
+                            <span class="px-2.5 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                                Out of Stock
+                            </span>
+                        {% elif item.variant.stock <= 5 %}
+                            <span class="stock-badge px-2.5 py-1 bg-orange-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                                Only {{ item.variant.stock }} left
+                            </span>
+                        {% else %}
+                            <span class="px-2.5 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                                In Stock
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Remove button top right -->
+                    <form method="POST"
+                        action="{% url 'remove_from_wishlist' item.variant.id %}"
+                        id="removeTopForm{{ item.id }}"
+                        class="absolute top-3 right-3 z-20">
+                        {% csrf_token %}
+                        <button type="button"
+                                onclick="showWishlistRemoveModal('removeTopForm{{ item.id }}', '{{ item.variant.product.product_name|escapejs }}')"
+                                class="remove-btn w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[18px] text-red-500">favorite</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Card Body -->
+                <div class="flex flex-col flex-1 p-4">
+
+                    <!-- Category -->
+                    <span class="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">
+                        {{ item.variant.product.category.category_name }}
+                    </span>
+
+                    <!-- Product Name -->
+                    <a href="{% url 'product_detail' item.variant.id %}"
+                       class="text-sm font-[900] uppercase italic tracking-tight text-black leading-tight mb-2 hover:opacity-60 transition-opacity line-clamp-2">
+                        {{ item.variant.product.product_name }}
+                    </a>
+
+                    <!-- Variant details -->
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        {% if item.variant.color %}
+                        <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span>
+                            {{ item.variant.color }}
+                        </span>
+                        {% endif %}
+                        {% if item.variant.size %}
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                            Size {{ item.variant.size }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mt-auto">
+                        <p class="text-xl font-[900] tracking-tight text-black mb-3">
+                            ₹{{ item.variant.price }}
+                        </p>
+
+                        <!-- Move to Cart -->
+                        {% if item.variant.stock > 0 %}
+                        <form method="POST" action="{% url 'add_to_cart' item.variant.id %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="btn-cart w-full h-11 bg-black text-white font-black text-[10px] uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.98] transition-all duration-200">
+                                <span class="material-symbols-outlined icon-sm">shopping_bag</span>
+                                Move to Cart
+                            </button>
+                        </form>
+                        {% else %}
+                        <button disabled
+                                class="w-full h-11 bg-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 cursor-not-allowed">
+                            <span class="material-symbols-outlined icon-sm">remove_shopping_cart</span>
+                            Unavailable
+                        </button>
+                        {% endif %}
+
+                        <!-- Remove text link -->
+                        <form method="POST"
+                            action="{% url 'remove_from_wishlist' item.variant.id %}"
+                            id="removeBottomForm{{ item.id }}"
+                            class="mt-2">
+                            {% csrf_token %}
+                            <button type="button"
+                                    onclick="showWishlistRemoveModal('removeBottomForm{{ item.id }}', '{{ item.variant.product.product_name|escapejs }}')"
+                                    class="w-full text-center text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors py-1">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Continue Shopping -->
+        <div class="mt-12 flex justify-center">
+            <a href="{% url 'product_listing' %}"
+               class="inline-flex items-center gap-3 px-8 py-4 border-2 border-black rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-200">
+                <span class="material-symbols-outlined icon-sm">arrow_back</span>
+                Continue Shopping
+            </a>
+        </div>
+
+        {% else %}
+
+        <!-- Empty Wishlist State -->
+        <div class="flex flex-col items-center justify-center py-24 px-4 text-center page-fade-in">
+            <div class="empty-icon mb-8">
+                <div class="w-28 h-28 rounded-full bg-white border-2 border-gray-100 flex items-center justify-center shadow-lg mx-auto">
+                    <span class="material-symbols-outlined text-slate-300" style="font-size:52px;">favorite</span>
+                </div>
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl font-[900] uppercase italic tracking-tighter text-black mb-3">
+                Nothing saved yet
+            </h2>
+            <p class="text-sm font-medium text-slate-400 max-w-sm leading-relaxed mb-8">
+                Your wishlist is empty. Browse our collections and save the styles you love — they'll be waiting right here.
+            </p>
+
+            <a href="{% url 'product_listing' %}"
+               class="inline-flex items-center gap-3 px-8 py-4 bg-black text-white font-black text-[11px] uppercase tracking-widest rounded-full hover:bg-slate-800 active:scale-[0.98] transition-all duration-200">
+                <span class="material-symbols-outlined icon-sm">explore</span>
+                Explore Collections
+            </a>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showWishlistRemoveModal(formId, productName) {
+        openConfirmModal({
+            icon: '&#10084;',
+            iconBg: 'bg-rose-50',
+            iconColor: 'text-rose-500',
+            title: 'Remove from Wishlist?',
+            message: productName + ' will be removed from your wishlist.',
+            confirmText: 'Yes, Remove',
+            onConfirm: function () {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+</script>
+{% endblock %}

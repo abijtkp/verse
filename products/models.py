@@ -1,6 +1,7 @@
 from django.db import models
 
 
+
 class Category(models.Model):
     category_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -58,6 +59,12 @@ class Variant(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def is_in_wishlist(self, user):
+        if not user.is_authenticated:
+            return False
+
+        return self.wishlisted_by.filter(user=user).exists()
 
     def __str__(self):
         return f"{self.product.product_name} - {self.color} / {self.size}"
@@ -89,3 +96,33 @@ class VariantImage(models.Model):
     class Meta:
         db_table = 'variant_images'
         ordering = ['-created_at']
+        
+        
+        
+# class ProductReview(models.Model):
+#     product = models.ForeignKey(
+#         Product,
+#         on_delete=models.CASCADE,
+#         related_name='reviews'
+#     )
+
+#     user = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.CASCADE,
+#         related_name='product_reviews'
+#     )
+
+#     rating = models.PositiveSmallIntegerField()
+#     review_text = models.TextField(blank=True, null=True)
+
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         db_table = 'product_reviews'
+#         unique_together = ('product', 'user')
+#         ordering = ['-created_at']
+
+#     def __str__(self):
+#         return f"{self.product.product_name} - {self.rating} stars by {self.user.email}"        

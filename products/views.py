@@ -1,7 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from .models import Category, Variant
-from django.shortcuts import get_object_or_404
+from django.db.models import Q, Avg, Count
+from cart.models import Wishlist
+from django.contrib import messages
+from accounts.decorators import user_required
+from django.contrib.auth.decorators import login_required
 
 
 def product_listing_view(request):
@@ -15,6 +19,7 @@ def product_listing_view(request):
 
     variants = Variant.objects.filter(
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
@@ -28,7 +33,10 @@ def product_listing_view(request):
 
     if search_query:
         variants = variants.filter(
-            product__product_name__icontains=search_query
+            Q(product__product_name__icontains=search_query) |
+            Q(product__description__icontains=search_query) |
+            Q(color__icontains=search_query) |
+            Q(size__icontains=search_query)
         )
 
     if selected_category:
@@ -44,7 +52,9 @@ def product_listing_view(request):
         variants = variants.filter(size__in=selected_sizes)
 
     if selected_colors:
-        variants = variants.filter(color__in=selected_colors)    
+        variants = variants.filter(color__in=selected_colors)
+    
+    variants = variants.distinct()        
 
     if sort_by == 'price_asc':
         variants = variants.order_by('price')
@@ -75,6 +85,7 @@ def product_listing_view(request):
     
     available_sizes = Variant.objects.filter(
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
@@ -83,6 +94,7 @@ def product_listing_view(request):
 
     available_colors = Variant.objects.filter(
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
@@ -107,6 +119,7 @@ def product_listing_view(request):
     })
 
 
+
 def product_detail_view(request, variant_id):
 
     variant = get_object_or_404(
@@ -118,49 +131,104 @@ def product_detail_view(request, variant_id):
         ),
         id=variant_id,
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
         product__category__is_deleted=False,
     )
 
-    same_product_variants = Variant.objects.filter(
+
+    all_color_variants = Variant.objects.filter(
         product=variant.product,
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
         product__category__is_deleted=False,
-    ).exclude(
-        id=variant.id
     ).order_by('color', 'size')
+
+    color_variants_dict = {}
+
+    for item in all_color_variants:
+        color_key = item.color.lower()
+
+        if color_key not in color_variants_dict:
+            color_variants_dict[color_key] = item
+
+        if item.color.lower() == variant.color.lower():
+            color_variants_dict[color_key] = variant
+
+    same_product_variants = color_variants_dict.values()
+
 
     size_variants = Variant.objects.filter(
         product=variant.product,
         color=variant.color,
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
         product__category__is_deleted=False,
     ).order_by('size')
 
+
     related_products = Variant.objects.filter(
         product__category=variant.product.category,
         is_active=True,
+        is_deleted=False,
         product__is_active=True,
         product__is_deleted=False,
         product__category__is_active=True,
         product__category__is_deleted=False,
     ).exclude(
-        product=variant.product
-    )[:4]
+        id=variant.id
+    ).select_related(
+        'product',
+        'product__category'
+    ).prefetch_related(
+        'images'
+    ).order_by('?')[:4]
+    
+    
+    is_in_wishlist = False
+
+    if request.user.is_authenticated:
+        is_in_wishlist = Wishlist.objects.filter(
+            user=request.user,
+            variant=variant
+        ).exists()
+        
+    # reviews = ProductReview.objects.filter(
+    #     product=variant.product,
+    #     is_active=True,
+    # ).select_related('user')
+    
+    # review_summary = reviews.aggregate(
+    #     average_rating=Avg('rating'),
+    #     review_count=Count('id')
+    # )
+    
+    # user_review = None
+    
+    # if request.user.is_authenticated:
+    #     user_review = ProductReview.objects.filter(
+    #         product=variant.product,
+    #         user=request.user
+    #     ).first()  
+        
+          
+    
 
     context = {
         'variant': variant,
         'same_product_variants': same_product_variants,
         'size_variants': size_variants,
         'related_products': related_products,
+        'is_in_wishlist': is_in_wishlist,
+       
     }
 
     return render(
@@ -169,3 +237,37 @@ def product_detail_view(request, variant_id):
         context
     )
     
+    
+    
+# @user_required
+# def submit_review(request, variant_id):
+
+#     variant = get_object_or_404(
+#         Variant,
+#         id=variant_id,
+#         is_active=True,
+#         product__is_active=True,
+#         product__is_deleted=False
+#     )
+
+#     if request.method == 'POST':
+
+#         rating = request.POST.get('rating')
+#         review_text = request.POST.get('review_text', '').strip()
+
+#         if not rating:
+#             messages.error(request, "Please select a rating")
+#             return redirect('product_detail', variant.id)
+
+#         ProductReview.objects.update_or_create(
+#             user=request.user,
+#             variant=variant,
+#             defaults={
+#                 'rating': int(rating),
+#                 'review_text': review_text
+#             }
+#         )
+
+#         messages.success(request, "Review submitted successfully")
+
+#     return redirect('product_detail', variant.id)

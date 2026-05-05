@@ -155,10 +155,10 @@
     <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div class="w-full px-8 h-20 flex items-center justify-between">
 
-            <a href="#" class="text-2xl font-[1000] italic tracking-tighter uppercase">VERSE</a>
+            <a href="{% url 'home' %}" class="text-2xl font-[1000] italic tracking-tighter uppercase">VERSE</a>
 
             <nav class="hidden lg:flex items-center gap-10 absolute left-1/2 transform -translate-x-1/2">
-                <a href="{% url 'home' %}" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">Home</a>
+                {% comment %} <a href="{% url 'home' %}" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">Home</a> {% endcomment %}
                 <a href="{% url 'product_listing' %}" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">Collections</a>
                 <a href="#" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">New Drops</a>
                 <a href="#" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">About</a>
@@ -171,12 +171,24 @@
                 </div>
 
                 <div class="flex items-center gap-5">
-                    <a href="#" class="relative">
+                    <a href="{% url 'wishlist_view' %}" class="relative inline-flex items-center justify-center">
                         <img src="{% static 'images/wishlist.svg' %}" class="w-6 h-6">
+
+                        {% if wishlist_count > 0 %}
+                            <span class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center leading-none">
+                                {{ wishlist_count }}
+                            </span>
+                        {% endif %}
                     </a>
 
-                    <a href="#" class="relative">
-                        <img src="{% static 'images/cart3.png' %}" class="w-6 h-6">
+                    <a href="{% url 'cart_view' %}" class="relative inline-flex items-center justify-center">
+                        <span class="material-symbols-outlined">shopping_bag</span>
+
+                        {% if cart_count > 0 %}
+                            <span id="cart-count-badge" class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center leading-none">
+                                {{ cart_count }}
+                            </span>
+                        {% endif %}
                     </a>
 
                     <button 
@@ -231,7 +243,8 @@
                 <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon"> Orders
             </a>
 
-            <a href="#" class="sidebar-link">
+            <a href="{% url 'wishlist_view' %}"
+            class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
                 <img src="{% static 'images/wishlist.svg' %}" class="sidebar-icon"> Wishlist
             </a>
 

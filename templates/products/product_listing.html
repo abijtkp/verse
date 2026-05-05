@@ -764,16 +764,15 @@
         {% if variants.has_other_pages %}
         <div class="flex items-center justify-center gap-2 mt-14">
 
-            <!-- Build the base query string (without page) -->
             {% with q=search_query sort=sort_by cat=selected_category mn=min_price mx=max_price %}
 
             <!-- Previous -->
             <a {% if variants.has_previous %}
-                   href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ variants.previous_page_number }}"
-               {% else %}
-                   href="#"
-               {% endif %}
-               class="page-btn {% if not variants.has_previous %}disabled{% endif %}">
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ variants.previous_page_number }}"
+            {% else %}
+                href="#"
+            {% endif %}
+            class="page-btn {% if not variants.has_previous %}disabled{% endif %}">
                 <span class="material-symbols-outlined icon-sm">chevron_left</span>
             </a>
 
@@ -781,12 +780,15 @@
             {% for num in variants.paginator.page_range %}
                 {% if variants.number == num %}
                     <span class="page-btn active">{{ num }}</span>
+
                 {% elif num >= variants.number|add:"-2" and num <= variants.number|add:"2" %}
-                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ num }}"
-                       class="page-btn">{{ num }}</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
+                    class="page-btn">{{ num }}</a>
+
                 {% elif num == 1 or num == variants.paginator.num_pages %}
-                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ num }}"
-                       class="page-btn">{{ num }}</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
+                    class="page-btn">{{ num }}</a>
+
                 {% elif num == variants.number|add:"-3" or num == variants.number|add:"3" %}
                     <span class="page-btn" style="border:none;cursor:default;">…</span>
                 {% endif %}
@@ -794,11 +796,11 @@
 
             <!-- Next -->
             <a {% if variants.has_next %}
-                   href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}page={{ variants.next_page_number }}"
-               {% else %}
-                   href="#"
-               {% endif %}
-               class="page-btn {% if not variants.has_next %}disabled{% endif %}">
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ variants.next_page_number }}"
+            {% else %}
+                href="#"
+            {% endif %}
+            class="page-btn {% if not variants.has_next %}disabled{% endif %}">
                 <span class="material-symbols-outlined icon-sm">chevron_right</span>
             </a>
 

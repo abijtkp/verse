@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <style>
-    /* ── Gallery ── */
     .thumb-btn {
         width: 72px;
         height: 72px;
@@ -17,27 +16,34 @@
         transition: all 0.2s ease;
         flex-shrink: 0;
     }
-    .thumb-btn:hover { border-color: #94a3b8; }
-    .thumb-btn.active { border-color: #000; }
+
+    .thumb-btn:hover {
+        border-color: #94a3b8;
+    }
+
+    .thumb-btn.active {
+        border-color: #000;
+    }
+
     .thumb-btn img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         transition: transform 0.3s ease;
     }
-    .thumb-btn:hover img { transform: scale(1.06); }
 
-    /* FIX 1: overflow removed — lens must not be clipped by the wrapper */
+    .thumb-btn:hover img {
+        transform: scale(1.06);
+    }
+
     .main-img-wrap {
         position: relative;
         width: 100%;
         border-radius: 24px;
         background: #f8fafc;
         aspect-ratio: 1 / 1;
-        /* overflow:hidden intentionally omitted */
     }
 
-    /* Apply border-radius + clip to the image itself, not the wrapper */
     .main-img-wrap > img {
         width: 100%;
         height: 100%;
@@ -48,7 +54,6 @@
         cursor: zoom-in;
     }
 
-    /* ── Size buttons ── */
     .size-btn {
         min-width: 52px;
         height: 48px;
@@ -66,8 +71,19 @@
         align-items: center;
         justify-content: center;
     }
-    .size-btn:hover:not(.disabled-size) { border-color: #000; color: #000; background: #f8fafc; }
-    .size-btn.active-size { background: #000; color: #fff; border-color: #000; }
+
+    .size-btn:hover:not(.disabled-size) {
+        border-color: #000;
+        color: #000;
+        background: #f8fafc;
+    }
+
+    .size-btn.active-size {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+
     .size-btn.disabled-size {
         background: #f8fafc;
         color: #cbd5e1;
@@ -75,18 +91,21 @@
         position: relative;
         overflow: hidden;
     }
+
     .size-btn.disabled-size::after {
         content: '';
         position: absolute;
-        top: 50%; left: 0;
-        width: 100%; height: 1.5px;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1.5px;
         background: #e2e8f0;
         transform: rotate(-12deg);
     }
 
-    /* ── Color swatches ── */
     .color-swatch {
-        width: 32px; height: 32px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         border: 2px solid transparent;
         cursor: pointer;
@@ -94,10 +113,15 @@
         box-shadow: 0 0 0 0px #000;
         position: relative;
     }
-    .color-swatch.active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000; }
-    .color-swatch:hover:not(.active) { transform: scale(1.1); }
 
-    /* ── CTA buttons ── */
+    .color-swatch.active {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
+    }
+
+    .color-swatch:hover:not(.active) {
+        transform: scale(1.1);
+    }
+
     .btn-primary {
         height: 56px;
         border-radius: 999px;
@@ -108,11 +132,23 @@
         letter-spacing: 0.15em;
         text-transform: uppercase;
         transition: all 0.2s;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         width: 100%;
     }
-    .btn-primary:hover { background: #1a1a1a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
-    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+
+    .btn-primary:hover {
+        background: #1a1a1a;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
 
     .btn-outline {
         height: 56px;
@@ -124,11 +160,17 @@
         letter-spacing: 0.12em;
         text-transform: uppercase;
         transition: all 0.2s;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
-    .btn-outline:hover { border-color: #000; color: #000; }
 
-    /* ── Highlights card ── */
+    .btn-outline:hover {
+        border-color: #000;
+        color: #000;
+    }
+
     .highlight-card {
         display: flex;
         align-items: flex-start;
@@ -139,9 +181,13 @@
         border: 1px solid #f1f5f9;
         transition: all 0.2s;
     }
-    .highlight-card:hover { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-color: #e2e8f0; }
 
-    /* ── Related product card ── */
+    .highlight-card:hover {
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border-color: #e2e8f0;
+    }
+
     .related-card {
         border-radius: 20px;
         background: #fafafa;
@@ -149,30 +195,49 @@
         transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
         cursor: pointer;
     }
-    .related-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.10); background: #fff; }
+
+    .related-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.10);
+        background: #fff;
+    }
+
     .related-card-img {
-        width: 100%; aspect-ratio: 1/1;
+        width: 100%;
+        aspect-ratio: 1/1;
         object-fit: cover;
         background: #f1f5f9;
         transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
     }
-    .related-card:hover .related-card-img { transform: scale(1.06); }
 
-    /* ── Accordion ── */
+    .related-card:hover .related-card-img {
+        transform: scale(1.06);
+    }
+
     .accordion-body {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
     }
-    .accordion-body.open { max-height: 600px; }
-    .accordion-icon { transition: transform 0.3s ease; }
-    .accordion-icon.rotated { transform: rotate(45deg); }
 
-    /* ── Sticky mobile CTA ── */
+    .accordion-body.open {
+        max-height: 600px;
+    }
+
+    .accordion-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .accordion-icon.rotated {
+        transform: rotate(45deg);
+    }
+
     @media (max-width: 767px) {
         .sticky-mobile-cta {
             position: fixed;
-            bottom: 0; left: 0; right: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
             z-index: 200;
             padding: 16px 20px;
             background: rgba(255,255,255,0.95);
@@ -182,20 +247,17 @@
         }
     }
 
-    /* ── Image fade ── */
-    @keyframes imgFade { from { opacity: 0.5; } to { opacity: 1; } }
-    .img-fade { animation: imgFade 0.25s ease; }
+    @keyframes imgFade {
+        from { opacity: 0.5; }
+        to { opacity: 1; }
+    }
 
-    /* ── Stars ── */
-    .stars { color: #000; letter-spacing: 1px; }
+    .img-fade {
+        animation: imgFade 0.25s ease;
+    }
 
-    /* ════════════════════════════════════
-       LENS ZOOM — all fixes consolidated
-    ════════════════════════════════════ */
-
-    /* The square lens that tracks the cursor over the main image */
     .zoom-lens {
-        position: absolute;          /* anchors to .main-img-wrap */
+        position: absolute;
         width: 130px;
         height: 130px;
         border: 2px solid rgba(0, 0, 0, 0.28);
@@ -204,30 +266,29 @@
         border-radius: 6px;
         pointer-events: none;
         display: none;
-        z-index: 20;                 /* above image, below badges */
+        z-index: 20;
         box-shadow:
             0 0 0 1px rgba(255,255,255,0.45),
             inset 0 0 0 1px rgba(255,255,255,0.25);
     }
 
-    /* FIX 2: position:absolute + correct left/top + all semicolons present */
     .zoom-preview-box {
-        position: absolute;          /* anchors to .gallery-col (position:relative) */
-        left: calc(100% + 64px);     /* right of the gallery column */
+        position: absolute;
+        left: calc(100% + 60px);
         top: 25px;
         width: 350px;
         height: 350px;
         border-radius: 20px;
         overflow: hidden;
         display: none;
-        z-index: 300;                /* clears the right product-info column */
+        z-index: 300;
         background: #f8fafc;
-        box-shadow: 0 24px 60px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.07);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.14),
+                    0 0 0 1px rgba(0,0,0,0.07);
         pointer-events: none;
         isolation: isolate;
     }
 
-    /* FIX 3: semicolons on every property, max-width/height:none so image isn't constrained */
     .zoom-preview-box img {
         position: absolute;
         top: 0;
@@ -236,22 +297,46 @@
         max-width: none;
         max-height: none;
         transform-origin: 0 0;
-        /* width + height set dynamically by JS */
     }
 
-    /* Hide on touch screens */
     @media (hover: none) {
         .zoom-lens,
-        .zoom-preview-box { display: none !important; }
+        .zoom-preview-box {
+            display: none !important;
+        }
+    }
+
+    .rating-group {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .rating-group input {
+        display: none;
+    }
+
+    .rating-group label {
+        cursor: pointer;
+        color: #cbd5e1;
+        transition: color 0.15s ease, transform 0.15s ease;
+    }
+
+    .rating-group label:hover {
+        transform: scale(1.08);
+    }
+
+    .rating-group input:checked ~ label,
+    .rating-group label:hover,
+    .rating-group label:hover ~ label {
+        color: #000;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- ══════════════════════════════════════
-     BREADCRUMBS
-══════════════════════════════════════ -->
 <section class="px-6 md:px-10 lg:px-16 pt-6 pb-2">
     <div class="max-w-screen-xl mx-auto">
         <nav class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -264,23 +349,14 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════
-     MAIN PRODUCT SECTION
-══════════════════════════════════════ -->
 <section class="px-6 md:px-10 lg:px-16 py-8">
     <div class="max-w-screen-xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16">
 
-            <!-- ── LEFT: GALLERY ──
-                 FIX 4: position:relative here so .zoom-preview-box
-                 (position:absolute; left:100%) anchors correctly to this column,
-                 not to a distant ancestor. sticky still works fine with position:relative.
-            -->
             <div class="flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24 lg:self-start"
                  id="galleryCol"
                  style="position: relative;">
 
-                <!-- Thumbnails -->
                 <div class="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[520px] pb-1 md:pb-0"
                      id="thumbList">
                     {% for image in variant.images.all %}
@@ -297,22 +373,16 @@
                     {% endfor %}
                 </div>
 
-                <!-- Main image + lens -->
                 <div class="flex-1">
                     <div class="main-img-wrap" id="mainImgWrapper">
-
-                        <!-- Main product image -->
                         {% with first=variant.images.first %}
                         <img id="mainProductImg"
                              src="{% if first %}{{ first.image_url.url }}{% else %}{% static 'images/no_product.png' %}{% endif %}"
-                             alt="{{ variant.product.product_name }}"
-                             >
+                             alt="{{ variant.product.product_name }}">
                         {% endwith %}
 
-                        <!-- Lens — position:absolute anchors to .main-img-wrap -->
                         <div class="zoom-lens" id="zoomLens"></div>
 
-                        <!-- Stock badges sit above lens -->
                         {% if variant.stock == 0 %}
                         <span class="absolute top-4 left-4 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full" style="z-index:25;">
                             Out of Stock
@@ -325,25 +395,19 @@
                     </div>
                 </div>
 
-                <!-- Preview box — sibling of thumb+image row, child of galleryCol.
-                     position:absolute; left:100% pushes it to the right of galleryCol. -->
                 <div class="zoom-preview-box" id="zoomPreviewBox">
                     <img id="zoomPreviewImg" src="" alt="Zoom preview">
                 </div>
+            </div>
 
-            </div><!-- end galleryCol -->
-
-            <!-- ── RIGHT: PRODUCT INFO ── -->
             <div class="flex flex-col gap-7 pb-24 md:pb-0">
 
-                <!-- Category tag -->
                 <div>
                     <span class="inline-block text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 border border-slate-200 rounded-full px-3 py-1">
                         {{ variant.product.category.category_name }}
                     </span>
                 </div>
 
-                <!-- Title -->
                 <div>
                     <h1 class="text-3xl md:text-4xl xl:text-5xl font-[900] uppercase italic tracking-tighter leading-none mb-2">
                         {{ variant.product.product_name }}
@@ -353,7 +417,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Price -->
                 <div class="flex items-center gap-4">
                     <span class="text-3xl font-black tracking-tight">₹{{ variant.price }}</span>
                     {% if variant.original_price and variant.original_price > variant.price %}
@@ -362,7 +425,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Stock indicator -->
                 <div class="flex items-center gap-2">
                     {% if variant.stock == 0 %}
                         <span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
@@ -378,7 +440,6 @@
 
                 <div class="h-px bg-slate-100"></div>
 
-                <!-- Color swatches -->
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
                         Color — <span class="text-black">{{ variant.color }}</span>
@@ -411,7 +472,6 @@
                     </div>
                 </div>
 
-                <!-- Size selection -->
                 <div>
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -437,9 +497,8 @@
 
                 <div class="h-px bg-slate-100"></div>
 
-                <!-- CTA (desktop) -->
                 <div class="hidden md:flex flex-col gap-3">
-                    <form method="POST" action="#" class="w-full">
+                    <form method="POST" action="{% url 'add_to_cart' variant.id %}" class="w-full">
                         {% csrf_token %}
                         <button type="submit" class="btn-primary"
                                 {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
@@ -447,18 +506,32 @@
                             {% if variant.stock == 0 %}Unavailable{% else %}Add to Cart{% endif %}
                         </button>
                     </form>
+
                     <div class="flex gap-3">
-                        <button type="button" class="btn-outline flex-1">
-                            <span class="material-symbols-outlined" style="font-size:18px;">favorite</span>
-                            Wishlist
-                        </button>
+                        <form method="POST" action="{% url 'toggle_wishlist' variant.id %}" class="flex-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-outline w-full">
+                                <span class="material-symbols-outlined {% if is_in_wishlist %}text-red-500{% endif %}"
+                                      style="
+                                        font-size:18px;
+                                        font-variation-settings:
+                                        'FILL' {% if is_in_wishlist %}1{% else %}0{% endif %},
+                                        'wght' 500,
+                                        'GRAD' 0,
+                                        'opsz' 24;
+                                      ">
+                                    favorite
+                                </span>
+                                Wishlist
+                            </button>
+                        </form>
+
                         <button type="button" class="btn-outline w-14 flex-shrink-0">
                             <span class="material-symbols-outlined" style="font-size:18px;">share</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Trust badges -->
                 <div class="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
                     <span class="flex items-center gap-1.5">
                         <span class="material-symbols-outlined" style="font-size:14px;">local_shipping</span>
@@ -479,9 +552,6 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════
-     ACCORDIONS
-══════════════════════════════════════ -->
 <section class="px-6 md:px-10 lg:px-16 py-10 border-t border-slate-100">
     <div class="max-w-screen-xl mx-auto">
         <div class="max-w-3xl">
@@ -497,7 +567,7 @@
                         {% if variant.product.description %}
                             {{ variant.product.description }}
                         {% else %}
-                            The {{ variant.product.product_name }} is engineered for the modern athlete who demands performance without compromise. Built with revolutionary responsive cushioning and premium materials, this silhouette delivers unmatched comfort from morning runs to weekend adventures. Every detail is considered, every stitch deliberate — because greatness lives in the details.
+                            The {{ variant.product.product_name }} is engineered for the modern athlete who demands performance without compromise.
                         {% endif %}
                     </div>
                 </div>
@@ -515,42 +585,28 @@
                             <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">bolt</span>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-wider mb-0.5">Lightweight Build</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Feather-light foam upper keeps fatigue minimal over long wear.</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Feather-light upper keeps fatigue minimal.</p>
                             </div>
                         </div>
                         <div class="highlight-card">
                             <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">spa</span>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-wider mb-0.5">Premium Grip</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Durable high-grip rubber outsole engineered for traction on any surface.</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Durable outsole engineered for traction.</p>
                             </div>
                         </div>
                         <div class="highlight-card">
                             <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">air</span>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-wider mb-0.5">Engineered Mesh</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Advanced breathable mesh keeps airflow optimal through every stride.</p>
-                            </div>
-                        </div>
-                        <div class="highlight-card">
-                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">self_improvement</span>
-                            <div>
-                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Responsive Comfort</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Precision-calibrated cushioning adapts to your foot's natural motion.</p>
-                            </div>
-                        </div>
-                        <div class="highlight-card">
-                            <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">architecture</span>
-                            <div>
-                                <p class="text-xs font-black uppercase tracking-wider mb-0.5">Minimalist Design</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Sleek silhouette moves seamlessly from training to street style.</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Breathable mesh keeps airflow optimal.</p>
                             </div>
                         </div>
                         <div class="highlight-card">
                             <span class="material-symbols-outlined text-slate-400 flex-shrink-0" style="font-size:22px;">verified</span>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-wider mb-0.5">Durable Materials</p>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Engineered to last — premium quality that stands up to every challenge.</p>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed">Premium quality built to last.</p>
                             </div>
                         </div>
                     </div>
@@ -585,13 +641,174 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════
-     RELATED PRODUCTS
-══════════════════════════════════════ -->
+
+                    <!-- RATINGS & REVIEWS -->
+
+                    <!-- RATINGS & REVIEWS -->
+                    <section class="px-6 md:px-10 lg:px-16 py-14 border-t border-slate-100">
+                        <div class="max-w-screen-xl mx-auto">
+
+                            <div class="max-w-4xl mx-auto">
+
+                                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">
+                                            Community Feedback
+                                        </p>
+
+                                        <h2 class="text-2xl md:text-3xl font-[900] uppercase italic tracking-tighter">
+                                            Ratings & Reviews
+                                        </h2>
+                                    </div>
+
+                                    <div class="sm:text-right">
+                                        <p class="text-4xl font-black leading-none">
+                                            {{ average_rating|floatformat:1|default:"0.0" }}
+                                        </p>
+
+                                        <div class="flex items-center sm:justify-end gap-0.5 mt-2">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= average_rating %}
+                                                    <span class="material-symbols-outlined text-black text-[20px]"
+                                                        style="font-variation-settings:'FILL' 1;">
+                                                        star
+                                                    </span>
+                                                {% else %}
+                                                    <span class="material-symbols-outlined text-slate-300 text-[20px]"
+                                                        style="font-variation-settings:'FILL' 1;">
+                                                        star
+                                                    </span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+
+                                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
+                                            {{ reviews.count }} Review{{ reviews.count|pluralize }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {% if request.user.is_authenticated %}
+                                <form method="POST"
+                                    action="#"
+                                    class="mb-10 bg-slate-50 border border-slate-100 rounded-3xl p-6 md:p-8">
+                                    {% csrf_token %}
+
+                                    <div class="mb-6">
+                                        <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 mb-3">
+                                            Your Rating
+                                        </label>
+
+                                        <div class="rating-group">
+                                            <input type="radio" id="star5" name="rating" value="5" {% if user_review.rating == 5 %}checked{% endif %} required>
+                                            <label for="star5">
+                                                <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">star</span>
+                                            </label>
+
+                                            <input type="radio" id="star4" name="rating" value="4" {% if user_review.rating == 4 %}checked{% endif %}>
+                                            <label for="star4">
+                                                <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">star</span>
+                                            </label>
+
+                                            <input type="radio" id="star3" name="rating" value="3" {% if user_review.rating == 3 %}checked{% endif %}>
+                                            <label for="star3">
+                                                <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">star</span>
+                                            </label>
+
+                                            <input type="radio" id="star2" name="rating" value="2" {% if user_review.rating == 2 %}checked{% endif %}>
+                                            <label for="star2">
+                                                <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">star</span>
+                                            </label>
+
+                                            <input type="radio" id="star1" name="rating" value="1" {% if user_review.rating == 1 %}checked{% endif %}>
+                                            <label for="star1">
+                                                <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">star</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-6">
+                                        <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 mb-3">
+                                            Review Message
+                                        </label>
+
+                                        <textarea
+                                            name="review_text"
+                                            rows="4"
+                                            placeholder="Share your experience with this product..."
+                                            class="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm focus:outline-none focus:border-black transition-all resize-none">{{ user_review.review_text|default:'' }}</textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary max-w-[220px]">
+                                        {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <div class="space-y-5">
+                                    {% for review in reviews %}
+                                    <div class="border border-slate-100 rounded-3xl p-6 bg-white">
+                                        <div class="flex items-start justify-between gap-4 mb-4">
+                                            <div>
+                                                <h4 class="text-sm font-black uppercase tracking-wide">
+                                                    {{ review.user.full_name|default:review.user.email }}
+                                                </h4>
+
+                                                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mt-1">
+                                                    {{ review.created_at|date:"d M Y" }}
+                                                </p>
+                                            </div>
+
+                                            <div class="flex gap-0.5">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= review.rating %}
+                                                        <span class="material-symbols-outlined text-black text-[18px]"
+                                                            style="font-variation-settings:'FILL' 1;">
+                                                            star
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="material-symbols-outlined text-slate-300 text-[18px]"
+                                                            style="font-variation-settings:'FILL' 1;">
+                                                            star
+                                                        </span>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        {% if review.review_text %}
+                                        <p class="text-sm leading-relaxed text-slate-600 font-medium">
+                                            {{ review.review_text }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    {% empty %}
+                                    <div class="border border-dashed border-slate-200 rounded-3xl p-10 text-center">
+                                        <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">
+                                            reviews
+                                        </span>
+
+                                        <h3 class="text-lg font-black uppercase tracking-wide mb-2">
+                                            No Reviews Yet
+                                        </h3>
+
+                                        <p class="text-sm text-slate-500 font-medium">
+                                            Be the first customer to review this product.
+                                        </p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </section>
+
+
+
 {% if related_products %}
 <section class="px-6 md:px-10 lg:px-16 py-12 border-t border-slate-100">
     <div class="max-w-screen-xl mx-auto">
-
         <div class="flex items-end justify-between mb-8">
             <div>
                 <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">You Might Also Like</p>
@@ -613,10 +830,6 @@
                          src="{% if img %}{{ img.image_url.url }}{% else %}{% static 'images/no_product.png' %}{% endif %}"
                          alt="{{ item.product.product_name }}">
                     {% endwith %}
-                    <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:scale-110"
-                            onclick="event.preventDefault();">
-                        <span class="material-symbols-outlined text-slate-500" style="font-size:16px;">favorite</span>
-                    </button>
                 </div>
                 <div class="p-4">
                     <p class="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">
@@ -638,40 +851,44 @@
             </a>
             {% endfor %}
         </div>
-
     </div>
 </section>
 {% endif %}
 
-<!-- ══════════════════════════════════════
-     STICKY MOBILE CTA
-══════════════════════════════════════ -->
 <div class="sticky-mobile-cta md:hidden">
     <div class="flex gap-3">
-        <form method="POST" action="#" class="flex-1">
+        <form method="POST" action="{% url 'add_to_cart' variant.id %}" class="flex-1">
             {% csrf_token %}
             <button type="submit" class="btn-primary"
-                    {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
+                    {% if variant.stock == 0 or not variant.is_active or variant.is_deleted or not variant.product.is_active or variant.product.is_deleted %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
                 <span class="material-symbols-outlined" style="font-size:18px;">shopping_bag</span>
                 {% if variant.stock == 0 %}Unavailable{% else %}Add to Cart{% endif %}
             </button>
         </form>
-        <button type="button" class="btn-outline w-14 flex-shrink-0">
-            <span class="material-symbols-outlined" style="font-size:18px;">favorite</span>
-        </button>
+
+        <form method="POST" action="{% url 'toggle_wishlist' variant.id %}" class="w-14 flex-shrink-0">
+            {% csrf_token %}
+            <button type="submit" class="btn-outline w-full">
+                <span class="material-symbols-outlined {% if is_in_wishlist %}text-red-500{% endif %}"
+                      style="
+                        font-size:18px;
+                        font-variation-settings:
+                        'FILL' {% if is_in_wishlist %}1{% else %}0{% endif %},
+                        'wght' 500,
+                        'GRAD' 0,
+                        'opsz' 24;
+                      ">
+                    favorite
+                </span>
+            </button>
+        </form>
     </div>
 </div>
-
-<!-- ══════════════════════════════════════
-     FULLSCREEN ZOOM MODAL (click)
-══════════════════════════════════════ -->
-
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // ── Image switcher ───────────────────────────────────────
     function switchImage(src, thumbEl) {
         const main = document.getElementById('mainProductImg');
         main.classList.remove('img-fade');
@@ -682,7 +899,6 @@
         thumbEl.classList.add('active');
     }
 
-    // ── Accordion ────────────────────────────────────────────
     function toggleAccordion(id) {
         const body = document.getElementById('body-' + id);
         const icon = document.getElementById('icon-' + id);
@@ -691,30 +907,22 @@
         icon.classList.toggle('rotated', !isOpen);
     }
 
-    // ── Fullscreen zoom modal ────────────────────────────────
-    
-
-    // ── Nike-style Lens Zoom ─────────────────────────────────
     (function () {
-        const LENS_W    = 130;   // lens square width  (px)
-        const LENS_H    = 130;   // lens square height (px)
-        const PREVIEW_W = 350;   // preview box width  (px)
-        const PREVIEW_H = 350;   // preview box height (px)
+        const LENS_W = 130;
+        const LENS_H = 130;
+        const PREVIEW_W = 350;
+        const PREVIEW_H = 350;
 
-        // Magnification = preview / lens
-        const ratioX = PREVIEW_W / LENS_W;   // ≈ 2.92×
+        const ratioX = PREVIEW_W / LENS_W;
         const ratioY = PREVIEW_H / LENS_H;
 
-        const wrapper    = document.getElementById('mainImgWrapper');
-        const mainImg    = document.getElementById('mainProductImg');
-        const lens       = document.getElementById('zoomLens');
+        const wrapper = document.getElementById('mainImgWrapper');
+        const mainImg = document.getElementById('mainProductImg');
+        const lens = document.getElementById('zoomLens');
         const previewBox = document.getElementById('zoomPreviewBox');
         const previewImg = document.getElementById('zoomPreviewImg');
 
-        // Abort if any element is missing
         if (!wrapper || !mainImg || !lens || !previewBox || !previewImg) return;
-
-        // Disable on touch-only devices
         if (!window.matchMedia('(hover: hover)').matches) return;
 
         function syncSrc() {
@@ -723,65 +931,58 @@
 
         function setupPreview() {
             syncSrc();
+
             const imgW = mainImg.offsetWidth;
             const imgH = mainImg.offsetHeight;
-            if (!imgW || !imgH) return;   // image not laid out yet — skip
 
-            // Scale the preview image so one lens-sized region fills the entire preview box.
-            // Formula: previewImg.size = renderedImg.size × magnification
-            previewImg.style.width  = (imgW * ratioX) + 'px';
+            if (!imgW || !imgH) return;
+
+            previewImg.style.width = (imgW * ratioX) + 'px';
             previewImg.style.height = (imgH * ratioY) + 'px';
 
-            previewBox.style.width  = PREVIEW_W + 'px';
+            previewBox.style.width = PREVIEW_W + 'px';
             previewBox.style.height = PREVIEW_H + 'px';
         }
 
-        function clamp(v, lo, hi) { return Math.max(lo, Math.min(v, hi)); }
+        function clamp(v, lo, hi) {
+            return Math.max(lo, Math.min(v, hi));
+        }
 
         function onMouseMove(e) {
             const rect = mainImg.getBoundingClientRect();
             const imgW = rect.width;
             const imgH = rect.height;
 
-            // Cursor position relative to the rendered image element
             const cursorX = e.clientX - rect.left;
             const cursorY = e.clientY - rect.top;
 
-            // Lens top-left corner — clamped so lens never leaves the image
             const lensX = clamp(cursorX - LENS_W / 2, 0, imgW - LENS_W);
             const lensY = clamp(cursorY - LENS_H / 2, 0, imgH - LENS_H);
 
-            // Move the lens square to follow cursor
             lens.style.left = lensX + 'px';
-            lens.style.top  = lensY + 'px';
+            lens.style.top = lensY + 'px';
 
-            // Shift the oversized preview image so the area under the lens
-            // is exactly what fills the preview box.
-            // previewImg offset = lensTopLeft × magnification (negative because we translate left/up)
             previewImg.style.left = (-lensX * ratioX) + 'px';
-            previewImg.style.top  = (-lensY * ratioY) + 'px';
+            previewImg.style.top = (-lensY * ratioY) + 'px';
         }
 
         wrapper.addEventListener('mouseenter', function () {
             setupPreview();
-            lens.style.display       = 'block';
+            lens.style.display = 'block';
             previewBox.style.display = 'block';
         });
 
         wrapper.addEventListener('mousemove', onMouseMove);
 
         wrapper.addEventListener('mouseleave', function () {
-            lens.style.display       = 'none';
+            lens.style.display = 'none';
             previewBox.style.display = 'none';
         });
 
-        // Re-sync when thumbnail click changes mainImg.src
         new MutationObserver(function () {
             syncSrc();
             if (previewBox.style.display !== 'none') setupPreview();
         }).observe(mainImg, { attributes: true, attributeFilter: ['src'] });
-
     }());
-    // ── End Lens Zoom ────────────────────────────────────────
 </script>
 {% endblock %}

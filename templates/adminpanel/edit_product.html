@@ -5,7 +5,7 @@
 {% block page_title %}Edit Product{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl">
+<div class="max-w-6xl mx-auto px-2">
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
             <a href="{% url 'product_list' %}"
@@ -35,7 +35,7 @@
           class="space-y-6">
         {% csrf_token %}
 
-        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-8">
+        <div class="bg-white p-8 md:p-10 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
             <div class="flex items-center justify-between pb-4 border-b border-slate-50">
                 <div class="flex items-center gap-3">
                     <span class="material-symbols-outlined text-slate-900">edit_note</span>
@@ -156,19 +156,19 @@
             </div>
 
             <!-- Actions -->
-            <div class="pt-6 border-t border-slate-50 flex items-center justify-end gap-4">
+            <div class="pt-6 border-t border-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                 <button type="button"
                         data-confirm-modal
                         data-modal-title="Discard Changes"
                         data-modal-message="Are you sure you want to discard your changes? Unsaved progress will be lost."
                         data-modal-confirm-text="Discard"
                         data-modal-form-id="back-to-list-redirect"
-                        class="px-8 py-3 rounded-full border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                        class="h-12 px-8 rounded-full border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
                     Discard
                 </button>
 
                 <button type="submit"
-                        class="px-8 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:opacity-90 shadow-lg shadow-black/10 transition-all">
+                        class="h-12 px-8 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:opacity-90 shadow-lg shadow-black/10 transition-all">
                     Update Product
                 </button>
             </div>

@@ -10,6 +10,7 @@ from django.db import transaction
 from accounts.decorators import user_required
 from django.views.decorators.http import require_POST
 from django.core.files.images import get_image_dimensions
+from allauth.socialaccount.models import SocialAccount
 
 @never_cache
 @user_required
@@ -429,8 +430,14 @@ def set_default_address(request, pk):
 
 @user_required
 def change_email_view(request):
+    
+    if SocialAccount.objects.filter(user=request.user, provider='google').exists():
+        messages.error(request, "Google account email cannot be changed.")
+        return redirect('profile')
+    
+    
     if request.method == 'POST':
-        new_email = request.POST.get('new_email')
+        new_email = request.POST.get('new_email').strip()
         
         if not new_email:
             messages.error(request, "Email is required")

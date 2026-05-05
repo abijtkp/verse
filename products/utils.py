@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from PIL import Image
 
 
-ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif']
 
 
 def optimize_variant_image(image_file, max_size=(1200, 1200), quality=85):
@@ -13,12 +13,12 @@ def optimize_variant_image(image_file, max_size=(1200, 1200), quality=85):
 
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
         raise ValueError(
-            'Unsupported image format. Please upload JPG, JPEG, PNG, or WEBP images.'
+            'Unsupported image format. Please upload JPG, JPEG, PNG, WEBP or AVIF images.'
         )
 
     image = Image.open(image_file)
 
-    if image.mode in ("RGBA", "P"):
+    if image.mode in ("RGBA", "P", "LA"):
         image = image.convert("RGB")
 
     image.thumbnail(max_size)
