@@ -1,213 +1,964 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<style>
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero-section {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        background: #080808;
+    }
+
+    .hero-bg-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(120px, 22vw, 320px);
+        font-weight: 900;
+        font-style: italic;
+        letter-spacing: -0.06em;
+        text-transform: uppercase;
+        color: #fff;
+        opacity: 0.025;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        line-height: 0.85;
+    }
+
+    .hero-noise {
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+        opacity: 0.04;
+        pointer-events: none;
+    }
+
+    .hero-gradient {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 80% 60% at 65% 50%, rgba(60,60,60,0.4) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    /* ─── TICKER ─────────────────────────────────────────────── */
+    .ticker-wrap {
+        overflow: hidden;
+        border-top: 1px solid rgba(10,10,10,0.08);
+        border-bottom: 1px solid rgba(10,10,10,0.08);
+        padding: 14px 0;
+        background: #fdfdfd;
+    }
+
+    .ticker-track {
+        display: flex;
+        gap: 0;
+        width: max-content;
+        animation: ticker 30s linear infinite;
+    }
+
+    .ticker-track:hover { animation-play-state: paused; }
+
+    @keyframes ticker {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        padding: 0 32px;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #0a0a0a;
+        white-space: nowrap;
+        opacity: 0.6;
+    }
+
+    .ticker-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #9e9e9e;
+        flex-shrink: 0;
+    }
+
+    /* ─── HERITAGE SECTION ───────────────────────────────────── */
+    .heritage-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        background: #e8e8e4;
+    }
+
+    .heritage-cell {
+        background: #fdfdfd;
+        padding: 60px 56px;
+    }
+
+    @media (max-width: 768px) {
+        .heritage-grid { grid-template-columns: 1fr; }
+        .heritage-cell { padding: 40px 28px; }
+    }
+
+    /* ─── CATEGORY CARDS ─────────────────────────────────────── */
+    .cat-card {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        border-radius: 20px;
+        background: #f0efeb;
+    }
+
+    .cat-card-img {
+        width: 100%;
+        aspect-ratio: 4/5;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .cat-card:hover .cat-card-img { transform: scale(1.06); }
+
+    .cat-card-label {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(253,253,253,0.92);
+        backdrop-filter: blur(12px);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #0a0a0a;
+    }
+
+    .cat-card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(10,10,10,0.3) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .cat-card:hover .cat-card-overlay { opacity: 1; }
+
+    /* ─── CRAFTSMANSHIP SECTION ──────────────────────────────── */
+    .craft-section {
+        background: #0a0a0a;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .craft-stat {
+        border-top: 1px solid rgba(253,253,253,0.08);
+        padding: 28px 0;
+    }
+
+    /* ─── SPOTLIGHT SECTION ──────────────────────────────────── */
+    .spotlight-section {
+        background: #f5f5f3;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* ─── PRODUCT CARDS ──────────────────────────────────────── */
+    .product-card {
+        background: #fdfdfd;
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), box-shadow 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 32px 80px rgba(10,10,10,0.12);
+    }
+
+    .product-img-wrap {
+        position: relative;
+        aspect-ratio: 1;
+        background: #f5f5f3;
+        overflow: hidden;
+    }
+
+    .product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 28px;
+        transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .product-card:hover .product-img { transform: scale(1.08); }
+
+    .wishlist-btn {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(253,253,253,0.9);
+        backdrop-filter: blur(8px);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, transform 0.2s ease;
+        z-index: 2;
+    }
+
+    .wishlist-btn:hover {
+        background: #fff;
+        transform: scale(1.1);
+    }
+
+    .new-badge {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        background: #0a0a0a;
+        color: #fdfdfd;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        padding: 5px 10px;
+        border-radius: 999px;
+        z-index: 2;
+    }
+
+    .add-to-cart-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        border: 1.5px solid rgba(10,10,10,0.1);
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .add-to-cart-btn:hover {
+        background: #0a0a0a;
+        border-color: #0a0a0a;
+    }
+
+    .add-to-cart-btn:hover svg { stroke: #fdfdfd; }
+    .add-to-cart-btn:active { transform: scale(0.93); }
+
+    /* ─── MEMBER JOURNEY ─────────────────────────────────────── */
+    .journey-card {
+        background: #0a0a0a;
+        border-radius: 28px;
+        padding: 48px 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .journey-card::before {
+        content: attr(data-num);
+        position: absolute;
+        bottom: -20px;
+        right: -10px;
+        font-size: 160px;
+        font-weight: 900;
+        font-style: italic;
+        color: rgba(253,253,253,0.03);
+        line-height: 1;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* ─── HERO ENTRANCE ANIMATIONS ───────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-animate {
+        opacity: 0;
+        animation: fadeUp 1s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    .ha-1 { animation-delay: 0.2s; }
+    .ha-2 { animation-delay: 0.45s; }
+    .ha-3 { animation-delay: 0.65s; }
+    .ha-4 { animation-delay: 0.85s; }
+    .ha-5 { animation-delay: 1.05s; }
+
+
+    .spotlight-image-card {
+    background: #eeecea;
+    padding: 0;
+    }
+
+    .spotlight-image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .size-option {
+        color: #0a0a0a !important;
+        background: transparent;
+    }
+
+    .size-option:hover {
+        background: #0a0a0a !important;
+        color: #fdfdfd !important;
+        border-color: #0a0a0a !important;
+    }
+
+    .hero-shoe-image{
+    width:min(650px,95%);
+    object-fit:contain;
+
+    filter:
+            drop-shadow(0 45px 80px rgba(0,0,0,0.55))
+            drop-shadow(0 10px 25px rgba(255,255,255,0.08));
+
+        transform:
+            perspective(1400px)
+            rotateY(-18deg)
+            rotateZ(-8deg);
+
+        animation: luxuryFloat 5s ease-in-out infinite;
+
+        transition: transform 0.6s ease;
+    }
+
+        .hero-shoe-image:hover{
+            transform:
+                perspective(1400px)
+                rotateY(-12deg)
+                rotateZ(-5deg)
+                scale(1.03);
+        }
+
+        @keyframes luxuryFloat{
+            0%,100%{
+                transform:
+                    perspective(1400px)
+                    rotateY(-18deg)
+                    rotateZ(-8deg)
+                    translateY(0px);
+            }
+
+            50%{
+                transform:
+                    perspective(1400px)
+                    rotateY(-15deg)
+                    rotateZ(-6deg)
+                    translateY(-18px);
+            }
+        }
+
+
+
+</style>
+{% endblock %}
+
 {% block content %}
 
+<!-- ═══════════════════════════════════════════════════════════
+     1. CINEMATIC HERO
+════════════════════════════════════════════════════════════ -->
+<section class="hero-section">
+    <div class="hero-bg-text">VERSE</div>
+    <div class="hero-noise"></div>
+    <div class="hero-gradient"></div>
 
-<section class="relative w-full overflow-hidden flex flex-col items-center justify-center mb-[-1px]" 
-         style="background: radial-gradient(circle at 70% 50%, #2c2c2c 0%, #0a0a0a 100%); min-height: 100vh;">
-    
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-        <span class="text-[35vw] font-[1000] italic uppercase leading-none opacity-[0.02] translate-y-20" style="color: #ffffff; letter-spacing: -0.05em;">
-            JORDAN
-        </span>
+    <div class="max-w-7xl mx-auto px-6 lg:px-10 w-full relative z-10">
+        <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-0 min-h-screen py-28 lg:py-0">
+
+            <!-- Left: Copy -->
+            <div class="flex-1 space-y-8 text-center lg:text-left order-2 lg:order-1">
+                <div class="hero-animate ha-1">
+                    <span class="section-eyebrow" style="color:rgba(253,253,253,0.35);">
+                        <span style="background:rgba(253,253,253,0.35);"></span>
+                        New Season / SS 2026
+                    </span>
+                </div>
+
+                <h1 class="hero-animate ha-2"
+                    style="font-size:clamp(52px,9vw,120px);font-weight:900;font-style:italic;line-height:0.82;letter-spacing:-0.04em;text-transform:uppercase;color:#fdfdfd;">
+                    MASTER<br>
+                    <span style="-webkit-text-stroke:1.5px rgba(253,253,253,0.3);color:transparent;">THE COURT</span>
+                </h1>
+
+                <p class="hero-animate ha-3 text-sm md:text-base max-w-md mx-auto lg:mx-0 leading-relaxed"
+                   style="color:rgba(253,253,253,0.5);">
+                    Engineered with hand-selected premium suede, responsive Air cushioning, and a silhouette that defined a generation — refined for those who move forward.
+                </p>
+
+                <div class="hero-animate ha-4 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    <a href="{% url 'product_listing' %}" class="btn-primary">
+                        Explore Collection
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-7-7 7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="btn-ghost">Member Access</a>
+                </div>
+
+                <!-- Stats row -->
+                <div class="hero-animate ha-5 flex gap-8 justify-center lg:justify-start pt-4">
+                    <div>
+                        <p class="text-2xl font-black italic" style="color:#fdfdfd;">200+</p>
+                        <p style="font-size:9px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:rgba(253,253,253,0.3);">Styles</p>
+                    </div>
+                    <div style="width:1px;background:rgba(253,253,253,0.1);"></div>
+                    <div>
+                        <p class="text-2xl font-black italic" style="color:#fdfdfd;">14+</p>
+                        <p style="font-size:9px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:rgba(253,253,253,0.3);">Brands</p>
+                    </div>
+                    <div style="width:1px;background:rgba(253,253,253,0.1);"></div>
+                    <div>
+                        <p class="text-2xl font-black italic" style="color:#fdfdfd;">48h</p>
+                        <p style="font-size:9px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:rgba(253,253,253,0.3);">Delivery</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Right: Product image -->
+            <div class="flex-1 relative flex items-center justify-center order-1 lg:order-2 w-full">
+                <!-- Glow -->
+                <div class="absolute rounded-full glow-pulse"
+                     style="width:65%;aspect-ratio:1;background:radial-gradient(circle, rgba(150,150,150,0.35), transparent 70%);"></div>
+
+                <!-- Ground shadow -->
+                <div class="absolute bottom-10 left-1/2 -translate-x-1/2"
+                     style="width:55%;height:60px;background:rgba(0,0,0,0.5);filter:blur(40px);border-radius:50%;transform:translateX(-50%) scaleY(0.4);"></div>
+
+                <img src="{% static 'images/jordpreview.png' %}"
+                    alt="VERSE Signature Sneaker"
+                    class="hero-shoe-image relative">
+
+                <!-- Corner tag -->
+                <div class="absolute bottom-16 right-4 lg:-right-4 flex flex-col items-end gap-1 pr-5 py-2"
+                     style="border-right:2px solid rgba(253,253,253,0.15);">
+                    <span style="font-size:8px;font-weight:900;letter-spacing:0.22em;text-transform:uppercase;color:rgba(253,253,253,0.3);">Technology</span>
+                    <span style="font-size:15px;font-weight:900;font-style:italic;text-transform:uppercase;color:#fdfdfd;letter-spacing:-0.02em;">NIKE AIR</span>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-16 relative z-10 w-full pt-12 lg:pt-20 pb-0">
-        
-        <div class="flex-1 space-y-8 text-center lg:text-left">
-            <div class="inline-flex items-center gap-3">
-                <span class="w-12 h-[2px]" style="background-color: #757575;"></span>
-                <span class="font-black tracking-[0.3em] uppercase text-[10px]" style="color: #9e9e9e;">
-                    Innovation / 001
-                </span>
-            </div>
-            
-            <div class="space-y-2">
-                <h1 class="text-6xl md:text-7xl lg:text-[110px] font-[1000] leading-[0.8] tracking-tighter uppercase italic" style="color: #fdfdfd;">
-                    MASTER <br> 
-                    <span class="text-transparent" style="-webkit-text-stroke: 1.5px rgba(253, 253, 253, 0.4);">THE STREETS</span>
-                </h1>
-            </div>
+    <!-- Scroll cue -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30 hidden lg:flex">
+        <span style="font-size:8px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;color:#fdfdfd;">Scroll</span>
+        <div style="width:1px;height:40px;background:linear-gradient(to bottom, #fdfdfd, transparent);"></div>
+    </div>
+</section>
 
-            <p class="font-medium text-sm md:text-base max-w-md mx-auto lg:mx-0 leading-relaxed" style="color: #9e9e9e;">
-                Engineered with premium suede and responsive cushioning. A silhouette that defines a generation, refined for the future.
+
+<!-- ═══════════════════════════════════════════════════════════
+     TICKER
+════════════════════════════════════════════════════════════ -->
+<div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-track">
+        {% for _ in "12345678"|make_list %}
+            <div class="ticker-item">Free Shipping on Orders Over ₹5000 <span class="ticker-dot"></span></div>
+            <div class="ticker-item">New Drops Every Thursday <span class="ticker-dot"></span></div>
+            <div class="ticker-item">Members Get 10% Off — Always <span class="ticker-dot"></span></div>
+            <div class="ticker-item">Crafted for the Streets <span class="ticker-dot"></span></div>
+        {% endfor %}
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. BRAND HERITAGE
+════════════════════════════════════════════════════════════ -->
+<section class="py-24 lg:py-32 px-6 max-w-7xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+
+        <!-- Left image mosaic -->
+        <div class="relative reveal">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="aspect-[3/4] rounded-2xl overflow-hidden" style="background:#f0efeb;">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600"
+                         alt="Heritage craftsmanship" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col gap-3 mt-12">
+                    <div class="aspect-[4/3] rounded-2xl overflow-hidden" style="background:#e8e7e3;">
+                        <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600"
+                             alt="Sneaker detail" class="w-full h-full object-cover">
+                    </div>
+                    <div class="aspect-square rounded-2xl overflow-hidden" style="background:#e0dfdb;">
+                        <img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600"
+                             alt="Material detail" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+            <!-- Floating tag -->
+            <div class="absolute -bottom-5 left-8 bg-white px-6 py-4 rounded-2xl shadow-xl"
+                 style="border:1px solid rgba(10,10,10,0.06);">
+                <p style="font-size:8px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#9e9e9e;">Est.</p>
+                <p style="font-size:28px;font-weight:900;font-style:italic;letter-spacing:-0.04em;line-height:1;color:#0a0a0a;">2014</p>
+            </div>
+        </div>
+
+        <!-- Right: Copy -->
+        <div class="space-y-8 reveal reveal-delay-2">
+            <span class="section-eyebrow">Heritage & Vision</span>
+
+            <h2 style="font-size:clamp(32px,4.5vw,56px);font-weight:900;font-style:italic;letter-spacing:-0.03em;line-height:0.92;text-transform:uppercase;color:#0a0a0a;">
+                More Than<br>A Shoe.<br>
+                <span style="color:#9e9e9e;">A Statement.</span>
+            </h2>
+
+            <p class="text-sm leading-[1.85] max-w-md" style="color:#6b6b6b;">
+                VERSE was born from a simple conviction: footwear should tell a story. Every pair we carry is a chapter — in craftsmanship, in culture, in the relentless pursuit of something that endures beyond trends.
             </p>
 
-            <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-6">
-                <button class="group relative overflow-hidden px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-                        style="background-color: #fdfdfd; color: #0a0a0a;">
-                    <span class="relative z-10">Shop the Collection</span>
-                </button>
-                <button class="px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest border border-white/10 transition-all hover:bg-white/5"
-                        style="color: #fdfdfd; backdrop-filter: blur(10px);">
-                    Member Access
-                </button>
-            </div>
-        </div>
+            <p class="text-sm leading-[1.85] max-w-md" style="color:#6b6b6b;">
+                We source from ateliers who still believe in hand-lasting, in full-grain leathers, in soles that grip the ground with intention. Because you deserve a shoe that remembers where you've been.
+            </p>
 
-        <div class="flex-1 relative w-full aspect-square group flex items-center justify-center">
-            <div class="absolute inset-0 rounded-full blur-[120px] opacity-20 transition-all duration-1000 group-hover:opacity-30"
-                 style="background: #757575; transform: scale(0.8);"></div>
-            
-            <div class="absolute bottom-20 left-1/2 -translate-x-1/2 w-3/4 h-20 bg-black/60 blur-[60px] rounded-[100%] scale-y-50"></div>
-            
-            <img alt="Air Jordan" 
-                class="relative w-full h-full object-contain transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] 
-                rotate-[-12deg] group-hover:rotate-[-4deg] group-hover:scale-110 group-hover:-translate-y-8" 
-                src="{% static 'images/jordan.png' %}"
-                style="filter: drop-shadow(0 30px 50px rgba(0,0,0,0.5)); display: block; margin-bottom: -10px;">
-            
-            <div class="absolute bottom-0 right-0 lg:-right-10 flex flex-col items-end gap-2 border-r-2 border-white/20 pr-6 py-2">
-                <span class="text-[10px] font-black uppercase tracking-widest text-white/40">Technology</span>
-                <span class="text-xl font-black italic text-white uppercase tracking-tighter">NIKE AIR</span>
+            <div class="flex gap-10 pt-4" style="border-top:1px solid rgba(10,10,10,0.08);">
+                <div>
+                    <p style="font-size:32px;font-weight:900;font-style:italic;letter-spacing:-0.04em;color:#0a0a0a;">12k+</p>
+                    <p style="font-size:9px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#9e9e9e;">Happy Customers</p>
+                </div>
+                <div>
+                    <p style="font-size:32px;font-weight:900;font-style:italic;letter-spacing:-0.04em;color:#0a0a0a;">96%</p>
+                    <p style="font-size:9px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#9e9e9e;">Satisfaction Rate</p>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="w-full h-12 lg:h-20"></div>
 </section>
 
 
-
-
-
-
-
-
-
-
-<section class="max-w-7xl mx-auto px-6 py-20">
-    <div class="flex items-end justify-between mb-12">
+<!-- ═══════════════════════════════════════════════════════════
+     3. TRENDING CATEGORIES
+════════════════════════════════════════════════════════════ -->
+<section class="py-20 px-6 max-w-7xl mx-auto">
+    <div class="flex items-end justify-between mb-12 reveal">
         <div>
-            <h2 class="text-3xl font-black uppercase tracking-tighter italic">Trending Categories</h2>
-            <div class="w-20 h-1.5 bg-accent mt-2"></div>
+            <span class="section-eyebrow">What's Hot</span>
+            <h2 class="mt-4" style="font-size:clamp(28px,4vw,44px);font-weight:900;font-style:italic;letter-spacing:-0.03em;text-transform:uppercase;color:#0a0a0a;">Trending<br>Categories</h2>
         </div>
-        <a class="text-sm font-bold underline decoration-accent decoration-2 underline-offset-4 uppercase tracking-widest" href="#">View All</a>
+        <a href="{% url 'product_listing' %}" style="font-size:9px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;text-decoration:none;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#9e9e9e'">View All →</a>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="group cursor-pointer">
-            <div class="aspect-[4/5] overflow-hidden bg-slate-100 rounded-xl relative mb-4">
-                <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                <div class="absolute bottom-6 left-6"><span class="bg-white px-4 py-2 rounded-full text-xs font-black uppercase shadow-sm">Running</span></div>
-            </div>
-            <h3 class="text-xl font-bold">Running Shoes</h3>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Running -->
+        <div class="cat-card reveal">
+            <img class="cat-card-img"
+                 src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600"
+                 alt="Running Shoes">
+            <div class="cat-card-overlay"></div>
+            <span class="cat-card-label">Running</span>
         </div>
-        <div class="group cursor-pointer">
-            <div class="aspect-[4/5] overflow-hidden bg-slate-100 rounded-xl relative mb-4">
-                <img src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=600" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                <div class="absolute bottom-6 left-6"><span class="bg-white px-4 py-2 rounded-full text-xs font-black uppercase shadow-sm">Basketball</span></div>
-            </div>
-            <h3 class="text-xl font-bold">Basketball Shoes</h3>
+
+        <!-- Basketball -->
+        <div class="cat-card reveal reveal-delay-1">
+            <img class="cat-card-img"
+                 src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=600"
+                 alt="Basketball Shoes">
+            <div class="cat-card-overlay"></div>
+            <span class="cat-card-label">Basketball</span>
         </div>
-        <div class="group cursor-pointer">
-            <div class="aspect-[4/5] overflow-hidden bg-slate-100 rounded-xl relative mb-4">
-                <img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                <div class="absolute bottom-6 left-6"><span class="bg-white px-4 py-2 rounded-full text-xs font-black uppercase shadow-sm">Casual</span></div>
-            </div>
-            <h3 class="text-xl font-bold">Casual Sneakers</h3>
+
+        <!-- Casual -->
+        <div class="cat-card reveal reveal-delay-2">
+            <img class="cat-card-img"
+                 src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600"
+                 alt="Casual Sneakers">
+            <div class="cat-card-overlay"></div>
+            <span class="cat-card-label">Casual</span>
         </div>
-        <div class="group cursor-pointer">
-            <div class="aspect-[4/5] overflow-hidden bg-slate-100 rounded-xl relative mb-4">
-                <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                <div class="absolute bottom-6 left-6"><span class="bg-white px-4 py-2 rounded-full text-xs font-black uppercase shadow-sm">Training</span></div>
-            </div>
-            <h3 class="text-xl font-bold">Training Shoes</h3>
+
+        <!-- Training -->
+        <div class="cat-card reveal reveal-delay-3">
+            <img class="cat-card-img"
+                 src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600"
+                 alt="Training Shoes">
+            <div class="cat-card-overlay"></div>
+            <span class="cat-card-label">Training</span>
         </div>
     </div>
 </section>
 
 
-<section class="bg-slate-50 py-24">
-    <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-black uppercase tracking-tighter italic">Trending Products</h2>
-            <p class="text-slate-500 mt-2 font-medium">The most wanted styles of the season</p>
-        </div>
+<!-- ═══════════════════════════════════════════════════════════
+     4. CRAFTSMANSHIP / MATERIAL DETAIL
+════════════════════════════════════════════════════════════ -->
+<section class="craft-section py-24 lg:py-32 px-6">
+    <!-- Background glow blob -->
+    <div class="absolute pointer-events-none" style="width:600px;height:600px;background:radial-gradient(circle,rgba(100,100,100,0.12),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow group">
-                <div class="relative aspect-square rounded-xl bg-background-light overflow-hidden mb-4">
-                    <button class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm">
-                        <img src="{% static 'images/wishlistt.svg' %}" class="w-5 h-5 object-contain" alt="Wishlist">
-                    </button>
-                    
-                    <img src="https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=600" class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500">
-                </div>
-                
-                <div class="space-y-1">
-                    <h4 class="font-bold text-lg group-hover:text-accent transition-colors">Nike Air Runner</h4>
-                    <p class="text-slate-500 text-sm">Mens Performance</p>
-                    <div class="flex items-center justify-between pt-3">
-                        <span class="text-xl font-black">₹2800.00</span>
-                        
-                        <button class="bg-slate-100 w-10 h-10 rounded-xl hover:bg-accent group/cart transition-colors flex items-center justify-center">
-                            <img src="{% static 'images/cartt.svg' %}" class="w-5 h-5 object-contain  transition-all" alt="Add to Cart">
-                        </button>
+    <div class="max-w-7xl mx-auto relative z-10">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+            <!-- Left copy -->
+            <div class="space-y-10 reveal">
+                <span class="section-eyebrow" style="color:rgba(253,253,253,0.3);">Craftsmanship</span>
+
+                <h2 style="font-size:clamp(36px,5vw,66px);font-weight:900;font-style:italic;letter-spacing:-0.04em;line-height:0.88;text-transform:uppercase;color:#fdfdfd;">
+                    Built to<br>
+                    <span style="color:rgba(253,253,253,0.25);">Outlast</span><br>
+                    Every Era.
+                </h2>
+
+                <p class="text-sm leading-[1.9] max-w-md" style="color:rgba(253,253,253,0.45);">
+                    We obsess over materials so you never have to. Hand-stitched uppers. Vulcanized soles. Cushioning engineered for the distance you actually run — and the distances you never expected.
+                </p>
+
+                <!-- Stats -->
+                <div class="space-y-0 max-w-sm">
+                    <div class="craft-stat">
+                        <div class="flex items-baseline justify-between">
+                            <span style="font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:rgba(253,253,253,0.35);">Premium Suede</span>
+                            <span style="font-size:22px;font-weight:900;font-style:italic;color:#fdfdfd;">A+</span>
+                        </div>
+                    </div>
+                    <div class="craft-stat">
+                        <div class="flex items-baseline justify-between">
+                            <span style="font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:rgba(253,253,253,0.35);">Air Cushion Tech</span>
+                            <span style="font-size:22px;font-weight:900;font-style:italic;color:#fdfdfd;">Gen IV</span>
+                        </div>
+                    </div>
+                    <div class="craft-stat">
+                        <div class="flex items-baseline justify-between">
+                            <span style="font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:rgba(253,253,253,0.35);">Vulcanized Sole</span>
+                            <span style="font-size:22px;font-weight:900;font-style:italic;color:#fdfdfd;">3x</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow group">
-                <div class="relative aspect-square rounded-xl bg-background-light overflow-hidden mb-4">
-                    <button class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm">
-                        <img src="{% static 'images/wishlistt.svg' %}" class="w-5 h-5 object-contain" alt="Wishlist">
-                    </button>
-                    <img src="https://images.unsplash.com/photo-1584735175315-9d5df23860e6?q=80&w=600" class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500">
+            <!-- Right: large image -->
+            <div class="reveal reveal-delay-2 relative">
+                <div class="rounded-3xl overflow-hidden aspect-[4/5]">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900"
+                         alt="Premium shoe craftsmanship"
+                         class="w-full h-full object-cover"
+                         style="filter:brightness(0.85) contrast(1.05);">
                 </div>
-                <div class="space-y-1">
-                    <h4 class="font-bold text-lg group-hover:text-accent transition-colors">Velocity Pro</h4>
-                    <p class="text-slate-500 text-sm">Professional Speed</p>
-                    <div class="flex items-center justify-between pt-3">
-                        <span class="text-xl font-black">₹2800.00</span>
-                        <button class="bg-slate-100 w-10 h-10 rounded-xl hover:bg-accent group/cart transition-colors flex items-center justify-center">
-                            <img src="{% static 'images/cartt.svg' %}" class="w-5 h-5 object-contain  transition-all" alt="Add to Cart">
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow group">
-                <div class="relative aspect-square rounded-xl bg-background-light overflow-hidden mb-4">
-                    <button class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm">
-                        <img src="{% static 'images/wishlistt.svg' %}" class="w-5 h-5 object-contain" alt="Wishlist">
-                    </button>
-                    <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=600" class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500">
-                </div>
-                <div class="space-y-1">
-                    <h4 class="font-bold text-lg group-hover:text-accent transition-colors">Air Max Elite</h4>
-                    <p class="text-slate-500 text-sm">Comfort First</p>
-                    <div class="flex items-center justify-between pt-3">
-                        <span class="text-xl font-black">₹2800.00</span>
-                        <button class="bg-slate-100 w-10 h-10 rounded-xl hover:bg-accent group/cart transition-colors flex items-center justify-center">
-                            <img src="{% static 'images/cartt.svg' %}" class="w-5 h-5 object-contain  transition-all" alt="Add to Cart">
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl transition-shadow group">
-                <div class="relative aspect-square rounded-xl bg-background-light overflow-hidden mb-4">
-                    <button class="absolute top-3 right-3 z-10 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-all shadow-sm">
-                        <img src="{% static 'images/wishlistt.svg' %}" class="w-5 h-5 object-contain" alt="Wishlist">
-                    </button>
-                    <img src="https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600" class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500">
-                </div>
-                <div class="space-y-1">
-                    <h4 class="font-bold text-lg group-hover:text-accent transition-colors">Dunk Retro Pro</h4>
-                    <p class="text-slate-500 text-sm">Heritage Style</p>
-                    <div class="flex items-center justify-between pt-3">
-                        <span class="text-xl font-black">₹2800.00</span>
-                        <button class="bg-slate-100 w-10 h-10 rounded-xl hover:bg-accent group/cart transition-colors flex items-center justify-center">
-                            <img src="{% static 'images/cartt.svg' %}" class="w-5 h-5 object-contain transition-all" alt="Add to Cart">
-                        </button>
+                <!-- Floating detail card -->
+                <div class="absolute -left-6 bottom-12 bg-white p-5 rounded-2xl shadow-2xl max-w-[200px]" style="border:1px solid rgba(10,10,10,0.06);">
+                    <p style="font-size:8px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;">Material</p>
+                    <p style="font-size:16px;font-weight:900;font-style:italic;color:#0a0a0a;letter-spacing:-0.02em;margin-top:4px;">Full-Grain<br>Nubuck Suede</p>
+                    <div class="flex gap-1.5 mt-3">
+                        <span class="w-4 h-4 rounded-full" style="background:#8b7355;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"></span>
+                        <span class="w-4 h-4 rounded-full" style="background:#2c2c2c;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"></span>
+                        <span class="w-4 h-4 rounded-full" style="background:#c8bfb2;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"></span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-    
 
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. FEATURED PRODUCT SPOTLIGHT
+════════════════════════════════════════════════════════════ -->
+<section class="spotlight-section py-24 lg:py-32 px-6 relative">
+    <!-- Giant bg number -->
+    <div class="absolute right-0 bottom-0 pointer-events-none select-none" style="font-size:30vw;font-weight:900;font-style:italic;letter-spacing:-0.06em;color:rgba(10,10,10,0.04);line-height:0.8;overflow:hidden;">01</div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+        <div class="text-center mb-16 reveal">
+            <span class="section-eyebrow">Featured Drop</span>
+            <h2 class="mt-4" style="font-size:clamp(30px,5vw,56px);font-weight:900;font-style:italic;letter-spacing:-0.03em;text-transform:uppercase;color:#0a0a0a;">
+                The Signature Silhouette
+            </h2>
+            <p class="mt-3 text-sm max-w-md mx-auto leading-relaxed" style="color:#9e9e9e;">
+                One shoe. Every occasion. The one that started it all.
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+            <!-- Product image -->
+            <div class="relative reveal">
+                <div class="aspect-square rounded-3xl overflow-hidden spotlight-image-card">
+                    <img src="{% static 'images/BlkWht.jpeg' %}"
+                        alt="Verse Signature Jordan"
+                         style="filter:drop-shadow(0 30px 50px rgba(0,0,0,0.2));transition:transform 0.9s ease;"
+                         onmouseover="this.style.transform='scale(1.06) rotate(-3deg)'"
+                         onmouseout="this.style.transform='scale(1) rotate(0deg)'">
+                </div>
+                <!-- Quick stat pills -->
+                <div class="absolute top-6 left-6 flex flex-col gap-2">
+                    <span class="px-3 py-1.5 rounded-full text-white" style="font-size:8px;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;background:#0a0a0a;">New Season</span>
+                    <span class="px-3 py-1.5 rounded-full" style="font-size:8px;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;background:rgba(10,10,10,0.08);color:#0a0a0a;">Limited</span>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="space-y-8 reveal reveal-delay-2">
+                <div>
+                    <p style="font-size:9px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#9e9e9e;">Air Jordan · Verse Edition</p>
+                    <h3 class="mt-2" style="font-size:clamp(32px,4vw,52px);font-weight:900;font-style:italic;letter-spacing:-0.04em;text-transform:uppercase;line-height:0.9;color:#0a0a0a;">
+                        Master<br>Series 1
+                    </h3>
+                </div>
+
+                <div class="flex gap-6 py-6" style="border-top:1px solid rgba(10,10,10,0.08);border-bottom:1px solid rgba(10,10,10,0.08);">
+                    <div>
+                        <p style="font-size:8px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#9e9e9e;">Upper</p>
+                        <p class="mt-1 text-sm font-bold">Premium Suede</p>
+                    </div>
+                    <div>
+                        <p style="font-size:8px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#9e9e9e;">Sole</p>
+                        <p class="mt-1 text-sm font-bold">Air Cushion</p>
+                    </div>
+                    <div>
+                        <p style="font-size:8px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#9e9e9e;">Origin</p>
+                        <p class="mt-1 text-sm font-bold">Italy</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        7
+                    </button>
+
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        8
+                    </button>
+
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        9
+                    </button>
+
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        10
+                    </button>
+
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        11
+                    </button>
+
+                    <button class="size-option w-11 h-11 rounded-xl border font-black text-xs transition-all"
+                            style="border-color:rgba(10,10,10,0.12);color:#0a0a0a;">
+                        12
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p style="font-size:9px;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;color:#9e9e9e;">Price</p>
+                        <p style="font-size:40px;font-weight:900;font-style:italic;letter-spacing:-0.04em;color:#0a0a0a;line-height:1.1;">₹8,999</p>
+                    </div>
+                    <a href="{% url 'product_listing' %}" class="btn-primary" style="background:#0a0a0a;">
+                        Add to Bag
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. TRENDING PRODUCTS
+════════════════════════════════════════════════════════════ -->
+<section class="py-20 px-6" style="background:#fdfdfd;">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex items-end justify-between mb-12 reveal">
+            <div>
+                <span class="section-eyebrow">Most Wanted</span>
+                <h2 class="mt-4" style="font-size:clamp(28px,4vw,44px);font-weight:900;font-style:italic;letter-spacing:-0.03em;text-transform:uppercase;color:#0a0a0a;">Trending<br>Right Now</h2>
+            </div>
+            <a href="{% url 'product_listing' %}" style="font-size:9px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;text-decoration:none;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#9e9e9e'">See All →</a>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <!-- Card 1 -->
+            <div class="product-card reveal">
+                <div class="product-img-wrap">
+                    <span class="new-badge">New</span>
+                    <button class="wishlist-btn" aria-label="Add to wishlist">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                        </svg>
+                    </button>
+                    <img src="https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=600"
+                         alt="Nike Air Runner" class="product-img">
+                </div>
+                <div class="p-5">
+                    <p style="font-size:8px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;">Nike</p>
+                    <h4 class="mt-1 font-black text-base" style="color:#0a0a0a;letter-spacing:-0.01em;">Air Runner Pro</h4>
+                    <div class="flex items-center justify-between mt-4">
+                        <span style="font-size:18px;font-weight:900;font-style:italic;letter-spacing:-0.03em;color:#0a0a0a;">₹2,800</span>
+                        <button class="add-to-cart-btn" aria-label="Add to cart">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="product-card reveal reveal-delay-1">
+                <div class="product-img-wrap">
+                    <button class="wishlist-btn" aria-label="Add to wishlist">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                        </svg>
+                    </button>
+                    <img src="https://images.unsplash.com/photo-1584735175315-9d5df23860e6?q=80&w=600"
+                         alt="Velocity Pro" class="product-img">
+                </div>
+                <div class="p-5">
+                    <p style="font-size:8px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;">Adidas</p>
+                    <h4 class="mt-1 font-black text-base" style="color:#0a0a0a;letter-spacing:-0.01em;">Velocity Pro</h4>
+                    <div class="flex items-center justify-between mt-4">
+                        <span style="font-size:18px;font-weight:900;font-style:italic;letter-spacing:-0.03em;color:#0a0a0a;">₹3,200</span>
+                        <button class="add-to-cart-btn" aria-label="Add to cart">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="product-card reveal reveal-delay-2">
+                <div class="product-img-wrap">
+                    <span class="new-badge" style="background:#e87c3e;">Hot</span>
+                    <button class="wishlist-btn" aria-label="Add to wishlist">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                        </svg>
+                    </button>
+                    <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=600"
+                         alt="Air Max Elite" class="product-img">
+                </div>
+                <div class="p-5">
+                    <p style="font-size:8px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;">Nike</p>
+                    <h4 class="mt-1 font-black text-base" style="color:#0a0a0a;letter-spacing:-0.01em;">Air Max Elite</h4>
+                    <div class="flex items-center justify-between mt-4">
+                        <span style="font-size:18px;font-weight:900;font-style:italic;letter-spacing:-0.03em;color:#0a0a0a;">₹4,100</span>
+                        <button class="add-to-cart-btn" aria-label="Add to cart">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="product-card reveal reveal-delay-3">
+                <div class="product-img-wrap">
+                    <button class="wishlist-btn" aria-label="Add to wishlist">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                        </svg>
+                    </button>
+                    <img src="https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600"
+                         alt="Dunk Retro Pro" class="product-img">
+                </div>
+                <div class="p-5">
+                    <p style="font-size:8px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:#9e9e9e;">Nike</p>
+                    <h4 class="mt-1 font-black text-base" style="color:#0a0a0a;letter-spacing:-0.01em;">Dunk Retro Pro</h4>
+                    <div class="flex items-center justify-between mt-4">
+                        <span style="font-size:18px;font-weight:900;font-style:italic;letter-spacing:-0.03em;color:#0a0a0a;">₹5,400</span>
+                        <button class="add-to-cart-btn" aria-label="Add to cart">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. MEMBER JOURNEY
+════════════════════════════════════════════════════════════ -->
+<section class="py-24 lg:py-32 px-6" style="background:#f5f5f3;">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16 reveal">
+            <span class="section-eyebrow">The Verse Experience</span>
+            <h2 class="mt-4" style="font-size:clamp(28px,4.5vw,52px);font-weight:900;font-style:italic;letter-spacing:-0.03em;text-transform:uppercase;color:#0a0a0a;">
+                A Premium<br>Shopping Journey
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="journey-card reveal" data-num="01">
+                <p style="font-size:8px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;color:rgba(253,253,253,0.25);">Step 01</p>
+                <div class="mt-5 mb-6 w-12 h-12 rounded-2xl flex items-center justify-center" style="background:rgba(253,253,253,0.06);">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-black text-lg italic" style="color:#fdfdfd;letter-spacing:-0.02em;">Discover</h3>
+                <p class="mt-2 text-sm leading-relaxed" style="color:rgba(253,253,253,0.4);">Browse curated drops, new releases, and member-exclusive styles. Filter by brand, size, or mood.</p>
+            </div>
+
+            <div class="journey-card reveal reveal-delay-1" data-num="02">
+                <p style="font-size:8px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;color:rgba(253,253,253,0.25);">Step 02</p>
+                <div class="mt-5 mb-6 w-12 h-12 rounded-2xl flex items-center justify-center" style="background:rgba(253,253,253,0.06);">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+                <h3 class="font-black text-lg italic" style="color:#fdfdfd;letter-spacing:-0.02em;">Select</h3>
+                <p class="mt-2 text-sm leading-relaxed" style="color:rgba(253,253,253,0.4);">Choose your size, colourway, and customisation. Add to your bag or wishlist for later. No pressure.</p>
+            </div>
+
+            <div class="journey-card reveal reveal-delay-2" data-num="03">
+                <p style="font-size:8px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;color:rgba(253,253,253,0.25);">Step 03</p>
+                <div class="mt-5 mb-6 w-12 h-12 rounded-2xl flex items-center justify-center" style="background:rgba(253,253,253,0.06);">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <h3 class="font-black text-lg italic" style="color:#fdfdfd;letter-spacing:-0.02em;">Delivered</h3>
+                <p class="mt-2 text-sm leading-relaxed" style="color:rgba(253,253,253,0.4);">Premium packaging. 48-hour delivery. And returns made so easy you'll wonder why other stores don't do the same.</p>
+            </div>
+        </div>
+
+        <!-- CTA Band -->
+        <div class="mt-10 rounded-3xl p-10 lg:p-14 flex flex-col lg:flex-row items-center justify-between gap-8 reveal"
+             style="background:#0a0a0a;">
+            <div>
+                <h3 style="font-size:clamp(24px,3.5vw,40px);font-weight:900;font-style:italic;letter-spacing:-0.03em;text-transform:uppercase;color:#fdfdfd;line-height:0.95;">Join the<br>Verse Circle.</h3>
+                <p class="mt-3 text-sm" style="color:rgba(253,253,253,0.4);max-width:340px;">Members get early access, exclusive drops, and loyalty rewards that actually feel like rewards.</p>
+            </div>
+            <div class="flex gap-3 flex-shrink-0">
+                <a href="{% url 'product_listing' %}" class="btn-primary" style="background:#fdfdfd;color:#0a0a0a;">Shop Now</a>
+                <a href="#" class="btn-ghost">Learn More</a>
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}

@@ -8,104 +8,136 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
     <style>
-        body { 
-            font-family: 'Manrope', sans-serif; 
+        :root {
+            --ink: #0a0a0a;
+            --paper: #dcdad7;
+            --muted: #9e9e9e;
+            --subtle: #e7e5e2
+            --border: rgba(10,10,10,0.08);
+            --glow: rgba(120,120,120,0.15);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Manrope', sans-serif;
             overflow-x: hidden;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+
+            background:
+                radial-gradient(circle at top left, rgba(255,255,255,0.35), transparent 35%),
+                radial-gradient(circle at bottom right, rgba(180,176,170,0.22), transparent 40%),
+                linear-gradient(to bottom, #dcdad7 0%, #e4e2df 45%, #d6d3cf 100%);
+            min-height: 100vh;
         }
 
-        /* --- GLASSMORPHISM SIDEBAR (Based on your Snippet) --- */
-        .profile-sidebar {
-            position: fixed;
-            top: 0;
-            right: -320px; /* Hidden by default */
-            height: 100vh;
-            width: 300px;
-            z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.85); /* rgba(255,255,255) from your image */
-            backdrop-filter: blur(15px); /* blur(10px) from your image */
-            -webkit-backdrop-filter: blur(15px);
-            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05); /* box-shadow from your image */
-            display: flex;
-            flex-direction: column;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 40px 24px;
-        }
-
-        .profile-sidebar.open {
-            right: 0; /* Slide in */
-        }
-
-        /* Background Blur Overlay */
-        .sidebar-overlay {
+        
+        body::before {
+            content: '';
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(4px);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.018;
+            pointer-events: none;
+            z-index: -1;
         }
 
-        .sidebar-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
 
-        /* --- SIDEBAR LINKS --- */
-        .sidebar-link {
+
+        /* ─── HEADER ─────────────────────────────────────────── */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            height: 72px;
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 14px 18px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
+            padding: 0 40px;
+            background: rgba(253,253,253,0.82);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .site-header.scrolled {
+            background: rgba(253,253,253,0.95);
+            border-bottom-color: rgba(10,10,10,0.12);
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.04em;
             text-transform: uppercase;
-            color: #64748b;
-            transition: all 0.2s;
+            color: var(--ink);
+            text-decoration: none;
+            line-height: 1;
         }
 
-        .sidebar-link:hover { 
-            background: #f1f5f9; 
-            color: #000; 
+        .logo span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--ink);
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-bottom: 10px;
+            vertical-align: bottom;
         }
 
-        .sidebar-link.active { 
-            background: #000; 
-            color: #fff; 
+        /* ─── NAV LINKS ───────────────────────────────────────── */
+        .nav-link {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink);
+            text-decoration: none;
+            position: relative;
+            padding-bottom: 2px;
+            opacity: 0.55;
+            transition: opacity 0.25s ease;
         }
 
-        .sidebar-icon { 
-            width: 18px; 
-            height: 18px; 
-            opacity: 0.6; 
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1.5px;
+            background: var(--ink);
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
         }
 
-        .sidebar-link.active .sidebar-icon { 
-            filter: invert(1); 
-            opacity: 1; 
-        }
+        .nav-link:hover { opacity: 1; }
+        .nav-link:hover::after { width: 100%; }
 
-        /* --- SEARCH BOX --- */
+        /* ─── SEARCH BOX ──────────────────────────────────────── */
         .search-box {
             display: flex;
             align-items: center;
-            gap: 10px;
-            background: #f8fafc;
-            border: 1px solid #f1f5f9;
+            gap: 8px;
+            background: var(--subtle);
+            border: 1px solid transparent;
             border-radius: 999px;
-            padding: 8px 16px;
-            width: 280px;
-            transition: all 0.2s;
+            padding: 7px 16px;
+            width: 220px;
+            transition: all 0.25s ease;
         }
 
         .search-box:focus-within {
-            border-color: #000;
+            border-color: var(--ink);
             background: #fff;
+            width: 260px;
         }
 
         .search-box input {
@@ -113,317 +145,681 @@
             outline: none;
             background: transparent;
             width: 100%;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 11.5px;
+            font-weight: 600;
+            font-family: 'Manrope', sans-serif;
+            color: var(--ink);
         }
 
+        .search-box input::placeholder { color: var(--muted); }
+
+        /* ─── ICON BUTTONS ────────────────────────────────────── */
+        .icon-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .icon-btn:hover { background: var(--subtle); }
+
+        .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #e02020;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            border: 2px solid var(--paper);
+        }
+
+        .avatar-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .avatar-btn:hover {
+            border-color: var(--ink);
+            transform: scale(1.05);
+        }
+
+        /* ─── MATERIAL ICONS ──────────────────────────────────── */
         .material-symbols-outlined {
-        font-variation-settings:
-        'FILL' 0,
-        'wght' 500,
-        'GRAD' 0,
-        'opsz' 24;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 22px;
+            line-height: 1;
+            display: block;
         }
 
-        /* Standard sizes */
-        .icon-sm {
-            font-size: 16px;
+        /* ─── SIDEBAR OVERLAY ─────────────────────────────────── */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,10,10,0.35);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 490;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
         }
 
-        .icon-md {
-            font-size: 20px;
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
 
-        .icon-lg {
-            font-size: 24px;
+        /* ─── PROFILE SIDEBAR ─────────────────────────────────── */
+        .profile-sidebar {
+            position: fixed;
+            top: 0;
+            right: -340px;
+            height: 100dvh;
+            width: 320px;
+            z-index: 500;
+            background: rgba(253,253,253,0.92);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: right 0.5s cubic-bezier(0.4,0,0.2,1);
+            padding: 28px 24px 32px;
         }
 
-        .icon-xl {
-            font-size: 32px;
+        .profile-sidebar.open { right: 0; }
+
+        .sidebar-close {
+            align-self: flex-end;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--subtle);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, transform 0.2s ease;
+            flex-shrink: 0;
         }
 
+        .sidebar-close:hover {
+            background: var(--ink);
+            color: var(--paper);
+            transform: rotate(90deg);
+        }
+
+        .sidebar-close svg { pointer-events: none; }
+
+        /* ─── SIDEBAR NAV ─────────────────────────────────────── */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(10,10,10,0.5);
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background: var(--subtle);
+            color: var(--ink);
+        }
+
+        .sidebar-link.active {
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        .sidebar-icon {
+            width: 17px;
+            height: 17px;
+            opacity: 0.55;
+            flex-shrink: 0;
+        }
+
+        .sidebar-link.active .sidebar-icon { filter: invert(1); opacity: 1; }
+        .sidebar-link:hover .sidebar-icon { opacity: 1; }
+
+        /* ─── SCROLL REVEAL ───────────────────────────────────── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .reveal.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ─── CARD HOVER ──────────────────────────────────────── */
+        .card-hover {
+            transition: transform 0.45s cubic-bezier(0.16,1,0.3,1), box-shadow 0.45s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 64px rgba(10,23,42,0.1);
+        }
+
+        /* ─── FLOAT ANIMATION ─────────────────────────────────── */
+        .float-shoe {
+            animation: floatShoe 5s ease-in-out infinite;
+        }
+
+        @keyframes floatShoe {
+            0%, 100% { transform: translateY(0) rotate(-10deg); }
+            50% { transform: translateY(-22px) rotate(-6deg); }
+        }
+
+        /* ─── GLOW PULSE ──────────────────────────────────────── */
+        .glow-pulse {
+            animation: glowPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.28; transform: scale(1.06); }
+        }
+
+        /* ─── GRAIN OVERLAY ───────────────────────────────────── */
+        .grain::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ─── PREMIUM BUTTON ──────────────────────────────────── */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: var(--ink);
+            color: var(--paper);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.12);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 40px rgba(10,10,10,0.25);
+        }
+
+        .btn-primary:hover::after { opacity: 1; }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 34px;
+            background: transparent;
+            color: var(--paper);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            border-radius: 999px;
+            border: 1.5px solid rgba(253,253,253,0.25);
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(253,253,253,0.6);
+            background: rgba(253,253,253,0.06);
+        }
+
+        /* ─── SECTION LABEL ───────────────────────────────────── */
+        .section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .section-eyebrow::before {
+            content: '';
+            display: block;
+            width: 28px;
+            height: 1.5px;
+            background: currentColor;
+        }
+
+        /* ─── CONFIRM MODAL ───────────────────────────────────── */
+        #confirmModal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        #confirmModalCard {
+            border-radius: 28px;
+            padding: 40px 32px;
+        }
+
+        /* ─── TOAST ───────────────────────────────────────────── */
+        .toast { font-family: 'Manrope', sans-serif; }
+
+        /* ─── MOBILE MENU ─────────────────────────────────────── */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            z-index: 400;
+            background: var(--ink);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 32px;
+            transform: translateX(-100%);
+            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .mobile-menu.open { transform: translateX(0); }
+
+        .mobile-nav-link {
+            font-size: clamp(28px, 8vw, 44px);
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            color: rgba(253,253,253,0.2);
+            text-decoration: none;
+            line-height: 1.1;
+            transition: color 0.2s ease;
+        }
+
+        .mobile-nav-link:hover { color: var(--paper); }
+
+        @media (max-width: 768px) {
+            .site-header { padding: 0 20px; }
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="bg-white text-black">
+<body>
     {% include 'includes/toasts.html' %}
 
+    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div class="w-full px-8 h-20 flex items-center justify-between">
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation menu">
+        <div class="flex items-center justify-between mb-16">
+            <a href="{% url 'home' %}" class="logo text-white" onclick="closeMobileMenu()">VERSE<span style="background:#fff;"></span></a>
+            <button onclick="closeMobileMenu()" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors" aria-label="Close menu">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-3 flex-1">
+            <a href="{% url 'product_listing' %}" class="mobile-nav-link" onclick="closeMobileMenu()">Collections</a>
+            <a href="#" class="mobile-nav-link" onclick="closeMobileMenu()">New Drops</a>
+            <a href="#" class="mobile-nav-link" onclick="closeMobileMenu()">About</a>
+        </nav>
+        <div class="flex items-center gap-6 pt-8 border-t border-white/10">
+            <a href="{% url 'wishlist_view' %}" class="text-white/50 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Wishlist</a>
+            <a href="{% url 'cart_view' %}" class="text-white/50 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Cart</a>
+        </div>
+    </div>
 
-            <a href="{% url 'home' %}" class="text-2xl font-[1000] italic tracking-tighter uppercase">VERSE</a>
+    <!-- ─── HEADER ──────────────────────────────────────────── -->
+    <header class="site-header" id="siteHeader">
+        <!-- Logo -->
+        <a href="{% url 'home' %}" class="logo">VERSE<span></span></a>
 
-            <nav class="hidden lg:flex items-center gap-10 absolute left-1/2 transform -translate-x-1/2">
-                {% comment %} <a href="{% url 'home' %}" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">Home</a> {% endcomment %}
-                <a href="{% url 'product_listing' %}" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">Collections</a>
-                <a href="#" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">New Drops</a>
-                <a href="#" class="text-[11px] font-black uppercase tracking-widest hover:opacity-60 transition-opacity">About</a>
-            </nav>
+        <!-- Center Nav -->
+        <nav class="hidden lg:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
+            <a href="{% url 'product_listing' %}" class="nav-link">Collections</a>
+            <a href="#" class="nav-link">New Drops</a>
+            <a href="#" class="nav-link">About</a>
+        </nav>
 
-            <div class="flex items-center gap-6">
-                <div class="search-box hidden md:flex">
-                    <img src="{% static 'images/search.svg' %}" class="w-5 h-5 opacity-40">
-                    <input type="text" placeholder="Search products...">
-                </div>
-
-                <div class="flex items-center gap-5">
-                    <a href="{% url 'wishlist_view' %}" class="relative inline-flex items-center justify-center">
-                        <img src="{% static 'images/wishlist.svg' %}" class="w-6 h-6">
-
-                        {% if wishlist_count > 0 %}
-                            <span class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center leading-none">
-                                {{ wishlist_count }}
-                            </span>
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'cart_view' %}" class="relative inline-flex items-center justify-center">
-                        <span class="material-symbols-outlined">shopping_bag</span>
-
-                        {% if cart_count > 0 %}
-                            <span id="cart-count-badge" class="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center leading-none">
-                                {{ cart_count }}
-                            </span>
-                        {% endif %}
-                    </a>
-
-                    <button 
-                        {% if user.is_authenticated %}
-                            onclick="toggleSidebar()" 
-                        {% else %}
-                            onclick="window.location.href={% url 'login' %}"
-                        {% endif %}        
-                            class="focus:outline-none group">
-                        <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-transparent group-hover:border-black transition-all">
-                            {% if user.profile.image and user.profile.image.name != 'default.png' %}
-                                <img src="{{ user.profile.image.url }}" class="w-full h-full object-cover">
-                            {% else %}
-                                <img src="{% static 'images/no_profile.png' %}" class="w-full h-full object-cover">
-                            {% endif %}
-                        </div>
-                    </button>
-                </div>
+        <!-- Right Actions -->
+        <div class="flex items-center gap-2 ml-auto">
+            <!-- Search -->
+            <div class="search-box hidden md:flex">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--muted);flex-shrink:0;">
+                    <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="Search products…" aria-label="Search products">
             </div>
+
+            <!-- Wishlist -->
+            <a href="{% url 'wishlist_view' %}" class="icon-btn" aria-label="Wishlist">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                </svg>
+                {% if wishlist_count > 0 %}
+                    <span class="badge">{{ wishlist_count }}</span>
+                {% endif %}
+            </a>
+
+            <!-- Cart -->
+            <a href="{% url 'cart_view' %}" class="icon-btn" aria-label="Shopping bag">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                {% if cart_count > 0 %}
+                    <span id="cart-count-badge" class="badge">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+
+            <!-- Avatar -->
+            <button
+                {% if user.is_authenticated %}
+                    onclick="toggleSidebar()"
+                {% else %}
+                    onclick="window.location.href='{% url 'login' %}'"
+                {% endif %}
+                class="avatar-btn ml-1"
+                aria-label="Account">
+                {% if user.profile.image and user.profile.image.name != 'default.png' %}
+                    <img src="{{ user.profile.image.url }}" alt="Profile" class="w-full h-full object-cover">
+                {% else %}
+                    <img src="{% static 'images/no_profile.png' %}" alt="Profile" class="w-full h-full object-cover">
+                {% endif %}
+            </button>
+
+            <!-- Mobile hamburger -->
+            <button onclick="openMobileMenu()" class="lg:hidden icon-btn ml-1" aria-label="Open menu">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h10"/>
+                </svg>
+            </button>
         </div>
     </header>
 
-    <aside id="profileSidebar" class="profile-sidebar">
-        <button onclick="toggleSidebar()" class="self-end p-2 hover:bg-black hover:text-white rounded-full transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    <!-- ─── PROFILE SIDEBAR ──────────────────────────────────── -->
+    <aside id="profileSidebar" class="profile-sidebar" role="dialog" aria-label="Account menu">
+        <button onclick="toggleSidebar()" class="sidebar-close" aria-label="Close">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
 
-        <div class="flex flex-col items-center text-center my-8">
-            <div class="w-20 h-20 rounded-full bg-slate-100 overflow-hidden mb-4 border-4 border-white shadow-xl">
+        <!-- Profile card -->
+        <div class="flex flex-col items-center text-center mt-6 mb-8">
+            <div class="w-[72px] h-[72px] rounded-full overflow-hidden mb-4 ring-4 ring-white shadow-xl">
                 {% if user.profile.image and user.profile.image.name != 'default.png' %}
-                    <img src="{{ user.profile.image.url }}" class="w-full h-full object-cover">
+                    <img src="{{ user.profile.image.url }}" alt="Profile" class="w-full h-full object-cover">
                 {% else %}
-                    <img src="{% static 'images/no_profile.png' %}" class="w-full h-full object-cover">
+                    <img src="{% static 'images/no_profile.png' %}" alt="Profile" class="w-full h-full object-cover">
                 {% endif %}
             </div>
             <h3 class="text-sm font-black uppercase italic tracking-tight">{{ user.full_name }}</h3>
-            <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Verse Member</span>
+            <span class="section-eyebrow mt-2" style="font-size:8px;">Verse Member</span>
         </div>
 
-        <nav class="space-y-1 flex-1">
+        <!-- Nav -->
+        <nav class="flex flex-col gap-1 flex-1">
             <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                <img src="{% static 'images/profile.svg' %}" class="sidebar-icon"> Profile
+                <img src="{% static 'images/profile.svg' %}" class="sidebar-icon" alt="">Profile
             </a>
-
             <a href="{% url 'address_list' %}" class="sidebar-link {% if 'address' in request.path %}active{% endif %}">
-                <img src="{% static 'images/location.svg' %}" class="sidebar-icon"> Addresses
+                <img src="{% static 'images/location.svg' %}" class="sidebar-icon" alt="">Addresses
             </a>
-
             <a href="#" class="sidebar-link">
-                <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon"> Orders
+                <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon" alt="">Orders
             </a>
-
-            <a href="{% url 'wishlist_view' %}"
-            class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
-                <img src="{% static 'images/wishlist.svg' %}" class="sidebar-icon"> Wishlist
+            <a href="{% url 'wishlist_view' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
+                <img src="{% static 'images/wishlist.svg' %}" class="sidebar-icon" alt="">Wishlist
             </a>
-
             <a href="#" class="sidebar-link">
-                <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon"> Wallet
+                <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon" alt="">Wallet
             </a>
         </nav>
-        
 
-        <div class="mt-auto pt-6 border-t border-slate-200/50">
-            <!-- fix: onclick now calls a named function — avoids HTML attribute quoting issues -->
+        <!-- Logout -->
+        <div class="pt-6 border-t" style="border-color:var(--border);">
             <form method="POST" action="{% url 'logout' %}" id="logoutForm">
                 {% csrf_token %}
-                <button type="button"
-                    onclick="triggerLogoutModal()"
-                    class="w-full flex items-center justify-between px-4 py-3 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-50 rounded-xl transition-all">
+                <button type="button" onclick="triggerLogoutModal()"
+                    class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 transition-colors"
+                    style="font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;">
                     Log Out
-                    <span class="text-lg">⏻</span>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
                 </button>
             </form>
         </div>
     </aside>
 
-    
+    <!-- ─── MAIN ─────────────────────────────────────────────── -->
+    <main class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
 
-    <div class="w-full">
-        <main class="min-h-screen">
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-<footer class="bg-[#0a0a0a] text-[#fdfdfd] pt-20 pb-10 px-6 font-sans border-t border-white/5">
-    <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-            
-            <div class="space-y-6">
-                <h3 class="text-sm font-black uppercase tracking-[0.2em]">Stay Connected</h3>
-                <p class="text-[#9e9e9e] text-sm leading-relaxed max-w-xs">
-                    Be the first to know about new drops, exclusive collaborations, and member-only offers.
-                </p>
-                <form class="flex max-w-sm border border-white/10 rounded-xl overflow-hidden group focus-within:border-white/30 transition-colors">
-                    <input type="email" placeholder="Email Address" 
-                           class="bg-transparent px-4 py-3 text-sm w-full outline-none placeholder:text-[#757575]">
-                    <button type="submit" 
-                            class="bg-[#fdfdfd] text-[#0a0a0a] px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-[#d4d4d4] transition-colors">
-                        Join
-                    </button>
-                </form>
-            </div>
+    <!-- ─── FOOTER ───────────────────────────────────────────── -->
+    <footer style="background:var(--ink);color:var(--paper);" class="pt-20 pb-10 px-6 relative overflow-hidden">
+        <!-- Decorative background text -->
+        <div class="absolute bottom-0 left-0 pointer-events-none select-none" style="line-height:0.8;opacity:0.025;">
+            <span style="font-size:22vw;font-weight:900;font-style:italic;letter-spacing:-0.05em;text-transform:uppercase;white-space:nowrap;">VERSE</span>
+        </div>
 
-            <div class="space-y-6 lg:pl-10">
-                <h3 class="text-sm font-black uppercase tracking-[0.2em]">Shop</h3>
-                <ul class="space-y-4 text-sm font-medium text-[#9e9e9e]">
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">New Releases</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Men's Shoes</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Women's Shoes</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Kid's Shoes</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors text-accent uppercase tracking-tight">Sale</a></li>
-                </ul>
-            </div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
 
-            <div class="space-y-6">
-                <h3 class="text-sm font-black uppercase tracking-[0.2em]">Help</h3>
-                <ul class="space-y-4 text-sm font-medium text-[#9e9e9e]">
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Order Status</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Shipping & Delivery</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Returns</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Payment Options</a></li>
-                    <li><a href="#" class="hover:text-[#fdfdfd] transition-colors uppercase tracking-tight">Contact Us</a></li>
-                </ul>
-            </div>
+                <!-- Newsletter -->
+                <div class="space-y-6">
+                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Stay Connected</p>
+                    <p class="text-sm leading-relaxed max-w-xs" style="color:#6b6b6b;">First to know. New drops, exclusive collabs, and member-only offers — straight to you.</p>
+                    <form class="flex border rounded-2xl overflow-hidden" style="border-color:rgba(253,253,253,0.08);" onsubmit="return false;">
+                        <input type="email" placeholder="your@email.com"
+                               class="bg-transparent px-4 py-3 text-sm w-full outline-none"
+                               style="font-family:'Manrope',sans-serif;color:var(--paper);"
+                               aria-label="Email address">
+                        <button type="submit"
+                                class="px-5 py-3 text-[9px] font-black uppercase tracking-widest flex-shrink-0 transition-colors"
+                                style="background:var(--paper);color:var(--ink);">Join</button>
+                    </form>
+                </div>
 
-            <div class="space-y-6 lg:text-right">
-                <h3 class="text-sm font-black uppercase tracking-[0.2em]">Connect</h3>
-                <div class="flex gap-4 lg:justify-end">
-                    <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                    </a>
+                <!-- Shop -->
+                <div class="space-y-6 lg:pl-6">
+                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Shop</p>
+                    <ul class="space-y-4">
+                        {% for label, href in forloop.parentloop.revaluelist|default:'' %}{% endfor %}
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">New Releases</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Men's Shoes</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Women's Shoes</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Kid's Shoes</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight" style="color:#e87c3e;">Sale</a></li>
+                    </ul>
+                </div>
+
+                <!-- Help -->
+                <div class="space-y-6">
+                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Help</p>
+                    <ul class="space-y-4">
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Order Status</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Shipping & Delivery</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Returns</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Payment Options</a></li>
+                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <!-- Social -->
+                <div class="space-y-6 lg:text-right">
+                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Connect</p>
+                    <div class="flex gap-3 lg:justify-end">
+                        <a href="#" class="w-10 h-10 rounded-full border flex items-center justify-center transition-colors" style="border-color:rgba(253,253,253,0.1);" onmouseover="this.style.background='rgba(253,253,253,0.08)'" onmouseout="this.style.background='transparent'" aria-label="Twitter">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full border flex items-center justify-center transition-colors" style="border-color:rgba(253,253,253,0.1);" onmouseover="this.style.background='rgba(253,253,253,0.08)'" onmouseout="this.style.background='transparent'" aria-label="Instagram">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </a>
+                    </div>
+                    <!-- Tagline -->
+                    <p class="text-xs font-black italic uppercase tracking-tight" style="color:rgba(253,253,253,0.15);">Made for the<br>streets. Built for<br>forever.</p>
                 </div>
             </div>
-        </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-white/5">
-            <div class="flex items-center gap-4">
-                <p class="text-[10px] font-medium text-[#757575]">© 2026 VERSE_SHOES, Inc. All Rights Reserved</p>
+            <!-- Bottom bar -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style="border-top:1px solid rgba(253,253,253,0.06);">
+                <p style="font-size:10px;font-weight:600;color:#4a4a4a;">© 2026 VERSE_SHOES, Inc. All Rights Reserved</p>
+                <ul class="flex gap-6" style="font-size:9px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:#4a4a4a;">
+                    <li><a href="#" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#4a4a4a'" class="transition-colors">Privacy Policy</a></li>
+                    <li><a href="#" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#4a4a4a'" class="transition-colors">Terms of Sale</a></li>
+                    <li><a href="#" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#4a4a4a'" class="transition-colors">Cookie Policy</a></li>
+                </ul>
             </div>
-            
-            <ul class="flex flex-wrap justify-center gap-6 text-[10px] font-black uppercase tracking-widest text-[#757575]">
-                <li><a href="#" class="hover:text-[#fdfdfd] transition-colors">Privacy Policy</a></li>
-                <li><a href="#" class="hover:text-[#fdfdfd] transition-colors">Terms of Sale</a></li>
-                <li><a href="#" class="hover:text-[#fdfdfd] transition-colors">Cookie Policy</a></li>
-            </ul>
         </div>
-    </div>
-</footer>
+    </footer>
 
-    <!-- change 2: centralized reusable confirmation modal (matches reference image) -->
+    <!-- ─── CONFIRM MODAL ─────────────────────────────────────── -->
     <div id="confirmModal"
          class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
          style="display:none !important;"
          role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
 
-        <!-- Backdrop -->
         <div id="confirmModalBackdrop"
-             class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+             class="absolute inset-0"
+             style="background:rgba(10,10,10,0.5);backdrop-filter:blur(8px);"
              onclick="closeConfirmModal()"></div>
 
-        <!-- Card -->
         <div id="confirmModalCard"
-             class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center
-                    transition-all duration-300 scale-90 opacity-0">
+             class="relative bg-white w-full max-w-sm p-10 flex flex-col items-center text-center transition-all duration-300 scale-90 opacity-0"
+             style="border-radius:28px;box-shadow:0 40px 100px rgba(10,10,10,0.2);">
 
-            <!-- Icon badge -->
             <div id="confirmModalIconWrap"
-                 class="w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-red-50">
-                <span id="confirmModalIcon" class="text-3xl text-red-500">🗑</span>
+                 class="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+                 style="background:#fef2f2;">
+                <span id="confirmModalIcon" class="text-3xl">🗑</span>
             </div>
 
-            <!-- Title -->
             <h2 id="confirmModalTitle"
-                class="text-xl font-black tracking-tight text-slate-900 mb-2"></h2>
+                class="text-xl font-black tracking-tight mb-2" style="color:var(--ink);"></h2>
 
-            <!-- Message -->
             <p id="confirmModalMessage"
-               class="text-sm text-slate-500 leading-relaxed mb-7"></p>
+               class="text-sm leading-relaxed mb-8" style="color:var(--muted);max-width:260px;"></p>
 
-            <!-- Confirm button -->
             <button id="confirmModalConfirmBtn"
-                    class="w-full h-12 rounded-full bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white font-black text-sm uppercase tracking-widest transition-all mb-3">
-            </button>
+                    class="w-full h-12 rounded-full font-black text-xs uppercase tracking-widest text-white transition-all active:scale-[0.97] mb-3"
+                    style="background:#e02020;letter-spacing:0.14em;"></button>
 
-            <!-- Cancel button -->
             <button onclick="closeConfirmModal()"
-                    class="w-full h-12 rounded-full border-2 border-slate-200 hover:border-slate-400 text-slate-700 font-black text-sm uppercase tracking-widest transition-all">
+                    class="w-full h-12 rounded-full font-black text-xs uppercase tracking-widest transition-all"
+                    style="border:1.5px solid rgba(10,10,10,0.12);color:var(--ink);letter-spacing:0.14em;">
                 Cancel
             </button>
         </div>
     </div>
 
+    <!-- ─── SCRIPTS ───────────────────────────────────────────── -->
     <script>
-        // change 3: sidebar toggle (existing)
+        /* ── Header scroll state ── */
+        const siteHeader = document.getElementById('siteHeader');
+        window.addEventListener('scroll', () => {
+            siteHeader.classList.toggle('scrolled', window.scrollY > 20);
+        }, { passive: true });
+
+        /* ── Sidebar ── */
         function toggleSidebar() {
             const sidebar = document.getElementById('profileSidebar');
             const overlay = document.getElementById('sidebarOverlay');
-
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-
-            if (sidebar.classList.contains('open')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
+            const open = sidebar.classList.toggle('open');
+            overlay.classList.toggle('active', open);
+            document.body.style.overflow = open ? 'hidden' : '';
         }
 
-        // fix: named function avoids HTML attribute single-quote escaping issues
+        /* ── Mobile Menu ── */
+        function openMobileMenu() {
+            document.getElementById('mobileMenu').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        /* ── Logout shortcut ── */
         function triggerLogoutModal() {
             openConfirmModal({
-                icon: '&#128682;',
-                iconBg: 'bg-red-50',
-                iconColor: 'text-red-500',
+                icon: '⏻',
+                iconBg: 'background:#fef2f2;',
+                iconColor: 'color:#e02020;',
                 title: 'Log Out?',
-                message: 'You will need to login again to access your account.',
+                message: 'You will need to sign in again to access your account.',
                 confirmText: 'Yes, Log Out',
-                onConfirm: function () {
-                    document.getElementById('logoutForm').submit();
-                }
+                confirmBg: '#e02020',
+                onConfirm: () => document.getElementById('logoutForm').submit()
             });
         }
 
-        // change 4: reusable confirmation modal logic
+        /* ── Confirm Modal ── */
         let _confirmCallback = null;
 
-        /**
-         * openConfirmModal({ icon, iconBg, iconColor, title, message, confirmText, onConfirm })
-         * Call this from any template to show the modal for any destructive action.
-         */
         function openConfirmModal(opts) {
             const modal   = document.getElementById('confirmModal');
             const card    = document.getElementById('confirmModalCard');
@@ -433,58 +829,57 @@
             const msgEl   = document.getElementById('confirmModalMessage');
             const btnEl   = document.getElementById('confirmModalConfirmBtn');
 
-            // Populate content
-            iconEl.innerHTML   = opts.icon        || '🗑';
-            iconWrap.className = 'w-16 h-16 rounded-full flex items-center justify-center mb-5 ' + (opts.iconBg || 'bg-red-50');
-            iconEl.className   = 'text-3xl ' + (opts.iconColor || 'text-red-500');
-            titleEl.textContent = opts.title      || 'Are you sure?';
-            msgEl.textContent   = opts.message    || 'This action cannot be undone.';
-            btnEl.textContent   = opts.confirmText || 'Confirm';
-            _confirmCallback    = opts.onConfirm  || null;
+            iconEl.innerHTML        = opts.icon        || '🗑';
+            iconWrap.style.cssText  = opts.iconBg      || 'background:#fef2f2;';
+            titleEl.textContent     = opts.title       || 'Are you sure?';
+            msgEl.textContent       = opts.message     || 'This action cannot be undone.';
+            btnEl.textContent       = opts.confirmText || 'Confirm';
+            btnEl.style.background  = opts.confirmBg   || '#e02020';
+            _confirmCallback        = opts.onConfirm   || null;
 
-            // Show modal
             modal.style.removeProperty('display');
             document.body.style.overflow = 'hidden';
 
-            // Animate in
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    card.classList.remove('scale-90', 'opacity-0');
-                    card.classList.add('scale-100', 'opacity-100');
-                });
-            });
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                card.classList.remove('scale-90', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }));
         }
 
         function closeConfirmModal() {
             const modal = document.getElementById('confirmModal');
             const card  = document.getElementById('confirmModalCard');
-
-            // Animate out
             card.classList.remove('scale-100', 'opacity-100');
             card.classList.add('scale-90', 'opacity-0');
-
             setTimeout(() => {
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
                 _confirmCallback = null;
-            }, 200);
+            }, 250);
         }
 
-        // Wire the confirm button
-        document.getElementById('confirmModalConfirmBtn').addEventListener('click', function () {
-            if (typeof _confirmCallback === 'function') {
-                _confirmCallback();
-            }
+        document.getElementById('confirmModalConfirmBtn').addEventListener('click', () => {
+            if (typeof _confirmCallback === 'function') _confirmCallback();
             closeConfirmModal();
         });
 
-        // change 5: close modal on Escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeConfirmModal();
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirmModal(); });
+
+        /* ── Scroll Reveal ── */
+        document.addEventListener('DOMContentLoaded', () => {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('show');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+            document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
         });
     </script>
 
     {% block extra_js %}{% endblock %}
-
 </body>
 </html>
