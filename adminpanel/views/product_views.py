@@ -4,8 +4,12 @@ from django.contrib import messages
 from django.db.models import Q
 from django.views.decorators.cache import never_cache
 
-from products.models import Product, Category
+from django.db import transaction
+from products.models import Product, Category, Variant, VariantImage
+from products.utils import optimize_variant_image
 from .core_views import admin_required
+
+
 
 
 @never_cache
@@ -69,14 +73,55 @@ def add_product_view(request):
         description = request.POST.get('description', '').strip()
         category_id = request.POST.get('category', '').strip()
         is_active = request.POST.get('is_active') == 'on'
+        color = request.POST.get('variant_name', '').strip()
+        sku_suffix = request.POST.get('sku_suffix', '').strip()
+        size = request.POST.get('size', '').strip()
+        stock = request.POST.get('stock', '').strip()
+        price = request.POST.get('price', '').strip()
+        variant_is_active = request.POST.get('stock_status') == 'active'
+        images = request.FILES.getlist('variant_images')
+        
 
         errors = {}
 
         if not product_name:
             errors['product_name'] = 'Product name is required.'
+        
+        elif Product.objects.filter(
+            product_name__iexact=product_name,
+            is_deleted=False
+        ).exists():
+            errors['product_name'] = "This product already exists."       
 
         if not category_id:
             errors['category'] = 'Category is required.'
+        
+        if not color:
+            errors['variant_name'] = 'Color / variant name is required.'
+
+        if not sku_suffix:
+            errors['sku_suffix'] = 'SKU suffix is required.'
+
+        if not size:
+            errors['size'] = 'Size is required.'
+
+        if not stock:
+            errors['stock'] = 'Stock is required.'
+        elif not stock.isdigit():
+            errors['stock'] = 'Stock must be a valid number.'
+
+        if not price:
+            errors['price'] = 'Price is required.'
+        else:
+            try:
+                price = float(price)
+                if price <= 0:
+                    errors['price'] = 'Price must be greater than zero.'
+            except ValueError:
+                errors['price'] = 'Enter a valid price.'
+
+        if len(images) < 3:
+            errors['variant_images'] = 'Please upload at least 3 variant images.'    
               
 
         category = None
@@ -97,16 +142,57 @@ def add_product_view(request):
                 'form_data': request.POST,
             })
 
-        product = Product.objects.create(
-            product_name=product_name,
-            description=description,
-            category=category,
-            is_active=is_active,
-            is_deleted=False,
-        )
-        
+        sku = f"{product_name[:3]}-{color[:3]}-{size}-{sku_suffix}".upper().replace(" ", "")
 
-        messages.success(request, 'Product added successfully.')
+        if Variant.objects.filter(sku__iexact=sku).exists():
+            errors['sku_suffix'] = 'This SKU already exists.'
+
+        if errors:
+            return render(request, 'adminpanel/add_product.html', {
+                'categories': categories,
+                'errors': errors,
+                'form_data': request.POST,
+            })
+
+        try:
+            with transaction.atomic():
+                product = Product.objects.create(
+                    product_name=product_name,
+                    description=description,
+                    category=category,
+                    is_active=is_active,
+                    is_deleted=False,
+                )
+
+                variant = Variant.objects.create(
+                    product=product,
+                    sku=sku,
+                    color=color,
+                    size=size,
+                    price=price,
+                    stock=int(stock),
+                    is_active=variant_is_active,
+                    is_deleted=False,
+                    is_default=True,
+                )
+
+                for index, image in enumerate(images):
+                    VariantImage.objects.create(
+                        variant=variant,
+                        image_url=optimize_variant_image(image),
+                        is_primary=(index == 0)
+                    )
+
+        except ValueError as e:
+            errors['variant_images'] = str(e)
+
+            return render(request, 'adminpanel/add_product.html', {
+                'categories': categories,
+                'errors': errors,
+                'form_data': request.POST,
+            })
+
+        messages.success(request, 'Product and first variant added successfully.')
         return redirect('product_list')
 
     return render(request, 'adminpanel/add_product.html', {
@@ -130,6 +216,12 @@ def edit_product_view(request, product_id):
 
         if not product_name:
             errors['product_name'] = 'Product name is required.'
+        
+        elif Product.objects.filter(
+            product_name__iexact=product_name,
+            is_deleted=False
+        ).exists():
+            errors['product_name'] = "Another product with this name already exists."    
 
         if not category_id:
             errors['category'] = 'Category is required.'

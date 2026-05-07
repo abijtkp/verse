@@ -111,6 +111,7 @@
             <table class="w-full min-w-[850px] text-left border-collapse">
                 <thead>
                     <tr class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 border-b border-slate-50">
+                        <th class="px-6 sm:px-8 py-5">Image</th>
                         <th class="px-6 sm:px-8 py-5">Category Name</th>
                         <th class="px-6 sm:px-8 py-5">Slug</th>
                         <th class="px-6 sm:px-8 py-5">Products</th>
@@ -122,6 +123,24 @@
                 <tbody class="divide-y divide-slate-50">
                     {% for category in page_obj %}
                     <tr class="group hover:bg-slate-50/60 transition-colors">
+                        
+                        <td class="px-6 sm:px-8 py-5">
+                            {% if category.category_image %}
+                                <img
+                                    src="{{ category.category_image.url }}"
+                                    alt="{{ category.category_name }}"
+                                    class="w-14 h-14 rounded-2xl object-cover border border-slate-200"
+                                >
+                            {% else %}
+                                <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-slate-300 text-lg">
+                                        image
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        
+                        
                         <td class="px-6 sm:px-8 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400">
@@ -195,7 +214,7 @@
 
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-8 py-20 text-center">
+                        <td colspan="6" class="px-8 py-20 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                     <span class="material-symbols-outlined text-3xl text-slate-200">inventory_2</span>

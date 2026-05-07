@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from .models import Category, Variant
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, Prefetch
 from cart.models import Wishlist
 from django.contrib import messages
 from accounts.decorators import user_required
 from django.contrib.auth.decorators import login_required
+from .models import Category, Variant, VariantImage
 
 
 def product_listing_view(request):
@@ -28,7 +29,11 @@ def product_listing_view(request):
         'product',
         'product__category'
     ).prefetch_related(
-        'images'
+        Prefetch(
+            'images',
+            queryset=VariantImage.objects.order_by('-is_primary', 'id'),
+            to_attr='ordered_images'
+        )
     )
 
     if search_query:
@@ -40,7 +45,10 @@ def product_listing_view(request):
         )
 
     if selected_category:
-        variants = variants.filter(product__category__id=selected_category)
+        if selected_category.isdigit():
+            variants = variants.filter(product__category__id=selected_category)
+        else:
+            variants = variants.filter(product__category__category_name__iexact=selected_category)
 
     if min_price:
         variants = variants.filter(price__gte=min_price)
@@ -73,8 +81,17 @@ def product_listing_view(request):
         
     else:
         variants = variants.order_by('-created_at')
+        
+      
+    unique_variants = []
+    seen_product_ids = set()
+    
+    for variant in variants:
+        if variant.product_id not in seen_product_ids:
+            unique_variants.append(variant)
+            seen_product_ids.add(variant.product_id)    
 
-    paginator = Paginator(variants, 8)
+    paginator = Paginator(unique_variants, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -175,7 +192,7 @@ def product_detail_view(request, variant_id):
     ).order_by('size')
 
 
-    related_products = Variant.objects.filter(
+    related_variants = Variant.objects.filter(
         product__category=variant.product.category,
         is_active=True,
         is_deleted=False,
@@ -184,15 +201,29 @@ def product_detail_view(request, variant_id):
         product__category__is_active=True,
         product__category__is_deleted=False,
     ).exclude(
-        id=variant.id
+        product_id=variant.product_id
     ).select_related(
         'product',
         'product__category'
     ).prefetch_related(
-        'images'
-    ).order_by('?')[:4]
+        Prefetch(
+        'images',
+        queryset=VariantImage.objects.order_by('-is_primary', 'id'),
+        to_attr='ordered_images'
+        )
+    ).order_by('?')
     
+    related_products = []
+    seen_product_ids = set()
     
+    for item in related_variants:
+        if item.product_id not in seen_product_ids:
+            related_products.append(item)
+            seen_product_ids.add(item.product_id)
+
+        if len(related_products) == 4:
+            break
+
     is_in_wishlist = False
 
     if request.user.is_authenticated:

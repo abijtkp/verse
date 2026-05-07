@@ -11,6 +11,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError  
 from django.contrib.auth.hashers import make_password
 from userprofile.models import Profile
+from products.models import Category
 from django.views.decorators.cache import never_cache
 
 @never_cache
@@ -300,13 +301,26 @@ def logout_view(request):
 @never_cache
 def home(request):
     profile = None
-    
 
-    
     if request.user.is_authenticated:
         profile, created = Profile.objects.get_or_create(user=request.user)
-    return render(request, 'home.html',{
-        'profile':profile
+
+    categories_with_images = Category.objects.filter(
+        is_active=True,
+        is_deleted=False,
+        category_image__isnull=False
+    ).exclude(
+        category_image=''
+    ).order_by('-updated_at', '-created_at')
+
+    show_category_cards = categories_with_images.count() >= 4
+
+    home_categories = categories_with_images[:4] if show_category_cards else []
+
+    return render(request, 'home.html', {
+        'profile': profile,
+        'home_categories': home_categories,
+        'show_category_cards': show_category_cards,
     })
     
 def profile_access_view(request):

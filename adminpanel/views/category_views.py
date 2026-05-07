@@ -44,7 +44,7 @@ def add_category_view(request):
         
         category_name = request.POST.get('category_name', '').strip()
         category_name = re.sub(r'\s+', ' ', category_name).strip()
-        
+        category_image = request.FILES.get('category_image')
         description = request.POST.get('description', '').strip()
         is_active = request.POST.get('is_active') == 'on'
 
@@ -75,6 +75,7 @@ def add_category_view(request):
         Category.objects.create(
             category_name=category_name,
             description=description,
+            category_image=category_image,
             is_active=is_active,
         )
 
@@ -92,6 +93,8 @@ def edit_category_view(request, category_id):
     if request.method == 'POST':
         category_name = request.POST.get('category_name', '').strip()
         category_name = re.sub(r'\s+', ' ', category_name).strip()
+        category_image = request.FILES.get('category_image')
+        remove_image = request.POST.get('remove_image') == 'on'
         description = request.POST.get('description', '').strip()
         is_active = request.POST.get('is_active') == 'on'
 
@@ -130,6 +133,15 @@ def edit_category_view(request, category_id):
         category.category_name = category_name
         category.description = description
         category.is_active = is_active
+        
+        if remove_image and category.category_image:
+            category.category_image.delete(save=False)
+            category.category_image = None
+
+        
+        if category_image:
+            category.category_image = category_image
+            
         category.save()
 
         only_status_changed = (

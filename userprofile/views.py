@@ -437,7 +437,7 @@ def change_email_view(request):
     
     
     if request.method == 'POST':
-        new_email = request.POST.get('new_email').strip()
+        new_email = request.POST.get('new_email','').strip()
         
         if not new_email:
             messages.error(request, "Email is required")

@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<form method="POST" action="{% url 'add_category' %}" class="max-w-5xl mx-auto px-4 md:px-0">
+<form method="POST" action="{% url 'add_category' %}" enctype="multipart/form-data" class="max-w-5xl mx-auto px-4 md:px-0">
     {% csrf_token %}
 
     <div class="flex flex-row justify-end items-center gap-3 mb-8 lg:-mt-18 relative z-10">
@@ -83,6 +83,45 @@
                     Configuration
                 </h3>
 
+                <div class="mb-6">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Category Image
+                    </label>
+
+                    <label for="category_image"
+                        class="group relative flex flex-col items-center justify-center w-full aspect-square rounded-[28px] border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
+
+                        <img id="categoryImagePreview"
+                            src=""
+                            alt=""
+                            class="hidden absolute inset-0 w-full h-full object-cover">
+
+                        <div id="categoryImagePlaceholder" class="flex flex-col items-center justify-center text-center px-4">
+                            <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">
+                                add_photo_alternate
+                            </span>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                Upload Image
+                            </p>
+                            <p class="text-[9px] font-medium text-slate-400 mt-1">
+                                PNG, JPG, WEBP
+                            </p>
+                        </div>
+                    </label>
+
+                    <input id="category_image"
+                        type="file"
+                        name="category_image"
+                        accept="image/*"
+                        class="hidden">
+
+                    {% if errors.category_image %}
+                        <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">
+                            {{ errors.category_image }}
+                        </p>
+                    {% endif %}
+                </div>
+
                 <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-900">
@@ -132,6 +171,29 @@
                 field.classList.add("border-slate-200");
             });
         });
+
+        const imageInput = document.getElementById("category_image");
+        const preview = document.getElementById("categoryImagePreview");
+        const placeholder = document.getElementById("categoryImagePlaceholder");
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function () {
+                const file = this.files[0];
+
+                if (!file) return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove("hidden");
+                    placeholder.classList.add("hidden");
+                };
+
+                reader.readAsDataURL(file);
+            });
+        }
+
     });
 </script>
 {% endblock %}

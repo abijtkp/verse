@@ -541,7 +541,7 @@
 <!-- ═══════════════════════════════════════════════
      PAGE HERO
 ═══════════════════════════════════════════════ -->
-<section class="px-6 md:px-10 lg:px-16 pt-12 pb-8">
+{% comment %} <section class="px-6 md:px-10 lg:px-16 pt-12 pb-8">
     <div class="max-w-screen-xl mx-auto">
         <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">VERSE / Shop</p>
         <h1 class="text-5xl md:text-7xl font-[900] uppercase italic tracking-tighter leading-none mb-3">
@@ -551,14 +551,21 @@
             Push your boundaries with our latest performance and lifestyle drops. Engineered for greatness.
         </p>
     </div>
-</section>
+</section> {% endcomment %}
 
 <!-- ═══════════════════════════════════════════════
      CONTROLS BAR
 ═══════════════════════════════════════════════ -->
-<section class="sticky top-20 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 px-6 md:px-10 lg:px-16 py-4">
+<section id="listingControls"
+         class="sticky top-[64px] z-30 border-b border-black/5 px-6 md:px-10 lg:px-16 py-2 transition-transform duration-300"
+         style="background: rgba(229,226,222,0.72); backdrop-filter: blur(14px);">
     <div class="max-w-screen-xl mx-auto">
         <form method="GET" action="" id="searchSortForm">
+
+            {% if search_query %}
+                <input type="hidden" name="q" value="{{ search_query }}">
+            {% endif %}
+
             <!-- Preserve filter params -->
             {% if selected_category %}
                 <input type="hidden" name="category" value="{{ selected_category }}">
@@ -587,9 +594,12 @@
 
 
             <div class="listing-controls-row flex flex-wrap items-center gap-3">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mr-auto">
+                    {{ variants.paginator.count }} result{{ variants.paginator.count|pluralize }}
+                </p>
 
                 <!-- Search -->
-                <div class="listing-search flex-1 min-w-[200px] max-w-xs">
+                {% comment %} <div class="listing-search flex-1 min-w-[200px] max-w-xs">
                     <span class="material-symbols-outlined icon-sm text-slate-400">search</span>
                     <input type="text" name="q" placeholder="Search products..."
                            value="{{ search_query|default:'' }}">
@@ -599,18 +609,18 @@
                         <span class="material-symbols-outlined icon-sm">close</span>
                     </button>
                     {% endif %}
-                </div>
+                </div> {% endcomment %}
 
                 <!-- Active Filter Chips -->
                 <div class="flex flex-wrap items-center gap-2">
-                    {% if search_query %}
+                    {% comment %} {% if search_query %}
                     <span class="filter-chip">
                         "{{ search_query }}"
                         <button type="button" onclick="clearSearch()">
                             <span class="material-symbols-outlined" style="font-size:13px;">close</span>
                         </button>
                     </span>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     {% if selected_category %}
                     <span class="filter-chip">
                         {% for cat in categories %}{% if cat.id|stringformat:"s" == selected_category %}{{ cat.category_name }}{% endif %}{% endfor %}
@@ -627,7 +637,7 @@
                         </a>
                     </span>
                     {% endif %}
-                    {% if search_query or selected_category or min_price or max_price %}
+                    {% if selected_category or min_price or max_price %}
                     <a href="{% url 'product_listing' %}"
                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors ml-1">
                         Clear all
@@ -645,7 +655,7 @@
                     <div class="sort-wrapper">
                         <button type="button"
                                 onclick="toggleSortMenu()"
-                                class="sort-trigger flex items-center justify-between gap-3 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider bg-white transition-all">
+                                class="sort-trigger flex items-center justify-between gap-2 h-9 px-4 rounded-full border border-slate-200 hover:border-black text-[10px] font-black uppercase tracking-wider bg-white transition-all">
                             <span>
                                 {% if sort_by == 'price_desc' %}
                                     Price: High-Low
@@ -684,8 +694,8 @@
 
                     <!-- Filter Button -->
                     <button type="button" onclick="toggleFilterDrawer()"
-                            class="filter-mobile-btn flex items-center gap-2 h-10 px-5 rounded-full border-2 border-slate-200 hover:border-black text-[11px] font-black uppercase tracking-wider transition-all">
-                        <span class="material-symbols-outlined icon-sm">tune</span>
+                            class="filter-mobile-btn flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200 hover:border-black text-[10px] font-black uppercase tracking-wider transition-all"
+                        <span class="material-symbols-outlined icon-sm"></span>
                         Filters
                         {% if selected_category or min_price or max_price or selected_sizes or selected_colors %}
                         <span class="w-2 h-2 rounded-full bg-black flex-shrink-0 -ml-0.5"></span>
@@ -706,9 +716,9 @@
         {% if variants %}
 
         <!-- Result count -->
-        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
+        {% comment %} <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
             {{ variants.paginator.count }} result{{ variants.paginator.count|pluralize }}
-        </p>
+        </p> {% endcomment %}
 
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {% for variant in variants %}
@@ -716,13 +726,13 @@
 
                 <!-- Image -->
                 <div class="product-card-img-wrap">
-                    {% with img=variant.images.first %}
-                        {% if img %}
-                            <img src="{{ img.image_url.url }}" alt="{{ variant.product.product_name }}">
-                        {% else %}
-                            <img src="{% static 'images/no_product.png' %}" alt="{{ variant.product.product_name }}">
-                        {% endif %}
-                    {% endwith %}
+                    {% if variant.ordered_images %}
+                        <img src="{{ variant.ordered_images.0.image_url.url }}"
+                            alt="{{ variant.product.product_name }}">
+                    {% else %}
+                        <img src="{% static 'images/no_product.png' %}"
+                            alt="{{ variant.product.product_name }}">
+                    {% endif %}
 
                     <!-- Stock Badge -->
                     {% if variant.stock == 0 %}
@@ -881,6 +891,26 @@
         if (!sortWrapper && sortMenu) {
             sortMenu.classList.remove('open');
         }
+    });
+</script>
+<script>
+    let lastScrollY = window.scrollY;
+    const listingControls = document.getElementById('listingControls');
+
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        if (!listingControls) return;
+
+        if (currentScrollY > lastScrollY && currentScrollY > 120) {
+            // scrolling down
+            listingControls.style.transform = 'translateY(-110%)';
+        } else {
+            // scrolling up
+            listingControls.style.transform = 'translateY(0)';
+        }
+
+        lastScrollY = currentScrollY;
     });
 </script>
 {% endblock %}

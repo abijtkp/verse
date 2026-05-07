@@ -5,6 +5,7 @@ from django.db import models
 class Category(models.Model):
     category_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    category_image = models.ImageField(upload_to='categories/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
