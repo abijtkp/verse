@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from accounts.decorators import user_required
 from products.models import Variant
 from .models import Cart, CartItem, Wishlist
+from userprofile.models import Address
 
 
 
@@ -24,9 +25,12 @@ def cart_view(request):
         .order_by('-created_at')
     )
 
+    has_address = Address.objects.filter(user=request.user).exists() 
+    
     return render(request, 'cart/cart.html', {
         'cart': cart,
         'cart_items': cart_items,
+        'has_address': has_address,
     })
 
 

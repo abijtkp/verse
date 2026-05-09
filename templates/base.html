@@ -15,12 +15,12 @@
             --ink: #0a0a0a;
             --paper: #dcdad7;
             --muted: #9e9e9e;
-            --subtle: #e7e5e2;
+            --subtle: #f8fafc;
             --border: rgba(10,10,10,0.08);
             --glow: rgba(120,120,120,0.15);
 
-            --site-bg: #e5e2de;
-            --section-bg: #e5e2de;
+            --site-bg: #f8fafc;
+            --section-bg: #f8fafc;
             --card-bg: #fdfdfd;
 
             --glass-bg: rgba(255,255,255,0.16);
@@ -60,7 +60,7 @@
             top: 0;
             z-index: 200;
             height: 64px;
-            width: 100%
+            width: 100%;
             margin: 0 auto 0;
             border-radius: 0 0 18px 18px;
 
@@ -734,12 +734,12 @@
             <a href="{% url 'address_list' %}" class="sidebar-link {% if 'address' in request.path %}active{% endif %}">
                 <img src="{% static 'images/location.svg' %}" class="sidebar-icon" alt="">Addresses
             </a>
-            <a href="#" class="sidebar-link">
+            <a href="{% url 'order_list' %}" class="sidebar-link">
                 <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon" alt="">Orders
             </a>
-            <a href="{% url 'wishlist_view' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
+            {% comment %} <a href="{% url 'wishlist_view' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
                 <img src="{% static 'images/wishlist.svg' %}" class="sidebar-icon" alt="">Wishlist
-            </a>
+            </a> {% endcomment %}
             <a href="#" class="sidebar-link">
                 <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon" alt="">Wallet
             </a>
@@ -774,7 +774,7 @@
         </div>
 
         <div class="max-w-7xl mx-auto relative z-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
+            {% comment %} <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
 
                 <!-- Newsletter -->
                 <div class="space-y-6">
@@ -830,7 +830,7 @@
                     <!-- Tagline -->
                     <p class="text-xs font-black italic uppercase tracking-tight" style="color:rgba(253,253,253,0.15);">Made for the<br>streets. Built for<br>forever.</p>
                 </div>
-            </div>
+            </div> {% endcomment %}
 
             <!-- Bottom bar -->
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style="border-top:1px solid rgba(253,253,253,0.06);">

@@ -251,6 +251,11 @@ def add_address(request):
         )
 
         messages.success(request, "Address added successfully.")
+        next_page = request.GET.get('next')
+
+        if next_page == 'checkout':
+            return redirect('checkout')
+        
         return redirect('address_list')
 
     return render(request, 'userprofile/add_address.html')
@@ -382,8 +387,13 @@ def edit_address(request, pk):
 
         address.save()
         messages.success(request, "Address updated successfully.")
-        return redirect('address_list')
+        next_page = request.GET.get('next')
 
+        if next_page == 'checkout':
+            return redirect('checkout')
+
+        return redirect('address_list')
+    
     return render(request, 'userprofile/edit_address.html', {
         'address': address
     })

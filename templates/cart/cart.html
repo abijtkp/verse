@@ -349,7 +349,7 @@
                     <span id="summary-total" class="text-2xl font-[900] text-black">₹{{ cart.total_price }}</span>
                 </div>
 
-                <a href="#" class="checkout-btn mb-4">
+                <a href="{% url 'checkout' %}" class="checkout-btn mb-4">
                     <span class="material-symbols-outlined icon-sm">lock</span>
                     Proceed to Checkout
                 </a>

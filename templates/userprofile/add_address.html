@@ -84,7 +84,10 @@
     <h1 class="form-title">Add Address</h1>
     <p class="form-subtitle">Add a new shipping address.</p>
 
-    <form method="POST" class="space-y-6" novalidate>
+    <form method="POST"
+      action="{% url 'add_address' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
+      class="space-y-6"
+      novalidate>
         {% csrf_token %}
 
         <div class="input-group">
@@ -112,7 +115,7 @@
         <div class="input-group">
             <label class="input-label">Address Line 2</label>
             <input type="text" name="address_line2"
-                class="custom-input"
+                class="custom-input" placeholder ="optional"
                 value="{{ form_data.address_line2|default:'' }}">
         </div>
 

@@ -1,0 +1,1194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout — VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ─── CHECKOUT LAYOUT ─────────────────────────────────── */
+    .checkout-wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 48px;
+        align-items: start;
+    }
+
+    
+    :root {
+        --accent-blue: #3b82f6;
+    }
+
+
+    @media (max-width: 1024px) {
+        .checkout-wrap {
+            grid-template-columns: 1fr;
+            padding: 28px 14px 60px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+    }
+
+    /* ─── CARDS ───────────────────────────────────────────── */
+    .ck-card {
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #f1f5f9;
+        padding: 32px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .checkout-right .ck-card {
+        padding: 22px;
+    }
+
+    .ck-card {
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .ck-card:hover {
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    @media (max-width: 640px) {
+        .ck-card {
+            border-radius: 22px;
+            padding: 22px;
+        }
+
+        .checkout-title {
+            font-size: 30px;
+        }
+
+        .checkout-title-icon {
+            width: 42px;
+            height: 42px;
+        }
+    }
+
+
+
+
+
+    .ck-card-title {
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ck-card-title svg { flex-shrink: 0; }
+
+    /* ─── ORDER ITEMS ─────────────────────────────────────── */
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid rgba(10,10,10,0.06);
+        min-width: 0;
+    }
+
+    @media (max-width: 480px) {
+        .order-item {
+            gap: 12px;
+        }
+
+        .order-item-img {
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
+        }
+
+        .order-item-price {
+            font-size: 13px;
+        }
+}
+
+    .order-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .order-item:first-child { padding-top: 0; }
+
+    .order-item-img {
+        width: 68px;
+        height: 68px;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #f8fafc;
+        flex-shrink: 0;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .order-item-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .order-item-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--subtle);
+    }
+
+    .order-item-info { flex: 1; min-width: 0; }
+
+    .order-item-name {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .order-item-meta {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-top: 3px;
+        letter-spacing: 0.03em;
+    }
+
+    .order-item-qty {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 6px;
+        background: #f8fafc;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 10px;
+        font-weight: 900;
+        color: var(--ink);
+        letter-spacing: 0.06em;
+    }
+
+    .order-item-price {
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--ink);
+        letter-spacing: -0.02em;
+        flex-shrink: 0;
+    }
+
+    /* ─── SHIPPING ADDRESS ────────────────────────────────── */
+    .address-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
+    }
+
+    .address-action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .address-action-link:hover {
+        background: var(--ink);
+        color: var(--paper);
+        transform: translateY(-1px);
+    }
+
+    .address-radio-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1.5px solid rgba(10,10,10,0.09);
+        cursor: pointer;
+        transition: border-color 0.25s ease, background 0.25s ease;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .address-radio-item:last-child { margin-bottom: 0; }
+
+    .address-radio-item:has(input:checked) {
+        border-color: var(--ink);
+        background: rgba(10,10,10,0.025);
+    }
+
+    .address-radio-item input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--ink);
+        margin-top: 2px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .address-text { flex: 1; }
+
+    .address-name {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+    }
+
+    .address-detail {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: #6b6b6b;
+        line-height: 1.6;
+        margin-top: 3px;
+    }
+
+    .address-phone {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-top: 5px;
+    }
+
+    .address-default-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #fff;
+        background: var(--ink);
+        border-radius: 999px;
+        padding: 3px 10px;
+        margin-top: 6px;
+    }
+
+    .address-edit-link {
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--muted);
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 999px;
+        transition: color 0.2s ease, background 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .address-edit-link:hover {
+        background: var(--subtle);
+        color: var(--ink);
+    }
+
+    .show-more-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 10.5px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: 0.08em;
+        padding: 10px 0 0;
+        transition: opacity 0.2s ease;
+        font-family: 'Manrope', sans-serif;
+    }
+
+    .show-more-btn:hover { opacity: 0.65; }
+
+    .empty-address {
+        text-align: center;
+        padding: 32px 16px;
+    }
+
+    /* ─── PAYMENT METHOD ──────────────────────────────────── */
+    .payment-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+       padding: 16px;
+        border-radius: 16px;
+        background: #f8fafc;
+        border: 1.5px solid rgba(10,10,10,0.09);
+        margin-bottom: 10px;
+        transition: border-color 0.25s ease, background 0.25s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .payment-option:last-child { margin-bottom: 0; }
+
+    .payment-option.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .payment-option:not(.disabled):has(input:checked) {
+        border-color: var(--accent-blue);
+        background: #fff;
+        box-shadow: 0 10px 28px rgba(59, 130, 246, 0.10);
+    }
+
+    .payment-selected {
+        border-color: var(--accent-blue) !important;
+        background: #fff !important;
+        box-shadow: 0 10px 28px rgba(59, 130, 246, 0.10);
+    }
+
+    .payment-selected .payment-icon,
+    .cod-payment-icon {
+        background: rgba(59,130,246,0.08) !important;
+    }
+
+    .payment-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent-blue);
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .payment-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: var(--subtle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .payment-info { flex: 1; }
+
+    .payment-name {
+        font-size: 12.5px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+    }
+
+    .payment-sub {
+        font-size: 10.5px;
+        font-weight: 500;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    .coming-soon-badge {
+        font-size: 8.5px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--subtle);
+        border-radius: 999px;
+        padding: 3px 9px;
+        flex-shrink: 0;
+    }
+
+    /* ─── PRICE SUMMARY ───────────────────────────────────── */
+    .summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 0;
+    }
+
+    .summary-row + .summary-row {
+        border-top: none;
+    }
+
+    .summary-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #6b6b6b;
+    }
+
+    .summary-value {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--ink);
+    }
+
+    .summary-value.discount { color: #16a34a; }
+    .summary-value.free { color: #16a34a; }
+
+    .summary-total-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .summary-total-label {
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+    }
+
+    .summary-total-value {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--ink);
+        letter-spacing: -0.03em;
+    }
+
+    /* ─── COUPON ──────────────────────────────────────────── */
+    .coupon-wrap {
+        display: flex;
+        gap: 8px;
+        margin: 28px 0 18px;
+    }
+
+    .coupon-input {
+        flex: 1;
+        height: 44px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(10,10,10,0.1);
+        padding: 0 18px;
+        font-size: 11.5px;
+        font-weight: 600;
+        font-family: 'Manrope', sans-serif;
+        color: var(--ink);
+        outline: none;
+        background: #f8fafc;
+        transition: border-color 0.2s ease;
+    }
+
+    .coupon-input:focus { border-color: var(--ink); background: #fff; }
+    .coupon-input::placeholder { color: var(--muted); }
+
+    .coupon-btn {
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(10,10,10,0.12);
+        background: transparent;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+        cursor: pointer;
+        font-family: 'Manrope', sans-serif;
+        transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .coupon-btn:hover { background: var(--subtle); }
+
+    /* ─── PLACE ORDER BTN ─────────────────────────────────── */
+    .place-order-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        height: 56px;
+        background: var(--ink);
+        color: var(--paper);
+        border: none;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        cursor: pointer;
+        font-family: 'Manrope', sans-serif;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+        margin-top: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .place-order-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.1);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .place-order-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 40px rgba(10,10,10,0.28);
+    }
+
+    .place-order-btn:hover::after { opacity: 1; }
+    .place-order-btn:active { transform: translateY(0); }
+
+    /* ─── STICKY SIDEBAR ──────────────────────────────────── */
+    .checkout-right {
+        position: sticky;
+        top: 100px;
+        align-self: start;
+    }
+
+    .checkout-right .ck-card-title {
+        margin-bottom: 16px;
+    }
+
+    .checkout-right .summary-row {
+        padding: 8px 0;
+    }
+
+    .checkout-right .coupon-wrap {
+        margin: 14px 0;
+    }
+
+    .checkout-right .place-order-btn {
+        height: 54px;
+        border-radius: 14px;
+        margin-top: 18px;
+    }
+
+    @media (max-width: 1024px) {
+        .checkout-right { position: static; }
+    }
+
+    /* ─── BACK LINK ───────────────────────────────────────── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-decoration: none;
+        margin-bottom: 24px;
+        transition: color 0.2s ease, gap 0.2s ease;
+    }
+
+    .back-link:hover { color: var(--ink); gap: 10px; }
+
+    /* ─── PAGE TITLE ──────────────────────────────────────── */
+    .checkout-title {
+        font-size: clamp(28px, 4vw, 38px);
+        font-weight: 900;
+        font-style: italic;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        color: var(--ink);
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .checkout-title-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* ─── ITEMS COUNT PILL ────────────────────────────────── */
+    .items-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-left: auto;
+    }
+
+    .order-items-scroll {
+        max-height: 440px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .order-items-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .order-items-scroll::-webkit-scrollbar-thumb {
+        background: #d4d4d4;
+        border-radius: 999px;
+    }
+
+    .address-scroll {
+        max-height: 340px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .address-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .address-scroll::-webkit-scrollbar-thumb {
+        background: #d4d4d4;
+        border-radius: 999px;
+    }
+        
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background: var(--site-bg); min-height: 100vh;">
+    <div class="checkout-wrap">
+
+        <!-- ─── LEFT COLUMN ─────────────────────────────────── -->
+        <div class="checkout-left">
+
+            <!-- Back link -->
+            <a href="{% url 'cart_view' %}" class="back-link">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Back to Cart
+            </a>
+
+            <!-- Page Title -->
+            <div class="checkout-title">
+                <div class="checkout-title-icon">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="3"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-4 0v2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 014 0v2"/>
+                    </svg>
+                </div>
+                Checkout
+            </div>
+
+            <form method="POST" action="{% url 'place_order' %}" id="checkoutForm">
+                {% csrf_token %}
+
+                <!-- ─── ORDER ITEMS ─────────────────────────────── -->
+                <div class="ck-card">
+                    <div class="ck-card-title">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        Order Items
+                        <span class="items-count">
+                            {{ cart_items|length }} item{% if cart_items|length != 1 %}s{% endif %}
+                        </span>
+                    </div>
+                <div class="order-items-scroll">
+                    {% for item in cart_items %}
+                    <div class="order-item">
+                        <!-- Product Image -->
+                        <div class="order-item-img">
+                            {% with images=item.variant.images.all %}
+                                {% if images %}
+                                    <img src="{{ images.0.image_url.url }}" alt="{{ item.variant.product.product_name }}">
+                                {% else %}
+                                    <div class="order-item-placeholder">
+                                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--muted);">
+                                            <rect x="3" y="3" width="18" height="18" rx="3"/>
+                                            <path stroke-linecap="round" d="M3 16l5-5 4 4 3-3 6 6"/>
+                                        </svg>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <!-- Info -->
+                        <div class="order-item-info">
+                            <div class="order-item-name">{{ item.variant.product.product_name }}</div>
+                            <div class="order-item-meta">
+                                {{ item.variant.color }}
+                                {% if item.variant.color and item.variant.size %} &nbsp;·&nbsp; {% endif %}
+                                Size {{ item.variant.size }}
+                            </div>
+                            <div class="order-item-qty">
+                                <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12M6 12h12"/>
+                                </svg>
+                                Qty {{ item.quantity }}
+                            </div>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="order-item-price">₹{{ item.subtotal }}</div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px;font-weight:600;">
+                        No items in cart.
+                    </div>
+                    {% endfor %}
+                    </div>    
+                </div>
+
+                <!-- ─── SHIPPING ADDRESS ─────────────────────────── -->
+                <div class="ck-card" style="margin-top:20px;">
+                    <div class="ck-card-title">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Shipping Address
+                        <div class="address-actions">
+                            <a href="{% url 'add_address' %}?next=checkout" class="address-action-link">
+                                <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16M4 12h16"/>
+                                </svg>
+                                Add
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if addresses %}
+                        <!-- Default address first -->
+                         <div class="address-scroll">
+                            {% for address in addresses %}
+                                {% if address.is_default %}
+                                <label class="address-radio-item" id="addr-label-{{ address.id }}">
+                                    <input
+                                        type="radio"
+                                        name="selected_address"
+                                        value="{{ address.id }}"
+                                        checked>
+                                    <div class="address-text">
+                                        <div class="address-name">{{ address.full_name }}</div>
+                                        <div class="address-detail">
+                                            {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                                            {% if address.city %}{{ address.city }}, {% endif %}{{ address.state }} — {{ address.pincode }}<br>
+                                            {{ address.country }}
+                                        </div>
+                                        <div class="address-phone">
+                                            <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:4px;vertical-align:middle;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                            </svg>
+                                            {{ address.phone_number }}
+                                        </div>
+                                        <div class="address-default-badge">
+                                            <svg width="9" height="9" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Default
+                                        </div>
+                                    </div>
+                                    <a href="{% url 'edit_address' address.id %}?next=checkout" class="address-edit-link" onclick="event.stopPropagation()">Edit</a>
+                                </label>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Other addresses (hidden initially) -->
+                            <div id="extraAddresses" style="display:none;">
+                                {% for address in addresses %}
+                                    {% if not address.is_default %}
+                                    <label class="address-radio-item" id="addr-label-{{ address.id }}">
+                                        <input
+                                            type="radio"
+                                            name="selected_address"
+                                            value="{{ address.id }}">
+                                        <div class="address-text">
+                                            <div class="address-name">{{ address.full_name }}</div>
+                                            <div class="address-detail">
+                                                {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                                                {% if address.city %}{{ address.city }}, {% endif %}{{ address.state }} — {{ address.pincode }}<br>
+                                                {{ address.country }}
+                                            </div>
+                                            <div class="address-phone">
+                                                <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="display:inline;margin-right:4px;vertical-align:middle;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                                </svg>
+                                                {{ address.phone_number }}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'edit_address' address.id %}" class="address-edit-link" onclick="event.stopPropagation()">Edit</a>
+                                    </label>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                         </div>
+                        {% if addresses|length > 1 %}
+                        <button type="button" class="show-more-btn" id="showMoreBtn" onclick="toggleExtraAddresses()">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" id="showMoreIcon">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                            <span id="showMoreText">Show {{ addresses|length|add:"-1" }} more address{% if addresses|length > 2 %}es{% endif %}</span>
+                        </button>
+                        {% endif %}
+
+                    {% else %}
+                        <!-- Empty state -->
+                        <div class="empty-address">
+                            <div style="width:64px;height:64px;border-radius:50%;background:var(--subtle);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <p style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;">No saved addresses</p>
+                            <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">Add a delivery address to continue.</p>
+                            <a href="{% url 'add_address' %}?next=checkout" class="btn-primary" style="margin:0 auto;width:fit-content;">
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16M4 12h16"/>
+                                </svg>
+                                Add Address
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ─── PAYMENT METHOD (mobile — below address) ── -->
+                <div class="ck-card lg:hidden" style="margin-top:20px;">
+                    {% comment %} {% include 'orders/includes/_payment_methods.html' ignore missing %} {% endcomment %}
+                    <!-- Inline payment methods for mobile since include may not exist -->
+                    <div class="ck-card-title">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <rect x="1" y="4" width="22" height="16" rx="3"/>
+                            <path stroke-linecap="round" d="M1 10h22"/>
+                        </svg>
+                        Payment Method
+                    </div>
+
+                    <!-- Razorpay — disabled -->
+                    <div class="payment-option disabled">
+                        <input type="radio" name="payment_method_mobile" value="razorpay" disabled>
+                        <div class="payment-icon">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div class="payment-info">
+                            <div class="payment-name">Razorpay</div>
+                            <div class="payment-sub">UPI, Cards, Netbanking</div>
+                        </div>
+                        <span class="coming-soon-badge">Soon</span>
+                    </div>
+
+                    <!-- Wallet — disabled -->
+                    <div class="payment-option disabled">
+                        <input type="radio" name="payment_method_mobile" value="wallet" disabled>
+                        <div class="payment-icon">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M11 15h.01M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/>
+                            </svg>
+                        </div>
+                        <div class="payment-info">
+                            <div class="payment-name">Wallet Payment</div>
+                            <div class="payment-sub">Use your wallet balance</div>
+                        </div>
+                        <span class="coming-soon-badge">Soon</span>
+                    </div>
+
+                    <!-- Cash on Delivery — enabled -->
+                    <label class="payment-option payment-selected">
+                        <input type="radio" name="payment_method" value="cod" checked>
+                        <div class="payment-icon" style="background:rgba(59,130,246,0.08);">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--ink);">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <div class="payment-info">
+                            <div class="payment-name">Cash on Delivery</div>
+                            <div class="payment-sub">Pay when you receive</div>
+                        </div>
+                    </label>
+                </div>
+
+
+
+
+                <!-- Mobile Price Summary -->
+                <div class="ck-card lg:hidden" style="margin-top:20px;">
+
+                    <div class="ck-card-title">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Price Summary
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal</span>
+                        <span class="summary-value">₹{{ subtotal }}</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">Shipping</span>
+                        <span class="summary-value free">
+                            {% if shipping_charge == 0 %}
+                                Free
+                            {% else %}
+                                ₹{{ shipping_charge }}
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Coupon -->
+                    <div class="coupon-wrap">
+                        <input type="text" class="coupon-input" placeholder="Enter coupon code" disabled>
+                        <button type="button" class="coupon-btn" disabled>Apply</button>
+                    </div>
+
+                    <a href="#"
+                    style="
+                            font-size:10.5px;
+                            font-weight:800;
+                            color:var(--accent-blue);
+                            display:block;
+                            margin-top:-4px;
+                            margin-bottom:4px;
+                            text-decoration:none;
+                            transition:opacity 0.2s ease;
+                    "
+                    onmouseover="this.style.opacity='0.7'"
+                    onmouseout="this.style.opacity='1'">
+                        View all available coupons
+                    </a>
+
+
+
+                    <div class="summary-total-row">
+                        <span class="summary-total-label">Total</span>
+                        <span class="summary-total-value">₹{{ final_total }}</span>
+                    </div>
+
+                </div>
+
+
+
+
+
+
+                <!-- Mobile Place Order btn -->
+                <div class="lg:hidden">
+                    <button type="submit" class="place-order-btn">
+                        Place Order
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- ─── RIGHT COLUMN ────────────────────────────────── -->
+        <div class="checkout-right hidden lg:block">
+
+            <!-- Payment Method -->
+            <div class="ck-card">
+                <div class="ck-card-title">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <rect x="1" y="4" width="22" height="16" rx="3"/>
+                        <path stroke-linecap="round" d="M1 10h22"/>
+                    </svg>
+                    Payment Method
+                </div>
+
+                <!-- Razorpay — disabled -->
+                <div class="payment-option disabled">
+                    <input type="radio" name="_payment_display" value="razorpay" disabled>
+                    <div class="payment-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div class="payment-info">
+                        <div class="payment-name">Razorpay</div>
+                        <div class="payment-sub">UPI, Cards, Netbanking</div>
+                    </div>
+                    <span class="coming-soon-badge">Soon</span>
+                </div>
+
+                <!-- Wallet — disabled -->
+                <div class="payment-option disabled">
+                    <input type="radio" name="_payment_display" value="wallet" disabled>
+                    <div class="payment-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M11 15h.01M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/>
+                        </svg>
+                    </div>
+                    <div class="payment-info">
+                        <div class="payment-name">Wallet Payment</div>
+                        <div class="payment-sub">Use your wallet balance</div>
+                    </div>
+                    <span class="coming-soon-badge">Soon</span>
+                </div>
+
+                <!-- Cash on Delivery — enabled, this is inside the form -->
+                <label class="payment-option" for="cod-desktop">
+                    <input type="radio" id="cod-desktop" name="payment_method" value="cod" form="checkoutForm" checked>
+                   <div class="payment-icon cod-payment-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--ink);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div class="payment-info">
+                        <div class="payment-name">Cash on Delivery</div>
+                        <div class="payment-sub">Pay when you receive</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Price Summary -->
+            <div class="ck-card" style="margin-top:20px;">
+                <div class="ck-card-title">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Price Summary
+                </div>
+
+                <div>
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal</span>
+                        <span class="summary-value">₹{{ subtotal }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Discount</span>
+                        <span class="summary-value discount">
+                            {% if discount %}-₹{{ discount }}{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Shipping</span>
+                        <span class="summary-value free">
+                            {% if shipping_charge == 0 %}Free{% else %}₹{{ shipping_charge }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Tax</span>
+                        <span class="summary-value">{% if tax %}₹{{ tax }}{% else %}—{% endif %}</span>
+                    </div>
+                </div>
+
+                <!-- Coupon -->
+                <div class="coupon-wrap">
+                    <input type="text" class="coupon-input" placeholder="Enter coupon code" disabled>
+                    <button type="button" class="coupon-btn" disabled>Apply</button>
+                </div>
+                <a href="#"
+                    style="
+                            font-size:10.5px;
+                            font-weight:800;
+                            color:var(--accent-blue);
+                            display:block;
+                            margin-top:-4px;
+                            margin-bottom:4px;
+                            text-decoration:none;
+                            transition:opacity 0.2s ease;
+                    "
+                    onmouseover="this.style.opacity='0.7'"
+                    onmouseout="this.style.opacity='1'">
+                        View all available coupons
+                    </a>
+
+                <div class="summary-total-row">
+                    <span class="summary-total-label">Total</span>
+                    <span class="summary-total-value">₹{{ final_total }}</span>
+                </div>
+
+                <button type="submit" form="checkoutForm" class="place-order-btn">
+                    Place Order
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </button>
+
+                <!-- Trust badges -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px;">
+                    <div style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:var(--muted);">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        Secure Checkout
+                    </div>
+                    <div style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:var(--muted);">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Easy Returns
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* ── Toggle extra addresses ── */
+    function toggleExtraAddresses() {
+        const extra = document.getElementById('extraAddresses');
+        const btn   = document.getElementById('showMoreBtn');
+        const icon  = document.getElementById('showMoreIcon');
+        const text  = document.getElementById('showMoreText');
+
+        const isHidden = extra.style.display === 'none' || extra.style.display === '';
+
+        if (isHidden) {
+            extra.style.display = 'block';
+            text.textContent = 'Show fewer addresses';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            extra.style.display = 'none';
+            text.textContent = text.dataset.original || text.textContent.replace('Show fewer', 'Show more');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    /* Store original show more text */
+    document.addEventListener('DOMContentLoaded', function () {
+        const text = document.getElementById('showMoreText');
+        if (text) text.dataset.original = text.textContent;
+
+        /* Sync desktop COD radio with form's payment_method radio */
+        const codDesktop = document.getElementById('cod-desktop');
+        const codMobile  = document.querySelector('input[name="payment_method"][value="cod"]');
+
+        if (codDesktop) {
+            codDesktop.addEventListener('change', function () {
+                if (codMobile && this.checked) codMobile.checked = true;
+            });
+        }
+
+        /* Animate icon on show-more toggle */
+        const showMoreIcon = document.getElementById('showMoreIcon');
+        if (showMoreIcon) {
+            showMoreIcon.style.transition = 'transform 0.3s ease';
+        }
+    });
+</script>
+{% endblock %}
