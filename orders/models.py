@@ -24,6 +24,7 @@ class Order(models.Model):
         ('out_for_delivery', 'Out for Delivery'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
+        ('returned', 'Returned'),
     ]
 
     user = models.ForeignKey(
@@ -34,7 +35,6 @@ class Order(models.Model):
 
     order_id = models.CharField(max_length=30, unique=True, editable=False)
 
-    # Address snapshot
     full_name = models.CharField(max_length=120)
     phone_number = models.CharField(max_length=15)
     address_line1 = models.CharField(max_length=255)
@@ -95,6 +95,41 @@ class Order(models.Model):
             self.order_id = f'VERSE-{today}-{next_number:04d}'
 
         super().save(*args, **kwargs)
+        
+        
+    @property
+    def cancelled_total(self):
+        return sum(
+            item.item_total
+            for item in self.items.filter(status='cancelled')
+        )
+
+
+    @property
+    def returned_total(self):
+        return sum(
+            item.item_total
+            for item in self.items.filter(status='returned')
+        )
+           
+    @property
+    def cancelled_or_returned_total(self):
+        return sum(
+            item.item_total
+            for item in self.items.filter(status__in=['cancelled', 'returned'])
+        )
+
+    @property
+    def active_items_total(self):
+        return sum(
+            item.item_total
+            for item in self.items.exclude(status__in=['cancelled', 'returned'])
+        )
+
+    @property
+    def adjusted_final_total(self):
+        total = self.active_items_total + self.tax + self.shipping_charge - self.discount
+        return max(total, 0)    
 
     def __str__(self):
         return self.order_id
@@ -124,7 +159,7 @@ class OrderItem(models.Model):
         related_name='order_items'
     )
 
-    # Product snapshot
+
     product_name = models.CharField(max_length=255)
     category_name = models.CharField(max_length=255, blank=True, null=True)
     color = models.CharField(max_length=100)

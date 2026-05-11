@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: a4;
+            margin: 1.2cm 1.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #000;
+            line-height: 1.3;
+        }
+        /* Header Section */
+        .header-table {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .brand-name {
+            font-size: 32pt;
+            font-weight: bold;
+            letter-spacing: -1.5px;
+            margin: 0;
+            line-height: 0.8;
+        }
+        .brand-sub {
+            font-size: 9pt;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+            padding-left: 2px;
+
+        }
+        .invoice-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .invoice-meta {
+            font-size: 11pt;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        .date-text {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 15px;
+        }
+        
+        .header-line {
+            border-top: 1.5pt solid #000;
+            margin: 15px 0 35px 0;
+        }
+
+        /* Address Section */
+        .address-table {
+            width: 100%;
+            margin-bottom: 40px;
+            
+        }
+        .address-label {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            margin-top: 20px;
+        }
+        .address-content {
+            font-size: 10pt;
+            line-height: 1.4;
+        }
+
+        /* Items Section */
+        .items-heading {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .items-table th {
+            background-color: #000;
+            color: #fff;
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .items-table td {
+            padding: 12px 10px;
+            border: 0.5pt solid #e0e0e0;
+            vertical-align: middle;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .item-name {
+            font-weight: bold;
+            font-size: 10pt;
+            display: block;
+        }
+        .item-meta {
+            font-size: 8pt;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* Summary Section */
+        .summary-wrapper {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .summary-table {
+            width: 250px;
+            margin-left: auto;
+            width: 250px;
+        }
+        .summary-table td {
+            padding: 6px 0;
+            font-size: 10pt;
+        }
+        .summary-label {
+            text-align: left;
+            text-transform: uppercase;
+            color: #000;
+        }
+        .summary-value {
+            text-align: right;
+            font-weight: normal;
+        }
+        .total-row {
+            border-top: 1.5pt solid #000;
+        }
+        .total-label {
+            font-weight: bold;
+            font-size: 11pt;
+            padding-top: 10px;
+        }
+        .total-value {
+            font-weight: bold;
+            font-size: 11pt;
+            padding-top: 10px;
+            text-align: right;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 8pt;
+            margin-top: 70px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 50%; vertical-align: bottom;">
+                <div class="brand-name">VERSE</div>
+                <div class="brand-sub">PREMIUM STORE</div>
+            </td>
+            <td style="width: 50%; text-align: right; vertical-align: bottom;">
+                <div class="invoice-title">INVOICE</div>
+                <div class="invoice-meta">#{{ order.order_id }}</div>
+                <div class="date-text">DATE: {{ order.created_at|date:"d M Y H:i" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="header-line"></div>
+
+    <!-- Addresses -->
+    <table class="address-table">
+        <tr>
+            <td style="width: 50%; vertical-align: top;">
+                <div class="address-label">BILL TO:</div>
+                <div class="address-content">
+                    {{ order.user.full_name }}<br/>
+                    {{ order.user.email }}<br/>
+                    {{ order.phone_number }}
+                </div>
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                <div class="address-label">SHIP TO:</div>
+                <div class="address-content">
+                    {{ order.full_name }}<br/>
+                    {{ order.address_line1 }}<br/>
+                    {% if order.address_line2 %}{{ order.address_line2 }}<br/>{% endif %}
+                    {{ order.city }}, {{ order.state }} {{ order.pincode }}<br/>
+                    {{ order.country }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Items -->
+    <div class="items-heading">ORDER ITEMS</div>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">PRODUCT</th>
+                <th style="width: 10%; text-align: center;">QTY</th>
+                <th style="width: 15%; text-align: right;">UNIT PRICE</th>
+                <th style="width: 15%; text-align: right;">AMOUNT</th>
+                <th style="width: 15%;">STATUS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>
+                    <span class="item-name">{{ item.product_name }}</span>
+                    <span class="item-meta">{{ item.category_name }} | {{ item.color }} | Size {{ item.size }}</span>
+                </td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td style="text-align: right;">INR {{ item.price }}</td>
+                <td style="text-align: right;">INR {{ item.item_total }}</td>
+                <td>{{ item.status|upper }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Summary -->
+    <div class="summary-wrapper">
+        <table class="summary-table">
+            <tr>
+                <td class="summary-label">SUBTOTAL</td>
+                <td class="summary-value">INR {{ order.subtotal }}</td>
+            </tr>
+            <tr>
+                <td class="summary-label">DISCOUNT</td>
+                <td class="summary-value">- INR {{ order.discount }}</td>
+            </tr>
+
+            {% if order.cancelled_total %}
+            <tr>
+                <td class="summary-label">CANCELLED ITEMS</td>
+                <td class="summary-value">- INR {{ order.cancelled_total }}</td>
+            </tr>
+            {% endif %}
+
+            {% if order.returned_total %}
+            <tr>
+                <td class="summary-label">RETURNED ITEMS</td>
+                <td class="summary-value">- INR {{ order.returned_total }}</td>
+            </tr>
+            {% endif %}
+
+            <tr>
+                <td class="summary-label">TAX (GST 5%)</td>
+                <td class="summary-value">+ INR {{ order.tax }}</td>
+            </tr>
+            <tr>
+                <td class="summary-label">SHIPPING</td>
+                <td class="summary-value">+ INR {{ order.shipping_charge }}</td>
+            </tr>
+            <tr class="total-row">
+                <td class="total-label">TOTAL AMOUNT</td>
+                <td class="total-value">INR {{ order.adjusted_final_total }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Thank you for shopping with VERSE. If you have any questions about this invoice, please contact our support team.
+    </div>
+</body>
+</html>

@@ -805,7 +805,7 @@
             <div class="ord-card">
                 <div class="card-label">Order Items</div>
 
-                {% if order.items.all %}
+                {% if order.items.exists %}
                     {% for item in order.items.all %}
                     <div class="item-row">
                         <!-- Image -->
@@ -841,6 +841,36 @@
                         <div class="item-right">
                             <span class="item-price">₹{{ item.item_total }}</span>
                             <span class="qty-badge">Qty: {{ item.quantity }}</span>
+                            
+                            {% if order.status != 'delivered' and order.status != 'cancelled' and item.status != 'cancelled' and item.status != 'returned' %}
+                            <button type="button" 
+                                    onclick="triggerCancelItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
+                                    class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors mt-2">
+                                Cancel Item
+                            </button>
+
+                            <form id="cancel-item-form-{{ item.id }}" action="{% url 'cancel_order_item' item.id %}" method="POST" style="display:none;">
+                                {% csrf_token %}
+                            </form>
+                            {% endif %}
+
+                            {% if order.status == 'delivered' and item.status != 'returned' and item.status != 'cancelled' %}
+                            <button type="button"
+                                    onclick="triggerReturnItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
+                                    class="text-[9px] font-black uppercase tracking-widest text-slate-700 hover:text-black transition-colors mt-2">
+                                Return Item
+                            </button>
+
+                            <form id="return-item-form-{{ item.id }}"
+                                action="{% url 'return_order_item' item.id %}"
+                                method="POST"
+                                style="display:none;">
+                                {% csrf_token %}
+                            </form>
+                            {% endif %} 
+
+
+
                         </div>
                     </div>
                     {% endfor %}
@@ -911,9 +941,18 @@
                 </div>
                 {% endif %}
 
+                {% if order.cancelled_or_returned_total %}
+                <div class="summary-row">
+                    <span class="summary-label">Cancelled / Returned</span>
+                    <span class="summary-value discount">
+                        −₹{{ order.cancelled_or_returned_total }}
+                    </span>
+                </div>
+                {% endif %}
+
                 <div class="summary-total-row">
                     <span class="summary-total-label">Total</span>
-                    <span class="summary-total-value">₹{{ order.final_total }}</span>
+                    <span class="summary-total-value">₹{{ order.adjusted_final_total }}</span>
                 </div>
             </div>
 
@@ -921,29 +960,39 @@
             <div class="ord-card" style="animation-delay:0.16s;display:flex;flex-direction:column;gap:10px;">
 
                 <!-- Invoice -->
-                <a href="#" class="action-btn btn-invoice">
+                <a href="{% url 'download_invoice' order.order_id %}" class="action-btn btn-invoice">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     Download Invoice
                 </a>
 
-                {% if order.status == 'pending' or order.status == 'placed' or order.status == 'shipped' or order.status == 'out_for_delivery' %}
-                <a href="#" class="action-btn btn-cancel">
+                {% if order.status == 'pending' or order.status == 'placed' or order.status == 'shipped' %}
+                <button type="button" onclick="triggerCancelOrderModal()" class="action-btn btn-cancel">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                     Cancel Order
-                </a>
+                </button>
+                <form id="cancel-order-form" action="{% url 'cancel_order' order.order_id %}" method="POST" style="display:none;">
+                    {% csrf_token %}
+                </form>
                 {% endif %}
 
                 {% if order.status == 'delivered' %}
-                <a href="#" class="action-btn btn-return">
+                <button type="button" onclick="triggerReturnOrderModal()" class="action-btn btn-return">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                     </svg>
                     Return Order
-                </a>
+                </button>
+
+                <form id="return-order-form"
+                    action="{% url 'return_order' order.order_id %}"
+                    method="POST"
+                    style="display:none;">
+                    {% csrf_token %}
+                </form>
                 {% endif %}
             </div>
 
@@ -967,4 +1016,206 @@
 
     </div><!-- /order-grid -->
 </div><!-- /order-page -->
+
+{% block extra_js %}
+<script>
+    function triggerCancelOrderModal() {
+        const extraHtml = `
+            <div class="text-left">
+                <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Reason for cancellation (Optional)</label>
+                <input type="text" id="modal-reason-input" list="cancel-reasons" 
+                       placeholder="Select or type a reason..."
+                       class="w-full px-4 py-3 rounded-xl border border-slate-100 text-sm focus:border-black outline-none transition-colors">
+                <datalist id="cancel-reasons">
+                    <option value="Changed my mind">
+                    <option value="Ordered by mistake">
+                    <option value="Found a better price">
+                    <option value="Shipping takes too long">
+                    <option value="Other (please specify)">
+                </datalist>
+            </div>
+        `;
+
+        openConfirmModal({
+            icon: '⚠️',
+            iconBg: 'background:#fff7ed;',
+            iconColor: 'color:#ea580c;',
+            title: 'Cancel Order?',
+            message: 'Are you sure you want to cancel this entire order? This action cannot be undone.',
+            confirmText: 'Yes, Cancel Order',
+            confirmBg: '#e02020',
+            extraContent: extraHtml,
+            onConfirm: () => {
+                const reason = document.getElementById('modal-reason-input').value;
+                const form = document.getElementById('cancel-order-form');
+                
+                // Add reason to form
+                let reasonInput = form.querySelector('input[name="reason"]');
+                if (!reasonInput) {
+                    reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    form.appendChild(reasonInput);
+                }
+                reasonInput.value = reason;
+                form.submit();
+            }
+        });
+    }
+
+    function triggerCancelItemModal(itemId, itemName) {
+        const extraHtml = `
+            <div class="text-left">
+                <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Reason for cancellation (Optional)</label>
+                <input type="text" id="modal-item-reason-input" list="cancel-reasons" 
+                       placeholder="Select or type a reason..."
+                       class="w-full px-4 py-3 rounded-xl border border-slate-100 text-sm focus:border-black outline-none transition-colors">
+            </div>
+        `;
+
+        openConfirmModal({
+            icon: '📦',
+            iconBg: 'background:#f1f5f9;',
+            iconColor: 'color:#64748b;',
+            title: 'Cancel Item?',
+            message: `Are you sure you want to cancel "${itemName}" from your order?`,
+            confirmText: 'Yes, Cancel Item',
+            confirmBg: '#e02020',
+            extraContent: extraHtml,
+            onConfirm: () => {
+                const reason = document.getElementById('modal-item-reason-input').value;
+                const form = document.getElementById(`cancel-item-form-${itemId}`);
+                
+                let reasonInput = form.querySelector('input[name="reason"]');
+                if (!reasonInput) {
+                    reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    form.appendChild(reasonInput);
+                }
+                reasonInput.value = reason;
+                form.submit();
+            }
+        });
+    }
+
+    function triggerReturnOrderModal() {
+        const extraHtml = `
+            <div class="text-left">
+                <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                    Reason for return <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="modal-return-reason-input"
+                    placeholder="Enter return reason..."
+                    oninput="
+                        this.style.borderColor='#e5e7eb';
+                        const err=document.getElementById('return-order-error');
+                        if(err) err.remove();
+                    "
+                    class="w-full px-4 py-3 rounded-xl border border-slate-100 text-sm focus:border-black outline-none transition-colors">
+            </div>
+        `;
+
+        openConfirmModal({
+            icon: '🚫',
+            iconBg: 'background:#f8fafc;',
+            title: 'Return Order?',
+            message: 'Please provide a reason to return this order.',
+            confirmText: 'Submit Return',
+            confirmBg: '#000',
+            extraContent: extraHtml,
+            onConfirm: () => {
+                const reason = document.getElementById('modal-return-reason-input').value.trim();
+
+                if (!reason) {
+                    const input = document.getElementById('modal-return-reason-input');
+                    input.style.borderColor = '#e02020';
+
+                    if (!document.getElementById('return-order-error')) {
+                        input.insertAdjacentHTML(
+                            'afterend',
+                            '<p id="return-order-error" style="font-size:10px;font-weight:800;color:#e02020;margin-top:8px;">Return reason is required.</p>'
+                        );
+                    }
+
+                    input.focus();
+                    return false;
+                }
+
+                const form = document.getElementById('return-order-form');
+
+                let reasonInput = form.querySelector('input[name="reason"]');
+                if (!reasonInput) {
+                    reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    form.appendChild(reasonInput);
+                }
+
+                reasonInput.value = reason;
+                form.submit();
+            }
+        });
+    }
+
+    function triggerReturnItemModal(itemId, itemName) {
+        const extraHtml = `
+            <div class="text-left">
+                <label class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                    Reason for return <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="modal-return-item-reason-input"
+                    placeholder="Enter return reason..."
+                    oninput="
+                        this.style.borderColor='#e5e7eb';
+                        const err=document.getElementById('return-item-error');
+                        if(err) err.remove();
+                    "
+                    class="w-full px-4 py-3 rounded-xl border border-slate-100 text-sm focus:border-black outline-none transition-colors">
+            </div>
+        `;
+
+        openConfirmModal({
+            icon: '📦',
+            iconBg: 'background:#f8fafc;',
+            title: 'Return Item?',
+            message: `Please provide a reason to return "${itemName}".`,
+            confirmText: 'Submit Return',
+            confirmBg: '#000',
+            extraContent: extraHtml,
+            onConfirm: () => {
+                const reason = document.getElementById('modal-return-item-reason-input').value.trim();
+
+                if (!reason) {
+                    const input = document.getElementById('modal-return-item-reason-input');
+                    input.style.borderColor = '#e02020';
+
+                    if (!document.getElementById('return-item-error')) {
+                        input.insertAdjacentHTML(
+                            'afterend',
+                            '<p id="return-item-error" style="font-size:10px;font-weight:800;color:#e02020;margin-top:8px;">Return reason is required.</p>'
+                        );
+                    }
+
+                    input.focus();
+                    return false;
+                }
+
+                const form = document.getElementById(`return-item-form-${itemId}`);
+
+                let reasonInput = form.querySelector('input[name="reason"]');
+                if (!reasonInput) {
+                    reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    form.appendChild(reasonInput);
+                }
+
+                reasonInput.value = reason;
+                form.submit();
+            }
+        });
+    }
+</script>
+{% endblock %}
 {% endblock %}

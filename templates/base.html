@@ -869,7 +869,9 @@
                 class="text-xl font-black tracking-tight mb-2" style="color:var(--ink);"></h2>
 
             <p id="confirmModalMessage"
-               class="text-sm leading-relaxed mb-8" style="color:var(--muted);max-width:260px;"></p>
+               class="text-sm leading-relaxed mb-6" style="color:var(--muted);max-width:260px;"></p>
+
+            <div id="confirmModalExtra" class="w-full mb-8"></div>
 
             <button id="confirmModalConfirmBtn"
                     class="w-full h-12 rounded-full font-black text-xs uppercase tracking-widest text-white transition-all active:scale-[0.97] mb-3"
@@ -936,6 +938,7 @@
             const titleEl = document.getElementById('confirmModalTitle');
             const msgEl   = document.getElementById('confirmModalMessage');
             const btnEl   = document.getElementById('confirmModalConfirmBtn');
+            const extraEl = document.getElementById('confirmModalExtra');
 
             iconEl.innerHTML        = opts.icon        || '🗑';
             iconWrap.style.cssText  = opts.iconBg      || 'background:#fef2f2;';
@@ -944,6 +947,14 @@
             btnEl.textContent       = opts.confirmText || 'Confirm';
             btnEl.style.background  = opts.confirmBg   || '#e02020';
             _confirmCallback        = opts.onConfirm   || null;
+
+            if (opts.extraContent) {
+                extraEl.innerHTML = opts.extraContent;
+                extraEl.style.display = 'block';
+            } else {
+                extraEl.innerHTML = '';
+                extraEl.style.display = 'none';
+            }
 
             modal.style.removeProperty('display');
             document.body.style.overflow = 'hidden';
@@ -967,10 +978,15 @@
         }
 
         document.getElementById('confirmModalConfirmBtn').addEventListener('click', () => {
-            if (typeof _confirmCallback === 'function') _confirmCallback();
+            let shouldClose = true;
+            if (typeof _confirmCallback === 'function') {
+                shouldClose = _confirmCallback();
+            }
+            if (shouldClose === false) {
+                return;
+            }
             closeConfirmModal();
         });
-
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirmModal(); });
 
         /* ── Scroll Reveal ── */
