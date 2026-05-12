@@ -58,10 +58,20 @@
                 <span class="material-symbols-outlined text-xl">category</span> 
                 <span class="text-sm font-semibold">Categories</span>
             </a>
-            <a href="{% url 'product_list' %}" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+            <a href="{% url 'product_list' %}" class="sidebar-link {% if 'product' in request.resolver_match.url_name or 'variant' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
                 <span class="material-symbols-outlined text-xl">inventory_2</span> 
                 <span class="text-sm font-semibold">Products</span>
             </a>
+            <a href="{% url 'admin_order_list' %}" class="sidebar-link {% if 'order' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+                <span class="material-symbols-outlined text-xl">receipt_long</span> 
+                <span class="text-sm font-semibold">Orders</span>
+            </a>
+
+            <a href="{% url 'admin_return_list' %}" class="sidebar-link {% if 'return' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+                <span class="material-symbols-outlined text-xl">assignment_return</span>
+                <span class="text-sm font-semibold">Returns</span>
+            </a>
+            
         </nav>
 
         <!-- Fixed Footer/Logout Area -->

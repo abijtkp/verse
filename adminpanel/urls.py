@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import order_views
 
 urlpatterns = [
     path('', views.admin_dashboard_view, name='admin_dashboard'),
@@ -28,4 +29,13 @@ urlpatterns = [
     path('variant-images/<int:image_id>/set-primary/', views.set_primary_variant_image_view, name='set_primary_variant_image'),
 
     path('variants/delete/<int:variant_id>/', views.delete_variant_view, name='delete_variant'),
+    
+    path('orders/', order_views.admin_order_list_view, name='admin_order_list'),
+    path('orders/<str:order_id>/update-status/', order_views.update_order_status_view, name='update_order_status'),
+    path('orders/<str:order_id>/', order_views.admin_order_detail_view, name='admin_order_detail'),
+    
+    path('returns/', order_views.admin_return_list_view, name='admin_return_list'),
+    path('returns/<int:item_id>/approve/', order_views.approve_return_request_view, name='approve_return_request'),
+    path('returns/<int:item_id>/reject/', order_views.reject_return_request_view, name='reject_return_request'),
+
 ]

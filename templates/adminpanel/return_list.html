@@ -1,0 +1,454 @@
+{% extends 'adminpanel/admin_base.html' %}
+
+{% block title %}VERSE | Return Management{% endblock %}
+
+{% block page_title %}Return Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Status badges ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+    .badge-requested { background: #fef3c7; color: #b45309; }
+    .badge-returned  { background: #dcfce7; color: #15803d; }
+    .badge-rejected  { background: #fee2e2; color: #dc2626; }
+
+    /* ── Stat cards ── */
+    .stat-card { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+    .stat-card:hover { box-shadow: 0 8px 32px 0 rgba(30,41,59,0.09); transform: translateY(-1px); }
+
+    /* ── Table row hover ── */
+    .return-row { transition: background 0.15s ease; }
+    .return-row:hover { background: #f8fafc; }
+
+    /* ── Action buttons ── */
+    .btn-approve { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; background: #000; color: #fff; border-radius: 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; transition: background 0.15s; border: none; cursor: pointer; }
+    .btn-approve:hover { background: #1e293b; }
+    .btn-reject  { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; background: #fff; color: #dc2626; border: 1px solid #fecaca; border-radius: 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; transition: all 0.15s; cursor: pointer; }
+    .btn-reject:hover { background: #fef2f2; border-color: #f87171; }
+
+    /* ── Reject modal ── */
+    #reject-modal { display: none; }
+    #reject-modal.show { display: flex; }
+    .modal-enter { animation: fadeUp 0.2s ease; }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== PAGE INTRO ===== -->
+<div class="mb-8">
+    <p class="text-sm font-semibold text-slate-400 mt-1">Oversee and resolve customer product return requests.</p>
+</div>
+
+<!-- ===== STAT CARDS ===== -->
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+
+    <!-- Total Returns -->
+    <div class="stat-card bg-white border border-slate-100 rounded-2xl shadow-sm px-6 py-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Returns</p>
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500" style="font-size:16px;">assignment_return</span>
+            </div>
+        </div>
+        <p class="text-3xl font-black text-slate-900 tracking-tight">{{ total_returns }}</p>
+    </div>
+
+    <!-- Pending -->
+    <div class="stat-card bg-white border border-slate-100 rounded-2xl shadow-sm px-6 py-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending</p>
+            <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-500" style="font-size:16px;">schedule</span>
+            </div>
+        </div>
+        <p class="text-3xl font-black text-amber-500 tracking-tight">{{ pending_returns }}</p>
+    </div>
+
+    <!-- Approved -->
+    <div class="stat-card bg-white border border-slate-100 rounded-2xl shadow-sm px-6 py-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Approved</p>
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-500" style="font-size:16px;">check_circle</span>
+            </div>
+        </div>
+        <p class="text-3xl font-black text-emerald-600 tracking-tight">{{ approved_returns }}</p>
+    </div>
+
+    <!-- Rejected -->
+    <div class="stat-card bg-white border border-slate-100 rounded-2xl shadow-sm px-6 py-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Rejected</p>
+            <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-400" style="font-size:16px;">cancel</span>
+            </div>
+        </div>
+        <p class="text-3xl font-black text-red-500 tracking-tight">{{ rejected_returns }}</p>
+    </div>
+
+</div>
+
+<!-- ===== SEARCH / FILTER ===== -->
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm px-5 py-4 mb-6">
+    <form method="GET" action="" class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+
+        <!-- Search -->
+        <div class="relative flex-1">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400" style="font-size:17px;">search</span>
+            <input type="text"
+                   name="q"
+                   value="{{ search_query|default:'' }}"
+                   placeholder="Search by order ID, product, customer…"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-slate-300 transition-all">
+        </div>
+
+        <!-- Status filter -->
+        <div class="relative sm:w-52">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400" style="font-size:16px;">filter_list</span>
+            <select name="status"
+                    onchange="this.form.submit()"
+                    class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-8 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all cursor-pointer">
+                <option value="" {% if not status_filter %}selected{% endif %}>All Statuses</option>
+                <option value="return_requested" {% if status_filter == 'return_requested' %}selected{% endif %}>Pending</option>
+                <option value="returned"         {% if status_filter == 'returned' %}selected{% endif %}>Approved</option>
+                <option value="return_rejected"  {% if status_filter == 'return_rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400" style="font-size:15px;">expand_more</span>
+        </div>
+
+        <!-- Search button -->
+        <button type="submit"
+                class="flex items-center justify-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all shrink-0">
+            <span class="material-symbols-outlined" style="font-size:16px;">search</span>
+            Search
+        </button>
+
+        <!-- Clear button (only when filters are active) -->
+        {% if search_query or status_filter %}
+        <a href="{% url 'admin_return_list' %}"
+           class="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wide text-slate-500 hover:border-slate-400 hover:text-black transition-all shrink-0">
+            <span class="material-symbols-outlined" style="font-size:15px;">close</span>
+            Clear
+        </a>
+        {% endif %}
+
+    </form>
+</div>
+
+<!-- ===== MAIN TABLE CARD ===== -->
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden mb-6">
+
+    <!-- Table Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500 text-base">undo</span>
+            </div>
+            <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Return Requests</h3>
+        </div>
+        <span class="text-[11px] font-black text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+            {{ page_obj.paginator.count }} total
+        </span>
+    </div>
+
+    <!-- Desktop column headers -->
+    <div class="hidden lg:grid grid-cols-12 gap-2 px-6 py-3 border-b border-slate-50 bg-slate-50/60">
+        <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Return ID</div>
+        <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Order</div>
+        <div class="col-span-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Product</div>
+        <div class="col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Customer</div>
+        <div class="col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Reason</div>
+        <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</div>
+        <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</div>
+        <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</div>
+    </div>
+
+    <!-- Rows -->
+    <div class="divide-y divide-slate-50">
+        {% for item in return_items %}
+        <div class="return-row px-6 py-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-2 items-start lg:items-center">
+
+                <!-- Return ID -->
+                <div class="col-span-1">
+                    <span class="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg tracking-wide">#{{ item.id }}</span>
+                    <p class="lg:hidden text-[9px] font-bold text-slate-300 uppercase mt-1">Return</p>
+                </div>
+
+                <!-- Order ID -->
+                <div class="col-span-1">
+                    <span class="text-[11px] font-bold text-slate-600">#{{ item.order.order_id }}</span>
+                    <p class="lg:hidden text-[9px] font-bold text-slate-300 uppercase mt-0.5">Order</p>
+                </div>
+
+                <!-- Product -->
+                <div class="col-span-3 flex items-center gap-3">
+                    {% if item.variant and item.variant.images.first %}
+                    <img src="{{ item.variant.images.first.image_url.url }}"
+                         alt="{{ item.product_name }}"
+                         class="w-12 h-12 rounded-xl object-cover border border-slate-100 bg-slate-50 shrink-0">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-slate-400" style="font-size:18px;">inventory_2</span>
+                    </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <p class="text-sm font-black text-slate-900 truncate leading-tight">{{ item.product_name }}</p>
+                        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">
+                            {% if item.color %}{{ item.color }}{% endif %}{% if item.size %} / {{ item.size }}{% endif %}
+                        </p>
+                        {% if item.sku %}
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">{{ item.sku }}</span>
+                        {% endif %}
+                        {% if item.quantity > 1 %}
+                        <span class="text-[9px] font-bold text-slate-400 ml-1">× {{ item.quantity }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Customer -->
+                <div class="col-span-2">
+                    <p class="text-xs font-black text-slate-800 truncate">{{ item.order.user.full_name|default:item.order.user.email }}</p>
+                    <p class="text-[10px] font-semibold text-slate-400 truncate mt-0.5">{{ item.order.user.email }}</p>
+                </div>
+
+                <!-- Reason -->
+                <div class="col-span-2">
+                    <p class="text-xs font-semibold text-slate-600 leading-snug line-clamp-2">{{ item.return_reason|default:"—" }}</p>
+                    {% if item.status == 'return_rejected' and item.return_rejection_reason %}
+                    <div class="mt-1.5 flex items-start gap-1">
+                        <span class="material-symbols-outlined text-red-400 shrink-0" style="font-size:11px; margin-top:1px;">info</span>
+                        <p class="text-[10px] font-semibold text-red-400 leading-snug line-clamp-2">{{ item.return_rejection_reason }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div class="col-span-1">
+                    {% if item.status == 'return_requested' %}
+                    <span class="badge badge-requested">
+                        <span class="material-symbols-outlined" style="font-size:10px;">schedule</span>
+                        Pending
+                    </span>
+                    {% elif item.status == 'returned' %}
+                    <span class="badge badge-returned">
+                        <span class="material-symbols-outlined" style="font-size:10px;">check_circle</span>
+                        Approved
+                    </span>
+                    {% elif item.status == 'return_rejected' %}
+                    <span class="badge badge-rejected">
+                        <span class="material-symbols-outlined" style="font-size:10px;">cancel</span>
+                        Rejected
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Date -->
+                <div class="col-span-1">
+                    <p class="text-[11px] font-bold text-slate-500">{{ item.return_requested|date:"M d, Y" }}</p>
+                    <p class="text-[10px] font-semibold text-slate-300">{{ item.return_requested|date:"M d, Y" }}</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-span-1 flex flex-wrap gap-2 lg:justify-end">
+                    {% if item.status == 'return_requested' %}
+
+                        <!-- Approve form -->
+                        <!-- Approve button -->
+                        <button type="button"
+                                class="btn-approve"
+                                data-confirm-modal
+                                data-modal-title="Approve Return"
+                                data-modal-message="Approve return request #{{ item.id }} for {{ item.product_name }}?"
+                                data-modal-confirm-text="Approve"
+                                data-modal-form-id="approve-form-{{ item.id }}">
+                            <span class="material-symbols-outlined" style="font-size:12px;">check</span>
+                            Approve
+                        </button>
+
+                        <!-- Hidden approve form for modal submit -->
+                        <form id="approve-form-{{ item.id }}"
+                            method="POST"
+                            action="{% url 'approve_return_request' item.id %}"
+                            class="hidden">
+                            {% csrf_token %}
+                        </form>
+
+                        <!-- Reject trigger -->
+                        <button type="button"
+                                class="btn-reject"
+                                data-reject-url="{% url 'reject_return_request' item.id %}"
+                                data-product-name="{{ item.product_name|escapejs }}"
+                                onclick="openRejectModal(this)">
+                            <span class="material-symbols-outlined" style="font-size:12px;">close</span>
+                            Reject
+                        </button>
+
+                    {% elif item.status == 'returned' %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase tracking-wide">
+                            <span class="material-symbols-outlined" style="font-size:13px;">check_circle</span>
+                            Approved
+                        </span>
+
+                    {% elif item.status == 'return_rejected' %}
+                        <span class="inline-flex items-center gap-1 text-[10px] font-black text-red-500 uppercase tracking-wide">
+                            <span class="material-symbols-outlined" style="font-size:13px;">cancel</span>
+                            Rejected
+                        </span>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty State -->
+        <div class="px-6 py-20 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-slate-300 text-3xl">assignment_return</span>
+            </div>
+            <p class="text-sm font-black text-slate-400 uppercase tracking-wide mb-1">No Return Requests</p>
+            <p class="text-xs font-semibold text-slate-300">
+                {% if search_query or status_filter %}
+                    No returns match your current filters.
+                    <a href="{% url 'admin_return_list' %}" class="text-black underline underline-offset-2 ml-1">Clear filters</a>
+                {% else %}
+                    All return requests will appear here.
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- ===== PAGINATION ===== -->
+{% if page_obj.has_other_pages %}
+<div class="flex items-center justify-between px-2">
+
+    <p class="text-[11px] font-bold text-slate-400">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} returns
+    </p>
+
+    <nav class="flex items-center gap-1">
+
+        <!-- Prev -->
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+           class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-black transition-all shadow-sm">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </a>
+        {% else %}
+        <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-300 cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </span>
+        {% endif %}
+
+        <!-- Page numbers -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-black text-white text-xs font-black shadow-sm">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:border-slate-400 hover:text-black transition-all shadow-sm">{{ num }}</a>
+            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+               class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:border-slate-400 hover:text-black transition-all shadow-sm">{{ num }}</a>
+            {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'3' %}
+            <span class="w-8 h-8 flex items-center justify-center text-slate-300 text-xs font-bold">…</span>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Next -->
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+           class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-black transition-all shadow-sm">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </a>
+        {% else %}
+        <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-300 cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </span>
+        {% endif %}
+
+    </nav>
+
+</div>
+{% endif %}
+
+<!-- ===== REJECT MODAL ===== -->
+<div id="reject-modal" class="fixed inset-0 z-[99999] items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeRejectModal()"></div>
+    <div class="modal-enter relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md z-10">
+
+        <div class="flex items-start justify-between mb-5">
+            <div>
+                <h3 class="text-lg font-black uppercase tracking-tight text-slate-900">Reject Return</h3>
+                <p id="reject-modal-product" class="text-xs font-semibold text-slate-400 mt-1"></p>
+            </div>
+            <button onclick="closeRejectModal()" class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:text-black transition-colors shrink-0">
+                <span class="material-symbols-outlined text-base">close</span>
+            </button>
+        </div>
+
+        <form id="reject-form" method="POST" action="">
+            {% csrf_token %}
+
+            <div class="mb-6">
+                <label for="rejection_reason" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    Rejection Reason <span class="text-red-400">*</span>
+                </label>
+                <textarea id="rejection_reason"
+                          name="rejection_reason"
+                          rows="4"
+                          required
+                          placeholder="Explain why this return is being rejected…"
+                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-slate-300 resize-none transition-all"></textarea>
+            </div>
+
+            <div class="flex gap-3 justify-end">
+                <button type="button"
+                        onclick="closeRejectModal()"
+                        class="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:border-slate-400 hover:text-black transition-all">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-red-700 transition-all">
+                    <span class="material-symbols-outlined" style="font-size:14px;">cancel</span>
+                    Reject Return
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openRejectModal(btn) {
+        const modal = document.getElementById('reject-modal');
+        const form  = document.getElementById('reject-form');
+        const label = document.getElementById('reject-modal-product');
+
+        form.action  = btn.dataset.rejectUrl;
+        label.textContent = 'Return for: ' + btn.dataset.productName;
+
+        document.getElementById('rejection_reason').value = '';
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRejectModal() {
+        document.getElementById('reject-modal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    // ESC key closes modal
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeRejectModal();
+    });
+</script>
+{% endblock %}

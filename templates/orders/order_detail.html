@@ -399,11 +399,11 @@
     }
     .badge-cancelled::before { background: #e02020; }
 
-    .badge-placed {
+    {% comment %} .badge-placed {
         background: #f0fdf4;
         color: #166534;
     }
-    .badge-placed::before { background: #22c55e; }
+    .badge-placed::before { background: #22c55e; } {% endcomment %}
 
     /* ─── SHIPPING ADDRESS ────────────────────────────────── */
     .address-block {
@@ -737,7 +737,7 @@
                 <div class="tracker-line">
                     <div class="tracker-line-fill"
                          style="width:
-                         {% if status == 'pending' or status == 'placed' %}0%
+                         {% if status == 'pending' %}0%
                          {% elif status == 'shipped' %}33%
                          {% elif status == 'out_for_delivery' %}66%
                          {% elif status == 'delivered' %}100%
@@ -842,7 +842,7 @@
                             <span class="item-price">₹{{ item.item_total }}</span>
                             <span class="qty-badge">Qty: {{ item.quantity }}</span>
                             
-                            {% if order.status != 'delivered' and order.status != 'cancelled' and item.status != 'cancelled' and item.status != 'returned' %}
+                            {% if order.status == 'pending' and item.status == 'pending' %}
                             <button type="button" 
                                     onclick="triggerCancelItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
                                     class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors mt-2">
@@ -854,7 +854,7 @@
                             </form>
                             {% endif %}
 
-                            {% if order.status == 'delivered' and item.status != 'returned' and item.status != 'cancelled' %}
+                            {% if order.status == 'delivered' and item.status == 'delivered' %}
                             <button type="button"
                                     onclick="triggerReturnItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
                                     class="text-[9px] font-black uppercase tracking-widest text-slate-700 hover:text-black transition-colors mt-2">
@@ -967,7 +967,7 @@
                     Download Invoice
                 </a>
 
-                {% if order.status == 'pending' or order.status == 'placed' or order.status == 'shipped' %}
+                {% if order.status == 'pending' %}
                 <button type="button" onclick="triggerCancelOrderModal()" class="action-btn btn-cancel">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>

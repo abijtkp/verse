@@ -142,6 +142,9 @@ class OrderItem(models.Model):
         ('out_for_delivery', 'Out for Delivery'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
+        
+        ('return_requested', 'Return Requested'),
+        ('return_rejected', 'Return Rejected'),
         ('returned', 'Returned'),
     ]
 
@@ -180,6 +183,11 @@ class OrderItem(models.Model):
     cancelled_at = models.DateTimeField(blank=True, null=True)
 
     return_reason = models.TextField(blank=True, null=True)
+    return_requested = models.DateTimeField(blank=True, null=True)
+    
+    return_rejection_reason = models.TextField(blank=True, null=True)
+    return_reviewed_at = models.DateTimeField(blank=True, null=True)
+    
     returned_at = models.DateTimeField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

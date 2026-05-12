@@ -1,0 +1,599 @@
+{% extends 'adminpanel/admin_base.html' %}
+
+{% block title %}VERSE | Order {{ order.order_id }}{% endblock %}
+
+{% block page_title %}Order Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+    .status-pending          { background: #fef3c7; color: #b45309; }
+    .status-shipped          { background: #dbeafe; color: #1d4ed8; }
+    .status-out_for_delivery { background: #e0e7ff; color: #4338ca; }
+    {% comment %} .status-processing       { background: #f1f5f9; color: #334155; } {% endcomment %}
+    .status-delivered        { background: #dcfce7; color: #15803d; }
+    .status-cancelled        { background: #fee2e2; color: #dc2626; }
+    .status-returned         { background: #f1f5f9; color: #64748b; }
+    .pay-paid     { background: #dcfce7; color: #15803d; }
+    .pay-unpaid   { background: #fee2e2; color: #dc2626; }
+    .pay-refunded { background: #ede9fe; color: #6d28d9; }
+    .item-row { transition: background 0.15s ease; }
+    .item-row:hover { background: #f8fafc; }
+    .info-card { transition: box-shadow 0.2s ease; }
+    .info-card:hover { box-shadow: 0 4px 28px 0 rgba(30,41,59,0.07); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== TOP HEADER ===== -->
+<div class="flex flex-col gap-5 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+        <div class="flex items-start gap-4">
+            <!-- Back Button -->
+            <a href="{% url 'admin_order_list' %}"
+               class="mt-1 flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-black hover:border-slate-400 transition-all shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+            </a>
+
+            <div>
+                <div class="flex flex-wrap items-center gap-3 mb-1.5">
+                    <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-900">#{{ order.order_id }}</h2>
+                    <!-- Order Status Badge -->
+                    <span class="status-badge
+                        {% if order.status == 'pending' %}status-pending
+                        {% elif order.status == 'shipped' %}status-shipped
+                        {% elif order.status == 'out_for_delivery' %}status-out_for_delivery
+                        {% comment %} {% elif order.status == 'processing' %}status-processing {% endcomment %}
+                        {% elif order.status == 'delivered' %}status-delivered
+                        {% elif order.status == 'cancelled' %}status-cancelled
+                        {% elif order.status == 'returned' %}status-returned
+                        {% else %}status-processing{% endif %}">
+                        {% if order.status == 'pending' %}<span class="material-symbols-outlined" style="font-size:12px;">schedule</span>{% endif %}
+                        {% if order.status == 'shipped' %}<span class="material-symbols-outlined" style="font-size:12px;">local_shipping</span>{% endif %}
+                        {% if order.status == 'out_for_delivery' %}<span class="material-symbols-outlined" style="font-size:12px;">delivery_dining</span>{% endif %}
+                        {% if order.status == 'processing' %}<span class="material-symbols-outlined" style="font-size:12px;">autorenew</span>{% endif %}
+                        {% if order.status == 'delivered' %}<span class="material-symbols-outlined" style="font-size:12px;">check_circle</span>{% endif %}
+                        {% if order.status == 'cancelled' %}<span class="material-symbols-outlined" style="font-size:12px;">cancel</span>{% endif %}
+                        {% if order.status == 'returned' %}<span class="material-symbols-outlined" style="font-size:12px;">undo</span>{% endif %}
+                        {{ order.status|title }}
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-400">
+                    <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined" style="font-size:13px;">calendar_today</span>
+                        Placed on {{ order.created_at|date:"M d, Y" }} at {{ order.created_at|date:"H:i" }}
+                    </span>
+                    <span class="text-slate-200">|</span>
+                    <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined" style="font-size:13px;">payments</span>
+                        {{ order.payment_method|default:"N/A"|title }}
+                    </span>
+                    <span class="text-slate-200">|</span>
+                    <span class="flex items-center gap-1 font-bold
+                        {% if order.payment_status == 'paid' %}text-emerald-600
+                        {% elif order.payment_status == 'refunded' %}text-purple-600
+                        {% else %}text-red-500{% endif %}">
+                        <span class="material-symbols-outlined" style="font-size:13px;">
+                            {% if order.payment_status == 'paid' %}check_circle{% elif order.payment_status == 'refunded' %}currency_exchange{% else %}error{% endif %}
+                        </span>
+                        {{ order.payment_status|default:"Unpaid"|title }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
+            {% comment %} <button type="button"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wide text-slate-600 hover:border-slate-400 hover:text-black transition-all shadow-sm">
+                <span class="material-symbols-outlined text-base">print</span>
+                Print Invoice
+            </button> {% endcomment %}
+
+            <select id="admin-status-select"
+                    class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wide text-slate-600 outline-none">
+
+                <option value="pending"
+                    {% if order.status == 'pending' %}selected{% endif %}>
+                    Pending
+                </option>
+
+                <option value="shipped"
+                    {% if order.status == 'shipped' %}selected{% endif %}>
+                    Shipped
+                </option>
+
+                <option value="out_for_delivery"
+                    {% if order.status == 'out_for_delivery' %}selected{% endif %}>
+                    Out For Delivery
+                </option>
+
+                <option value="delivered"
+                    {% if order.status == 'delivered' %}selected{% endif %}>
+                    Delivered
+                </option>
+
+                <option value="cancelled"
+                    {% if order.status == 'cancelled' %}selected{% endif %}>
+                    Cancelled
+                </option>
+            </select>
+
+
+            <button type="button"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all shadow-sm"
+                    data-confirm-modal
+                    data-modal-title="Update Order Status"
+                    data-modal-message="Are you sure you want to update the status of order #{{ order.order_id }}?"
+                    data-modal-confirm-text="Update"
+                    data-modal-form-id="update-status-form">
+                <span class="material-symbols-outlined text-base">sync</span>
+                Update Status
+            </button>
+            <form id="update-status-form"
+                method="POST"
+                action="{% url 'update_order_status' order.order_id %}"
+                class="hidden">
+                {% csrf_token %}
+                <input type="hidden" name="status" id="selected-status-input">
+            </form>
+
+            <button type="button"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 rounded-xl text-xs font-black uppercase tracking-wide text-red-500 hover:bg-red-50 hover:border-red-400 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-base">currency_exchange</span>
+                Refund
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== MAIN GRID ===== -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- =============================== LEFT COLUMN =============================== -->
+    <div class="xl:col-span-2 flex flex-col gap-6">
+
+        <!-- ===== CUSTOMER INFORMATION CARD ===== -->
+        <div class="info-card bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500 text-base">person</span>
+                </div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Customer Information</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+
+                <!-- Contact Details -->
+                <div class="px-6 py-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Contact Details</p>
+                    <p class="text-sm font-black text-slate-900 mb-1.5">{{ order.user.get_full_name|default:order.user.email }}</p>
+                    <p class="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-slate-300" style="font-size:13px;">mail</span>
+                        {{ order.user.email }}
+                    </p>
+                    {% if order.phone_number %}
+                    <p class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-slate-300" style="font-size:13px;">call</span>
+                        {{ order.phone_number }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Shipping Address — direct snapshot fields on Order model -->
+                <div class="px-6 py-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Shipping Address</p>
+                    {% if order.full_name %}
+                    <p class="text-sm font-bold text-slate-800 mb-1">{{ order.full_name }}</p>
+                    <p class="text-xs font-semibold text-slate-500 leading-relaxed">
+                        {{ order.address_line1 }}<br>
+                        {% if order.address_line2 %}{{ order.address_line2 }}<br>{% endif %}
+                        {{ order.city }}, {{ order.state }} – {{ order.pincode }}<br>
+                        {{ order.country }}
+                    </p>
+                    {% else %}
+                    <p class="text-xs text-slate-400 italic">No address on record</p>
+                    {% endif %}
+                </div>
+
+                <!-- Billing Address — same snapshot (no separate billing fields on model) -->
+                {% comment %} <div class="px-6 py-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Billing Address</p>
+                    <p class="text-xs font-semibold text-slate-400 italic flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-slate-300" style="font-size:13px;">info</span>
+                        Same as shipping address
+                    </p>
+                </div> {% endcomment %}
+
+            </div>
+        </div>
+
+        <!-- ===== ORDER ITEMS CARD ===== -->
+        <div class="info-card bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-500 text-base">inventory_2</span>
+                    </div>
+                    <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Order Items</h3>
+                </div>
+                <span class="text-[11px] font-black text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                    {{ order.items.count }} item{{ order.items.count|pluralize }}
+                </span>
+            </div>
+
+            <!-- Table Header (desktop) -->
+            <div class="hidden md:grid grid-cols-12 gap-2 px-6 py-3 border-b border-slate-50 bg-slate-50/60">
+                <div class="col-span-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Product</div>
+                <div class="col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-400">SKU</div>
+                <div class="col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Price</div>
+                <div class="col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qty</div>
+                <div class="col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Total</div>
+            </div>
+
+            <!-- Item Rows -->
+            <div class="divide-y divide-slate-50">
+                {% for item in order.items.all %}
+                <div class="item-row grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 items-center px-6 py-4">
+
+                    <!-- Product (col 5) -->
+                    <div class="col-span-5 flex items-center gap-3">
+                        {% if item.variant and item.variant.images.first %}
+                        <img src="{{ item.variant.images.first.image_url.url }}"
+                             alt="{{ item.product_name }}"
+                             class="w-14 h-14 rounded-xl object-cover border border-slate-100 bg-slate-50 shrink-0">
+                        {% else %}
+                        <div class="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-slate-400">inventory_2</span>
+                        </div>
+                        {% endif %}
+                        <div class="min-w-0">
+                            <p class="text-sm font-black text-slate-900 truncate leading-tight">{{ item.product_name }}</p>
+                            {% if item.category_name %}
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{{ item.category_name }}</p>
+                            {% endif %}
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                                {% if item.color %}{{ item.color }}{% endif %}{% if item.size %} / Size {{ item.size }}{% endif %}
+                            </p>
+                            <!-- Per-item status badge (OrderItem.status) -->
+                            {% if item.status %}
+                            <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide
+                                {% if item.status == 'delivered' %}bg-emerald-50 text-emerald-600
+                                {% elif item.status == 'cancelled' %}bg-red-50 text-red-500
+                                {% elif item.status == 'returned' %}bg-purple-50 text-purple-500
+                                {% else %}bg-slate-100 text-slate-500{% endif %}">
+                                {{ item.status|title }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- SKU (col 2) -->
+                    <div class="col-span-2">
+                        <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md tracking-wide">
+                            {{ item.sku|default:"—" }}
+                        </span>
+                        <p class="md:hidden text-[10px] text-slate-400 mt-1 font-semibold uppercase">SKU</p>
+                    </div>
+
+                    <!-- Price (col 2) -->
+                    <div class="col-span-2 text-center">
+                        <p class="text-sm font-bold text-slate-700">₹{{ item.price|floatformat:2 }}</p>
+                        <p class="md:hidden text-[10px] text-slate-400 font-semibold uppercase mt-0.5">Price</p>
+                    </div>
+
+                    <!-- Qty (col 1) -->
+                    <div class="col-span-1 text-center">
+                        <span class="inline-flex items-center justify-center w-7 h-7 bg-slate-100 rounded-lg text-xs font-black text-slate-700">
+                            {{ item.quantity }}
+                        </span>
+                    </div>
+
+                    <!-- Item Total (col 2) — uses item.item_total -->
+                    <div class="col-span-2 text-right">
+                        <p class="text-sm font-black text-slate-900">₹{{ item.item_total|floatformat:2 }}</p>
+                    </div>
+
+                </div>
+                {% empty %}
+                <div class="px-6 py-12 text-center">
+                    <span class="material-symbols-outlined text-slate-300 text-4xl block mb-2">inventory_2</span>
+                    <p class="text-sm font-semibold text-slate-400">No items found for this order.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== PAYMENT DETAILS CARD ===== -->
+        <div class="info-card bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500 text-base">credit_card</span>
+                </div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Payment Details</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+
+                <!-- Method -->
+                <div class="px-6 py-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Payment Method</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-6 bg-slate-900 rounded-md flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-white" style="font-size:13px;">credit_card</span>
+                        </div>
+                        <p class="text-sm font-black text-slate-800">{{ order.payment_method|default:"N/A"|title }}</p>
+                    </div>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="px-6 py-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Payment Status</p>
+                    <span class="status-badge
+                        {% if order.payment_status == 'paid' %}pay-paid
+                        {% elif order.payment_status == 'refunded' %}pay-refunded
+                        {% else %}pay-unpaid{% endif %}">
+                        {% if order.payment_status == 'paid' %}
+                            <span class="material-symbols-outlined" style="font-size:11px;">check_circle</span>
+                        {% elif order.payment_status == 'refunded' %}
+                            <span class="material-symbols-outlined" style="font-size:11px;">currency_exchange</span>
+                        {% else %}
+                            <span class="material-symbols-outlined" style="font-size:11px;">error</span>
+                        {% endif %}
+                        {{ order.payment_status|default:"Unpaid"|title }}
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <!-- end left column -->
+
+    <!-- =============================== RIGHT COLUMN =============================== -->
+    <div class="flex flex-col gap-6">
+
+        <!-- ===== PRICE SUMMARY CARD (DARK) ===== -->
+        <div class="bg-slate-900 rounded-2xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-white/10">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Price Summary</p>
+            </div>
+            <div class="px-6 py-5 space-y-3">
+
+                <!-- Subtotal -->
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400">
+                        Subtotal ({{ order.items.count }} item{{ order.items.count|pluralize }})
+                    </span>
+                    <span class="text-sm font-bold text-white">₹{{ order.subtotal|floatformat:2 }}</span>
+                </div>
+
+                <!-- Shipping -->
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400">
+                        Shipping
+                        {% if order.shipping_method %}
+                        <span class="text-[10px] font-bold text-slate-500 ml-1">({{ order.shipping_method }})</span>
+                        {% endif %}
+                    </span>
+                    <span class="text-sm font-bold text-white">₹{{ order.shipping_charge|default:"0.00"|floatformat:2 }}</span>
+                </div>
+
+                <!-- Coupon Discount -->
+                {% if order.coupon_code %}
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400">
+                        Discount
+                        <span class="text-[10px] font-black text-slate-500 ml-1 bg-white/10 px-1.5 py-0.5 rounded">{{ order.coupon_code }}</span>
+                    </span>
+                    <span class="text-sm font-bold text-red-400">-₹{{ order.discount|default:"0.00"|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Grand Total -->
+                <div class="border-t border-white/10 pt-4 mt-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black uppercase tracking-widest text-slate-300">Total</span>
+                        <span class="text-2xl font-black text-white tracking-tight">₹{{ order.final_total|floatformat:2 }}</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== ORDER TIMELINE CARD ===== -->
+        <div class="info-card bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500 text-base">timeline</span>
+                </div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Order Timeline</h3>
+            </div>
+
+            <div class="px-6 py-5">
+                {% with s=order.status %}
+                <div>
+
+                    <!-- Order Placed — always complete -->
+                    <div class="relative flex gap-4 pb-6">
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-black">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">check</span>
+                            </div>
+                            <div class="flex-1 w-0.5 bg-slate-100 mt-1"></div>
+                        </div>
+                        <div class="pb-1">
+                            <p class="text-xs font-black text-slate-900 leading-tight">Order Placed</p>
+                            <p class="text-[11px] font-semibold text-slate-400 mt-0.5">{{ order.created_at|date:"M d, Y · H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Payment Confirmed -->
+                    <div class="relative flex gap-4 pb-6">
+                        <div class="flex flex-col items-center">
+                            {% if order.payment_status == 'paid' or order.payment_status == 'refunded' %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-black">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">payments</span>
+                            </div>
+                            {% else %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-slate-200">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:13px;">payments</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 w-0.5 bg-slate-100 mt-1"></div>
+                        </div>
+                        <div class="pb-1">
+                            <p class="text-xs font-black {% if order.payment_status == 'paid' or order.payment_status == 'refunded' %}text-slate-900{% else %}text-slate-400{% endif %} leading-tight">Payment Confirmed</p>
+                            <p class="text-[11px] font-semibold mt-0.5 {% if order.payment_status == 'paid' or order.payment_status == 'refunded' %}text-slate-400{% else %}text-slate-300{% endif %}">
+                                {% if order.payment_status == 'paid' or order.payment_status == 'refunded' %}Confirmed{% else %}Awaiting payment{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                   <!-- Preparing Shipment -->
+                    <div class="relative flex gap-4 pb-6">
+                        <div class="flex flex-col items-center">
+                            {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-black">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">autorenew</span>
+                            </div>
+                            {% else %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-slate-200">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:13px;">autorenew</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 w-0.5 bg-slate-100 mt-1"></div>
+                        </div>
+                        <div class="pb-1">
+                            <p class="text-xs font-black {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}text-slate-900{% else %}text-slate-400{% endif %} leading-tight">Processing</p>
+                            <p class="text-[11px] font-semibold text-slate-300 mt-0.5">
+                                {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}Being prepared{% else %}Pending{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Shipped -->
+                    <div class="relative flex gap-4 pb-6">
+                        <div class="flex flex-col items-center">
+                            {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-black">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">local_shipping</span>
+                            </div>
+                            {% else %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-slate-200">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:13px;">local_shipping</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 w-0.5 bg-slate-100 mt-1"></div>
+                        </div>
+                        <div class="pb-1">
+                            <p class="text-xs font-black {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}text-slate-900{% else %}text-slate-400{% endif %} leading-tight">Shipped</p>
+                            <p class="text-[11px] font-semibold text-slate-300 mt-0.5">
+                                {% if s == 'shipped' or s == 'out_for_delivery' or s == 'delivered' %}Dispatched{% else %}Pending{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Out for Delivery -->
+                    <div class="relative flex gap-4 pb-6">
+                        <div class="flex flex-col items-center">
+                            {% if s == 'out_for_delivery' or s == 'delivered' %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-black">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">delivery_dining</span>
+                            </div>
+                            {% else %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-slate-200">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:13px;">delivery_dining</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 w-0.5 bg-slate-100 mt-1"></div>
+                        </div>
+                        <div class="pb-1">
+                            <p class="text-xs font-black {% if s == 'out_for_delivery' or s == 'delivered' %}text-slate-900{% else %}text-slate-400{% endif %} leading-tight">Out for Delivery</p>
+                            <p class="text-[11px] font-semibold text-slate-300 mt-0.5">
+                                {% if s == 'out_for_delivery' or s == 'delivered' %}En route{% else %}Pending{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Delivered -->
+                    <div class="relative flex gap-4">
+                        <div class="flex flex-col items-center">
+                            {% if s == 'delivered' %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-emerald-500">
+                                <span class="material-symbols-outlined text-white" style="font-size:13px;">check_circle</span>
+                            </div>
+                            {% else %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-slate-200">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:13px;">check_circle</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="text-xs font-black {% if s == 'delivered' %}text-emerald-600{% else %}text-slate-400{% endif %} leading-tight">Delivered</p>
+                            <p class="text-[11px] font-semibold text-slate-300 mt-0.5">
+                                {% if s == 'delivered' %}Completed{% else %}Pending{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Cancelled banner -->
+                    {% if s == 'cancelled' %}
+                    <div class="mt-5 flex items-center gap-2 px-3 py-2.5 bg-red-50 border border-red-100 rounded-xl">
+                        <span class="material-symbols-outlined text-red-400 text-base">cancel</span>
+                        <p class="text-xs font-black text-red-600">Order Cancelled</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Returned banner -->
+                    {% if s == 'returned' %}
+                    <div class="mt-5 flex items-center gap-2 px-3 py-2.5 bg-purple-50 border border-purple-100 rounded-xl">
+                        <span class="material-symbols-outlined text-purple-400 text-base">undo</span>
+                        <p class="text-xs font-black text-purple-600">Order Returned</p>
+                    </div>
+                    {% endif %}
+
+                {% endwith %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== INTERNAL NOTES CARD ===== -->
+        {% comment %} <div class="info-card bg-white border border-dashed border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-400 text-base">sticky_note_2</span>
+                </div>
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-600">Internal Notes</h3>
+            </div>
+            <div class="px-6 py-8 text-center">
+                <span class="material-symbols-outlined text-slate-300 text-3xl block mb-2">edit_note</span>
+                <p class="text-xs font-semibold text-slate-400">No internal notes for this order.</p>
+            </div>
+        </div> {% endcomment %}
+
+    </div>
+    <!-- end right column -->
+
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const updateBtn = document.querySelector('[data-modal-form-id="update-status-form"]');
+    const statusSelect = document.getElementById('admin-status-select');
+    const hiddenInput = document.getElementById('selected-status-input');
+
+    if (updateBtn && statusSelect && hiddenInput) {
+        updateBtn.addEventListener('click', function () {
+            hiddenInput.value = statusSelect.value;
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %}

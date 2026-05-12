@@ -1,0 +1,355 @@
+{% extends 'adminpanel/admin_base.html' %}
+
+{% block title %}VERSE | Order Management{% endblock %}
+
+{% block page_title %}Order Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    .status-pending       { background: #fef3c7; color: #b45309; }
+    .status-shipped       { background: #dbeafe; color: #1d4ed8; }
+    .status-out_for_delivery { background: #e0e7ff; color: #4338ca; }
+    .status-delivered     { background: #dcfce7; color: #15803d; }
+    .status-cancelled     { background: #fee2e2; color: #dc2626; }
+    .status-returned      { background: #f1f5f9; color: #64748b; }
+    .metric-card { transition: box-shadow 0.2s ease; }
+    .metric-card:hover { box-shadow: 0 4px 24px 0 rgba(30,41,59,0.07); }
+    .table-row { transition: background 0.15s ease; }
+    .table-row:hover { background: #f8fafc; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== PAGE HEADER ===== -->
+<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+    <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Fulfillment & Logistics</p>
+        <p class="text-sm font-medium text-slate-500 max-w-sm">Tracking sneaker fulfillment and logistics</p>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+        <!-- Export CSV (visual only) -->
+        <button type="button" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:text-black transition-all shadow-sm">
+            <span class="material-symbols-outlined text-base">download</span>
+            Export CSV
+        </button>
+        <!-- New Order (visual only) -->
+        <button type="button" class="flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-base">add</span>
+            New Order
+        </button>
+    </div>
+</div>
+
+<!-- ===== SEARCH & FILTER ROW ===== -->
+<div class="bg-white border border-slate-100 rounded-2xl p-4 mb-6 shadow-sm">
+    <form method="GET" action="{% url 'admin_order_list' %}" class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+        <!-- Search -->
+        <div class="relative flex-1">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+            <input
+                type="text"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Search by Order ID, customer, or product..."
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-slate-400 transition-all"
+            >
+        </div>
+
+        <!-- Status Filter -->
+        <div class="relative">
+            <select name="status" onchange="this.form.submit()" class="appearance-none bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-4 pr-9 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-slate-400 transition-all cursor-pointer">
+                <option value="" {% if not status_filter %}selected{% endif %}>All Statuses</option>
+                <option value="pending"          {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="shipped"          {% if status_filter == 'shipped' %}selected{% endif %}>Shipped</option>
+                <option value="out_for_delivery" {% if status_filter == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                <option value="delivered"        {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+                <option value="cancelled"        {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="returned"         {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+            </select>
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-base">expand_more</span>
+        </div>
+
+        <!-- Sort -->
+        <div class="relative">
+            <select name="sort" onchange="this.form.submit()" class="appearance-none bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-4 pr-9 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-slate-400 transition-all cursor-pointer">
+                <option value="-created_at" {% if sort_by == '-created_at' or not sort_by %}selected{% endif %}>Newest First</option>
+                <option value="created_at"  {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                <option value="-final_total" {% if sort_by == '-final_total' %}selected{% endif %}>Price: High → Low </option>
+                <option value="final_total" {% if sort_by == 'final_total' %}selected{% endif %}>Price: Low → High</option>
+            </select>
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-base">expand_more</span>
+        </div>
+
+        <!-- Submit -->
+        {% comment %} <button type="submit" class="px-5 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all">
+            Filter
+        </button> {% endcomment %}
+
+        <!-- Clear -->
+        {% if search_query or status_filter or sort_by != '-created_at' %}
+        <a href="{% url 'admin_order_list' %}" class="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wide text-slate-400 hover:text-red-500 hover:border-red-200 transition-all">
+            <span class="material-symbols-outlined text-sm">close</span>
+            Clear
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- ===== METRICS CARDS ===== -->
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+
+    <!-- Total Orders -->
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Total Orders</p>
+        <p class="text-3xl font-black tracking-tight text-slate-900">{{ total_orders }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-emerald-500">trending_up</span>
+            <span class="text-[11px] font-bold text-emerald-500">All time</span>
+        </div>
+    </div>
+
+    <!-- Pending Shipments -->
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Pending Shipments</p>
+        <p class="text-3xl font-black tracking-tight text-slate-900">{{ pending_orders }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            {% if pending_orders > 0 %}
+            <span class="material-symbols-outlined text-sm text-amber-500">warning</span>
+            <span class="text-[11px] font-bold text-amber-500">Needs Action</span>
+            {% else %}
+            <span class="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
+            <span class="text-[11px] font-bold text-emerald-500">All clear</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Revenue -->
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Revenue</p>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ revenue }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-emerald-500">trending_up</span>
+            <span class="text-[11px] font-bold text-emerald-500">Gross total</span>
+        </div>
+    </div>
+
+    <!-- Returned / Cancelled -->
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Returned / Cancelled</p>
+        <p class="text-3xl font-black tracking-tight text-slate-900">{{ issue_orders }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            {% if issue_orders > 0 %}
+            <span class="material-symbols-outlined text-sm text-red-400">error</span>
+            <span class="text-[11px] font-bold text-red-400">Needs review</span>
+            {% else %}
+            <span class="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
+            <span class="text-[11px] font-bold text-emerald-500">None</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== ORDERS TABLE ===== -->
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+
+    {% if orders %}
+
+    <!-- Table scroll wrapper (mobile) -->
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[800px]">
+            <thead>
+                <tr class="border-b border-slate-100">
+                    <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Order ID</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Customer</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Product</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Total Price</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                    <th class="text-right px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                {% for order in orders %}
+                <tr class="table-row">
+
+                    <!-- Order ID -->
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-black text-slate-900 tracking-tight">#{{ order.order_id }}</span>
+                    </td>
+
+                    <!-- Date -->
+                    <td class="px-4 py-4">
+                        <span class="text-xs font-semibold text-slate-500 whitespace-nowrap">{{ order.created_at|date:"M d, Y" }}</span>
+                    </td>
+
+                    <!-- Customer -->
+                    <td class="px-4 py-4">
+                        <p class="text-sm font-bold text-slate-800 leading-tight">{{ order.user.full_name|default:order.user.email }}</p>
+                        {% if order.user.full_name %}
+                        <p class="text-[11px] font-medium text-slate-400 mt-0.5 truncate max-w-[160px]">{{ order.user.email }}</p>
+                        {% endif %}
+                    </td>
+
+                    <!-- Product Preview -->
+                    <!-- Product Preview -->
+                    <td class="px-4 py-4">
+                        {% with first_item=order.items.all.0 %}
+                        {% if first_item %}
+                        <div class="flex items-center gap-3">
+                            {% if first_item.variant and first_item.variant.images.first %}
+                            <img src="{{ first_item.variant.images.first.image_url.url }}"
+                                alt="{{ first_item.product_name }}"
+                                class="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0 bg-slate-50">
+                            {% else %}
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-slate-400 text-base">inventory_2</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-slate-800 truncate max-w-[140px] leading-tight">
+                                    {{ first_item.product_name }}
+                                </p>
+                                <p class="text-[11px] font-medium text-slate-400 mt-0.5">
+                                    {% if first_item.size %}Size {{ first_item.size }}{% endif %}
+                                    {% if first_item.color %}&nbsp;· {{ first_item.color }}{% endif %}
+                                </p>
+
+                                {% with extra=order.items.count|add:"-1" %}
+                                {% if extra > 0 %}
+                                <p class="text-[10px] font-bold text-slate-400">+{{ extra }} more</p>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-xs text-slate-400 italic">No items</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+
+                    <!-- Total Price -->
+                    <td class="px-4 py-4">
+                        <span class="text-sm font-black text-slate-900">₹{{ order.adjusted_final_total|floatformat:2 }}</span>
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td class="px-4 py-4">
+                        {% with s=order.status %}
+                        <span class="status-badge
+                            {% if s == 'pending' %}status-pending
+                            {% elif s == 'shipped' %}status-shipped
+                            {% elif s == 'out_for_delivery' %}status-out_for_delivery
+                            {% elif s == 'delivered' %}status-delivered
+                            {% elif s == 'cancelled' %}status-cancelled
+                            {% elif s == 'returned' %}status-returned
+                            {% else %}status-returned{% endif %}">
+                            {% if s == 'pending' %}<span class="material-symbols-outlined" style="font-size:11px;">schedule</span>{% endif %}
+                            {% if s == 'shipped' %}<span class="material-symbols-outlined" style="font-size:11px;">local_shipping</span>{% endif %}
+                            {% if s == 'out_for_delivery' %}<span class="material-symbols-outlined" style="font-size:11px;">delivery_dining</span>{% endif %}
+                            {% if s == 'delivered' %}<span class="material-symbols-outlined" style="font-size:11px;">check_circle</span>{% endif %}
+                            {% if s == 'cancelled' %}<span class="material-symbols-outlined" style="font-size:11px;">cancel</span>{% endif %}
+                            {% if s == 'returned' %}<span class="material-symbols-outlined" style="font-size:11px;">undo</span>{% endif %}
+                            {{ s|title|cut:"_" }}
+                        </span>
+                        {% endwith %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 text-right">
+                        {# Replace href="#" with {% url 'admin_order_detail' order.order_id %} once the detail view is created #}
+                        <a href="{% url 'admin_order_detail' order.order_id %}"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-black uppercase tracking-wide hover:bg-black transition-all">
+                            <span class="material-symbols-outlined text-xs" style="font-size:14px;">open_in_new</span>
+                            View
+                        </a>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===== PAGINATION ===== -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-slate-100">
+        <p class="text-xs font-semibold text-slate-400">
+            Showing
+            <span class="font-black text-slate-600">{{ page_obj.start_index }}</span>
+            to
+            <span class="font-black text-slate-600">{{ page_obj.end_index }}</span>
+            of
+            <span class="font-black text-slate-600">{{ page_obj.paginator.count }}</span>
+            entries
+        </p>
+
+        <div class="flex items-center gap-1">
+            <!-- Previous -->
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+               class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                Prev
+            </a>
+            {% else %}
+            <span class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-300 bg-white border border-slate-100 rounded-xl cursor-not-allowed">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                Prev
+            </span>
+            {% endif %}
+
+            <!-- Page numbers -->
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="w-9 h-9 flex items-center justify-center text-xs font-black text-white bg-black rounded-xl">{{ num }}</span>
+                {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                   class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">{{ num }}</a>
+                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                <span class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-300">…</span>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next -->
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+               class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">
+                Next
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </a>
+            {% else %}
+            <span class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-300 bg-white border border-slate-100 rounded-xl cursor-not-allowed">
+                Next
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+
+    <!-- ===== EMPTY STATE ===== -->
+    <div class="flex flex-col items-center justify-center py-24 px-6 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
+            <span class="material-symbols-outlined text-slate-400 text-3xl">receipt_long</span>
+        </div>
+        <h3 class="text-base font-black uppercase tracking-tight text-slate-800 mb-1">No orders found</h3>
+        {% if search_query or status_filter %}
+        <p class="text-sm font-medium text-slate-400 mb-5">No results match your filters. Try clearing them to see all orders.</p>
+        <a href="{% url 'admin_order_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all">
+            <span class="material-symbols-outlined text-sm">close</span>
+            Clear Filters
+        </a>
+        {% else %}
+        <p class="text-sm font-medium text-slate-400">Orders will appear here once customers start placing them.</p>
+        {% endif %}
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

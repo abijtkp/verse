@@ -14,6 +14,7 @@ import io
 from xhtml2pdf import pisa
 from django.db.models import Q
 from django.core.paginator import Paginator
+from products.models import Variant
 
 
 @login_required
@@ -22,7 +23,7 @@ def checkout_view(request):
 
     if not cart:
         messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+        return redirect('cart_view')
 
     cart_items = CartItem.objects.filter(
         cart=cart
@@ -36,7 +37,23 @@ def checkout_view(request):
 
     if not cart_items.exists():
         messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+        return redirect('cart_view')
+    
+    for item in cart_items:
+        variant = item.variant
+        
+        if (
+            not variant or 
+            variant.is_deleted or
+            not variant.is_active or
+            variant.stock <= 0 or
+            variant.stock < item.quantity
+        ):
+            messages.error(
+                request,
+                f"{variant.product.product_name if variant and variant.product else 'A product'} is no longer available."
+            )
+            return redirect('cart_view')
     
 
     addresses = Address.objects.filter(
@@ -111,7 +128,7 @@ def place_order_view(request):
 
     if not cart:
         messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+        return redirect('cart_view')
 
     cart_items = CartItem.objects.filter(
         cart=cart
@@ -119,28 +136,34 @@ def place_order_view(request):
         'variant',
         'variant__product',
         'variant__product__category'
-    )
+    ).order_by('variant_id')
 
     if not cart_items.exists():
         messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+        return redirect('cart_view')
 
+    variant_ids = list(cart_items.values_list('variant_id', flat=True))
+
+    locked_variants = {
+        variant.id: variant
+        for variant in Variant.objects.select_for_update().filter(id__in=variant_ids)
+    }
 
     for item in cart_items:
-
-        variant = item.variant
-
+        variant = locked_variants.get(item.variant_id)
         if (
             not variant or
             variant.is_deleted or
             not variant.is_active or
+            variant.stock <= 0 or
             variant.stock < item.quantity
         ):
+            product_name = item.variant.product.product_name if item.variant and item.variant.product else 'Product'
             messages.error(
                 request,
-                f"{variant.product.product_name if variant and variant.product else 'Product'} is out of stock or unavailable."
+                f"{product_name} is out of stock or unavailable."
             )
-            return redirect('cart')
+            return redirect('cart_view')
 
 
     subtotal = sum(item.subtotal for item in cart_items)
@@ -176,25 +199,19 @@ def place_order_view(request):
     )
 
     for item in cart_items:
-
-        variant = item.variant
-
+        variant = locked_variants[item.variant_id]
+        
         OrderItem.objects.create(
             order=order,
-
             variant=variant,
-
             product_name=variant.product.product_name,
             category_name=variant.product.category.category_name if variant.product.category else '',
-
             color=variant.color,
             size=variant.size,
             sku=variant.sku,
-
             price=variant.price,
             quantity=item.quantity,
             item_total=item.subtotal,
-
             status='pending',
         )
 
@@ -204,7 +221,7 @@ def place_order_view(request):
             variant.stock = 0
             variant.is_active = False
 
-        variant.save()
+        variant.save(update_fields=['stock', 'is_active'])
 
 
     cart_items.delete()
@@ -294,44 +311,6 @@ def order_detail_view(request, order_id):
     })
 
 
-@login_required
-@transaction.atomic
-def cancel_order(request, order_id):
-    order = get_object_or_404(Order, order_id=order_id, user=request.user)
-    
-    if request.method != 'POST':
-        return redirect('order_detail', order_id=order.order_id)
-
-    if order.status in ['cancelled', 'delivered']:
-        messages.error(request, f"Order cannot be cancelled as it is already {order.status}.")
-        return redirect('order_detail', order_id=order_id)
-    
-    reason = request.POST.get('reason', '').strip()
-
-
-    order.status = 'cancelled'
-    order.cancelled_at = timezone.now()
-    order.cancellation_reason = reason
-    order.save(update_fields=['status', 'cancelled_at', 'cancellation_reason', 'updated_at'])
-
-    for item in order.items.all():
-        if item.status != 'cancelled':
-            item.status = 'cancelled'
-            item.cancellation_reason = reason
-            item.cancelled_at = timezone.now()
-            item.save(update_fields=['status', 'cancelled_at', 'cancellation_reason'])
-
-
-            # Restore stock
-            if item.variant:
-                item.variant.stock += item.quantity
-                if not item.variant.is_active and item.variant.stock > 0:
-                    item.variant.is_active = True
-                item.variant.save(update_fields=['stock', 'is_active'])
-
-    messages.success(request, "Order cancelled successfully.")
-    return redirect('order_detail', order_id=order_id)
-
 
 @login_required
 @transaction.atomic
@@ -341,8 +320,8 @@ def cancel_order(request, order_id):
     if request.method != 'POST':
         return redirect('order_detail', order_id=order.order_id)
 
-    if order.status in ['cancelled', 'delivered']:
-        messages.error(request, f"Order cannot be cancelled as it is already {order.status}.")
+    if order.status != 'pending':
+        messages.error(request, "Order can only be cancelled before it is shipped.")
         return redirect('order_detail', order_id=order.order_id)
 
     reason = request.POST.get('reason', '').strip()
@@ -382,8 +361,8 @@ def cancel_order_item(request, item_id):
 
     order = item.order
 
-    if order.status in ['cancelled', 'delivered']:
-        messages.error(request, f"Item cannot be cancelled because the order is {order.status}.")
+    if order.status != 'pending':
+        messages.error(request, "Items can only be cancelled before the order is shipped.")
         return redirect('order_detail', order_id=order.order_id)
 
     if item.status in ['cancelled', 'delivered', 'returned']:
@@ -430,19 +409,21 @@ def return_order(request, order_id):
         messages.error(request, "Only delivered orders can be returned.")
         return redirect('order_detail', order_id=order.order_id)
 
-    for item in order.items.exclude(status__in=['cancelled', 'returned']):
-        item.status = 'returned'
+    returnable_items = order.items.filter(status='delivered')
+
+    if not returnable_items.exists():
+        messages.error(request, "No delivered items are available for return.")
+        return redirect('order_detail', order_id=order.order_id)
+
+    for item in returnable_items:
+        item.status = 'return_requested'
         item.return_reason = reason
-        item.returned_at = timezone.now()
-        item.save(update_fields=['status', 'return_reason', 'returned_at'])
+        item.return_requested = timezone.now()
+        item.save(update_fields=['status', 'return_reason', 'return_requested'])
 
-        if item.variant:
-            item.variant.stock += item.quantity
-            item.variant.is_active = True
-            item.variant.save(update_fields=['stock', 'is_active'])
-
-    messages.success(request, "Order return request submitted successfully.")
+    messages.success(request, "Return request submitted. Admin will review it.")
     return redirect('order_detail', order_id=order.order_id)
+
 
 
 @login_required
@@ -469,22 +450,18 @@ def return_order_item(request, item_id):
         messages.error(request, "Only delivered items can be returned.")
         return redirect('order_detail', order_id=order.order_id)
 
-    if item.status in ['cancelled', 'returned']:
-        messages.error(request, f"This item is already {item.status}.")
+    if item.status != 'delivered':
+        messages.error(request, "Only delivered items can be returned.")
         return redirect('order_detail', order_id=order.order_id)
 
-    item.status = 'returned'
+    item.status = 'return_requested'
     item.return_reason = reason
-    item.returned_at = timezone.now()
-    item.save(update_fields=['status', 'return_reason', 'returned_at'])
+    item.return_requested = timezone.now()
+    item.save(update_fields=['status', 'return_reason', 'return_requested'])
 
-    if item.variant:
-        item.variant.stock += item.quantity
-        item.variant.is_active = True
-        item.variant.save(update_fields=['stock', 'is_active'])
-
-    messages.success(request, f"Return request submitted for '{item.product_name}'.")
+    messages.success(request, f"Return request submitted for '{item.product_name}'. Admin will review it.")
     return redirect('order_detail', order_id=order.order_id)
+
 
 
 @login_required
