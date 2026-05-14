@@ -7,11 +7,7 @@ from products.models import Variant
 from .models import Cart, CartItem, Wishlist
 from userprofile.models import Address
 
-
-
 MAX_CART_QUANTITY = 5
-
-
 
 @never_cache
 @user_required
@@ -255,9 +251,28 @@ def toggle_wishlist(request, variant_id):
 
     if wishlist_item:
         wishlist_item.delete()
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'is_wishlisted': False,
+                'wishlist_count': Wishlist.objects.filter(user=request.user).count(),
+                'message': 'Product removed from wishlist.'
+            })
+
         messages.success(request, "Product removed from wishlist.")
+
     else:
         Wishlist.objects.create(user=request.user, variant=variant)
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'is_wishlisted': True,
+                'wishlist_count': Wishlist.objects.filter(user=request.user).count(),
+                'message': 'Product added to wishlist.'
+            })
+
         messages.success(request, "Product added to wishlist.")
 
     return redirect(request.META.get('HTTP_REFERER', 'wishlist_view'))

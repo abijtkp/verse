@@ -303,6 +303,21 @@
     outline-offset: 3px;
 }
 
+.wishlist-btn .wishlist-icon {
+        font-variation-settings: 'FILL' 0;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+
+    .wishlist-btn.active .wishlist-icon {
+        font-variation-settings: 'FILL' 1;
+        color: #ef4444;
+    }
+
+    .wishlist-btn:hover .wishlist-icon {
+        transform: scale(1.12);
+    }
+
 /* Responsive controls fix */
 @media (max-width: 640px) {
     .listing-search {
@@ -337,6 +352,16 @@
         right: auto;
         width: 100%;
     }
+
+    .product-card:hover .material-symbols-outlined.icon-sm {
+        transform: translateX(4px);
+    }
+
+    .product-card .p-4 {
+        min-height: 140px;
+    }
+
+    
 }
 
 
@@ -594,8 +619,8 @@
 
 
             <div class="listing-controls-row flex flex-wrap items-center gap-3">
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mr-auto">
-                    {{ variants.paginator.count }} result{{ variants.paginator.count|pluralize }}
+                <p class="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 mr-auto">
+                    {{ page_obj.paginator.count }} Product{{ page_obj.paginator.count|pluralize }}
                 </p>
 
                 <!-- Search -->
@@ -694,7 +719,7 @@
 
                     <!-- Filter Button -->
                     <button type="button" onclick="toggleFilterDrawer()"
-                            class="filter-mobile-btn flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200 hover:border-black text-[10px] font-black uppercase tracking-wider transition-all"
+                            class="filter-mobile-btn flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200 hover:border-black text-[10px] font-black uppercase tracking-wider transition-all">
                         <span class="material-symbols-outlined icon-sm"></span>
                         Filters
                         {% if selected_category or min_price or max_price or selected_sizes or selected_colors %}
@@ -713,7 +738,7 @@
 <section class="px-6 md:px-10 lg:px-16 py-10">
     <div class="max-w-screen-xl mx-auto">
 
-        {% if variants %}
+        {% if products %}
 
         <!-- Result count -->
         {% comment %} <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
@@ -721,48 +746,60 @@
         </p> {% endcomment %}
 
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {% for variant in variants %}
-            <a href="{% url 'product_detail' variant.id %}" class="product-card group block">
+            {% for product in products %}
+            <a href="{% url 'product_detail' product.representative_variant.id %}"class="product-card group block">
 
                 <!-- Image -->
                 <div class="product-card-img-wrap">
-                    {% if variant.ordered_images %}
-                        <img src="{{ variant.ordered_images.0.image_url.url }}"
-                            alt="{{ variant.product.product_name }}">
+                    {% if product.representative_variant.ordered_images %}
+                        <img src="{{ product.representative_variant.ordered_images.0.image_url.url }}"
+                         alt = "{{ product.product_name}}">
                     {% else %}
                         <img src="{% static 'images/no_product.png' %}"
-                            alt="{{ variant.product.product_name }}">
+                           alt="{{ product.product_name }}">
                     {% endif %}
 
                     <!-- Stock Badge -->
-                    {% if variant.stock == 0 %}
-                    <span class="stock-badge absolute top-3 left-3 bg-red-500 text-white">Out of Stock</span>
-                    {% elif variant.stock <= 5 %}
-                    <span class="stock-badge absolute top-3 left-3 bg-amber-400 text-black">Only {{ variant.stock }} left</span>
+                    {% if product.is_out_of_stock %}
+                    <span class="stock-badge absolute top-3 left-3 bg-red-500 text-white">
+                        Out of Stock
+                    </span>
+
+                    {% elif product.representative_variant.stock <= 5 %}
+                    <span class="stock-badge absolute top-3 left-3 bg-amber-400 text-black">
+                        Only {{ product.representative_variant.stock }} left
+                    </span>
                     {% endif %}
 
                     <!-- Wishlist button -->
-                    <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:scale-110"
-                            onclick="event.preventDefault();">
-                        <span class="material-symbols-outlined icon-sm text-slate-500">favorite</span>
+                    <button type="button"
+                            class="wishlist-btn absolute top-3 right-3 z-[5] w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center transition-all hover:scale-110 {% if product.representative_variant.id in wishlisted_variant_ids %}active{% endif %}"
+                            data-variant-id="{{ product.representative_variant.id }}"
+                            onclick="toggleWishlist(event, this)">
+                        <span class="material-symbols-outlined wishlist-icon text-[21px]">
+                            favorite
+                        </span>
                     </button>
                 </div>
 
                 <!-- Info -->
                 <div class="p-4">
                     <p class="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-1">
-                        {{ variant.product.category.category_name }}
+                        {{ product.category.category_name }}
                     </p>
                     <h3 class="text-sm font-black uppercase tracking-tight leading-tight mb-1 line-clamp-2">
-                        {{ variant.product.product_name }}
+                       {{ product.product_name }}
                     </h3>
-                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
+                    {% comment %} <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
                         <span>{{ variant.color }}</span>
                         <span class="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span>Size {{ variant.size }}</span>
+                    </div> {% endcomment %}
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
+                        <span>{{ product.total_colors }} Colour{{ product.total_colors|pluralize }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-base font-black">₹{{ variant.price }}</span>
+                        <span class="text-base font-black">₹{{ product.representative_variant.price }}</span>
                         <span class="material-symbols-outlined icon-sm text-slate-300 group-hover:text-black transition-colors">arrow_forward</span>
                     </div>
                 </div>
@@ -771,46 +808,46 @@
         </div>
 
         <!-- ── Pagination ── -->
-        {% if variants.has_other_pages %}
+        {% if page_obj.has_other_pages %}
         <div class="flex items-center justify-center gap-2 mt-14">
 
             {% with q=search_query sort=sort_by cat=selected_category mn=min_price mx=max_price %}
 
             <!-- Previous -->
-            <a {% if variants.has_previous %}
-                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ variants.previous_page_number }}"
+            <a {% if page_obj.has_previous %}
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ page_obj.previous_page_number }}"
             {% else %}
                 href="#"
             {% endif %}
-            class="page-btn {% if not variants.has_previous %}disabled{% endif %}">
+            class="page-btn {% if not page_obj.has_previous %}disabled{% endif %}">
                 <span class="material-symbols-outlined icon-sm">chevron_left</span>
             </a>
 
             <!-- Page Numbers -->
-            {% for num in variants.paginator.page_range %}
-                {% if variants.number == num %}
+            {% for num in page_obj.paginator.page_range%}
+                {% if page_obj.number == num %}
                     <span class="page-btn active">{{ num }}</span>
 
-                {% elif num >= variants.number|add:"-2" and num <= variants.number|add:"2" %}
+                {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
                     <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
                     class="page-btn">{{ num }}</a>
 
-                {% elif num == 1 or num == variants.paginator.num_pages %}
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
                     <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
                     class="page-btn">{{ num }}</a>
 
-                {% elif num == variants.number|add:"-3" or num == variants.number|add:"3" %}
+                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
                     <span class="page-btn" style="border:none;cursor:default;">…</span>
                 {% endif %}
             {% endfor %}
 
             <!-- Next -->
-            <a {% if variants.has_next %}
-                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ variants.next_page_number }}"
+            <a {% if page_obj.has_next %}
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ page_obj.next_page_number}}"
             {% else %}
                 href="#"
             {% endif %}
-            class="page-btn {% if not variants.has_next %}disabled{% endif %}">
+            class="page-btn {% if not page_obj.has_next %}disabled{% endif %}">
                 <span class="material-symbols-outlined icon-sm">chevron_right</span>
             </a>
 
@@ -912,5 +949,59 @@
 
         lastScrollY = currentScrollY;
     });
+</script>
+
+<script>
+function getCSRFToken() {
+    return document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+
+function toggleWishlist(event, button) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const variantId = button.dataset.variantId;
+
+    fetch(`/cart/wishlist/toggle/${variantId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data) return;
+
+        if (data.is_wishlisted) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+
+        const wishlistCount = document.getElementById('wishlistCount');
+
+        if (wishlistCount && data.wishlist_count !== undefined) {
+            wishlistCount.textContent = data.wishlist_count;
+
+            if (data.wishlist_count > 0) {
+                wishlistCount.classList.remove('hidden');
+            } else {
+                wishlistCount.classList.add('hidden');
+            }
+        }
+
+    })
+    .catch(error => console.error('Wishlist error:', error));
+}
 </script>
 {% endblock %}

@@ -25,6 +25,7 @@ class Order(models.Model):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
         ('returned', 'Returned'),
+        ('payment_failed', 'Payment Failed'),
     ]
 
     user = models.ForeignKey(

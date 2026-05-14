@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Payment — VERSE{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f8f8f8] flex items-center justify-center py-10 px-4">
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 sm:p-12 w-full max-w-lg text-center transition-all duration-300 hover:shadow-xl">
+        
+        <div class="w-20 h-20 bg-slate-50 rounded-full border-2 border-slate-100 flex items-center justify-center mx-auto mb-6">
+            <span class="material-symbols-outlined text-4xl text-black">lock</span>
+        </div>
+
+        <h1 class="text-3xl font-[900] uppercase italic tracking-tighter text-black mb-2">
+            Secure Payment
+        </h1>
+        <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">
+            Order #{{ order.order_id }}
+        </p>
+
+        <div class="bg-slate-50 rounded-2xl p-6 mb-8 text-center border border-slate-100">
+            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-1">Total Amount</span>
+            <span class="text-3xl font-[900] text-black">₹{{ order.final_total }}</span>
+        </div>
+
+        <p class="text-sm text-slate-500 mb-8 font-medium">
+            Please wait while we redirect you to the secure payment gateway. If the popup does not open automatically, click the button below.
+        </p>
+
+        <button id="rzp-button" class="w-full py-5 bg-black text-white font-[900] text-[11px] uppercase tracking-[0.2em] rounded-full hover:bg-slate-800 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined icon-sm">payment</span>
+            Pay Now
+        </button>
+
+        <form id="paymentVerifyForm" action="{% url 'verify_razorpay_payment' %}" method="POST" class="hidden">
+            {% csrf_token %}
+            <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+            <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+            <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "{{ razorpay_key_id }}",
+        "amount": "{{ razorpay_amount }}",
+        "currency": "INR",
+        "name": "VERSE",
+        "description": "Payment for Order #{{ order.order_id }}",
+        "order_id": "{{ payment.razorpay_order_id }}",
+        "handler": function (response){
+            document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('razorpay_signature').value = response.razorpay_signature;
+            document.getElementById('paymentVerifyForm').submit();
+        },
+        "modal": {
+            "ondismiss": function(){
+                window.location.href = "{% url 'payment_failed' order.order_id %}";
+            }
+        },
+        "theme": {
+            "color": "#000000"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+
+    rzp1.on('payment.failed', function (response) {
+        window.location.href = "{% url 'payment_failed' order.order_id %}";
+    });
+        
+    document.getElementById('rzp-button').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+    
+    // Auto-open Razorpay popup on load
+    window.onload = function() {
+        rzp1.open();
+    };
+</script>
+{% endblock %}

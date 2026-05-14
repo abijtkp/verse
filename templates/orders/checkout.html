@@ -880,8 +880,8 @@
                     </div>
 
                     <!-- Razorpay — disabled -->
-                    <div class="payment-option disabled">
-                        <input type="radio" name="payment_method_mobile" value="razorpay" disabled>
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="razorpay">
                         <div class="payment-icon">
                             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -891,12 +891,11 @@
                             <div class="payment-name">Razorpay</div>
                             <div class="payment-sub">UPI, Cards, Netbanking</div>
                         </div>
-                        <span class="coming-soon-badge">Soon</span>
-                    </div>
+                    </label>
 
                     <!-- Wallet — disabled -->
-                    <div class="payment-option disabled">
-                        <input type="radio" name="payment_method_mobile" value="wallet" disabled>
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="wallet">
                         <div class="payment-icon">
                             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M11 15h.01M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/>
@@ -906,8 +905,7 @@
                             <div class="payment-name">Wallet Payment</div>
                             <div class="payment-sub">Use your wallet balance</div>
                         </div>
-                        <span class="coming-soon-badge">Soon</span>
-                    </div>
+                    </label>
 
                     <!-- Cash on Delivery — enabled -->
                     <label class="payment-option payment-selected">
@@ -1016,8 +1014,8 @@
                 </div>
 
                 <!-- Razorpay — disabled -->
-                <div class="payment-option disabled">
-                    <input type="radio" name="_payment_display" value="razorpay" disabled>
+                <label class="payment-option" for="razorpay-desktop">
+                    <input type="radio" id="razorpay-desktop" name="payment_method" value="razorpay" form="checkoutForm">
                     <div class="payment-icon">
                         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -1027,12 +1025,11 @@
                         <div class="payment-name">Razorpay</div>
                         <div class="payment-sub">UPI, Cards, Netbanking</div>
                     </div>
-                    <span class="coming-soon-badge">Soon</span>
-                </div>
+                </label>
 
                 <!-- Wallet — disabled -->
-                <div class="payment-option disabled">
-                    <input type="radio" name="_payment_display" value="wallet" disabled>
+                <label class="payment-option" for="wallet-desktop">
+                    <input type="radio" id="wallet-desktop" name="payment_method" value="wallet" form="checkoutForm">
                     <div class="payment-icon">
                         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--muted);">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M11 15h.01M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/>
@@ -1042,8 +1039,7 @@
                         <div class="payment-name">Wallet Payment</div>
                         <div class="payment-sub">Use your wallet balance</div>
                     </div>
-                    <span class="coming-soon-badge">Soon</span>
-                </div>
+                </label>
 
                 <!-- Cash on Delivery — enabled, this is inside the form -->
                 <label class="payment-option" for="cod-desktop">

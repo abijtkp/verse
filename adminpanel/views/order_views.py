@@ -4,11 +4,27 @@ from django.db.models import Q, Sum
 from django.contrib.auth.decorators import login_required
 from adminpanel.views.core_views import admin_required
 from orders.models import Order, OrderItem
+from payments.models import Wallet, WalletTransaction
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from adminpanel.views.core_views import admin_required
 from django.utils import timezone
 from django.db import transaction
+
+
+def credit_wallet(user, amount, order, reason):
+    wallet, created = Wallet.objects.get_or_create(user=user)
+
+    wallet.balance += amount
+    wallet.save(update_fields=['balance', 'updated_at'])
+
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        order=order,
+        transaction_type='credit',
+        amount=amount,
+        reason=reason
+    )
 
 
 
@@ -262,11 +278,13 @@ def admin_return_list_view(request):
 @transaction.atomic
 def approve_return_request_view(request, item_id):
     item = get_object_or_404(
-        OrderItem.objects.select_related('order', 'variant'),
+        OrderItem.objects.select_related('order','order__user' 'variant'),
         id=item_id,
         status='return_requested'
     )
 
+    order = item.order
+    
     item.status = 'returned'
     item.return_reviewed_at = timezone.now()
     item.returned_at = timezone.now()
@@ -275,13 +293,33 @@ def approve_return_request_view(request, item_id):
     if item.variant:
         item.variant.stock += item.quantity
         item.variant.is_active = True
-        item.variant.save(update_fields=['stock', 'is_active'])
+        item.variant.save(update_fields=['stock', 'is_active'])   
 
-    order = item.order
+    
+    if order.payment_method == 'razorpay' and order.payment_status == 'paid':
+        credit_wallet(
+            user=order.user,
+            amount=item.item_total,
+            order=order,
+            reason=f"Refund for returned item: {item.product_name}"
+        )
 
-    if not order.items.exclude(status__in=['cancelled', 'returned']).exists():
+    remaining_active_items = order.items.exclude(
+        status__in=['cancelled', 'returned']
+    )
+
+    if not remaining_active_items.exists():
         order.status = 'returned'
-        order.save(update_fields=['status', 'updated_at'])
+
+        if order.payment_method == 'razorpay':
+            order.payment_status = 'refunded'
+
+            if hasattr(order, 'payment'):
+                order.payment.status = 'refunded'
+                order.payment.save(update_fields=['status', 'updated_at'])
+
+        order.save(update_fields=['status', 'payment_status', 'updated_at'])
+    
 
     messages.success(request, f"Return approved for '{item.product_name}'. Stock restored.")
     return redirect('admin_return_list')

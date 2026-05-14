@@ -1,12 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from .models import Category, Variant
 from django.db.models import Q, Avg, Count, Prefetch
 from cart.models import Wishlist
 from django.contrib import messages
 from accounts.decorators import user_required
 from django.contrib.auth.decorators import login_required
-from .models import Category, Variant, VariantImage
+from .models import Category, Product, Variant, VariantImage
 
 
 def product_listing_view(request):
@@ -18,80 +17,121 @@ def product_listing_view(request):
     selected_sizes = request.GET.getlist('size')
     selected_colors = request.GET.getlist('color')
 
-    variants = Variant.objects.filter(
+    products = Product.objects.filter(
         is_active=True,
         is_deleted=False,
-        product__is_active=True,
-        product__is_deleted=False,
-        product__category__is_active=True,
-        product__category__is_deleted=False,
+        category__is_active=True,
+        category__is_deleted=False,
+        variants__is_active=True,
+        variants__is_deleted=False,
     ).select_related(
-        'product',
-        'product__category'
+        'category'
     ).prefetch_related(
         Prefetch(
-            'images',
-            queryset=VariantImage.objects.order_by('-is_primary', 'id'),
-            to_attr='ordered_images'
+            'variants',
+            queryset=Variant.objects.filter(
+                is_active=True,
+                is_deleted=False
+            ).prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=VariantImage.objects.order_by('-is_primary', 'id'),
+                    to_attr='ordered_images'
+                )
+            ).order_by('-stock', 'price'),
+            to_attr='active_variants'
         )
-    )
+    ).distinct()
 
+    
     if search_query:
-        variants = variants.filter(
-            Q(product__product_name__icontains=search_query) |
-            Q(product__description__icontains=search_query) |
-            Q(color__icontains=search_query) |
-            Q(size__icontains=search_query)
+        products = products.filter(
+            Q(product_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(variants__color__icontains=search_query) |
+            Q(variants__size__icontains=search_query)
         )
+
 
     if selected_category:
         if selected_category.isdigit():
-            variants = variants.filter(product__category__id=selected_category)
+            products = products.filter(category__id=selected_category)
         else:
-            variants = variants.filter(product__category__category_name__iexact=selected_category)
+            products = products.filter(
+                category__category_name__iexact=selected_category
+            )
+
 
     if min_price:
-        variants = variants.filter(price__gte=min_price)
+        products = products.filter(
+            variants__price__gte=min_price
+        )
 
     if max_price:
-        variants = variants.filter(price__lte=max_price)
-        
+        products = products.filter(
+            variants__price__lte=max_price
+        )
+
+    
     if selected_sizes:
-        variants = variants.filter(size__in=selected_sizes)
+        products = products.filter(
+            variants__size__in=selected_sizes
+        )
 
     if selected_colors:
-        variants = variants.filter(color__in=selected_colors)
-    
-    variants = variants.distinct()        
+        products = products.filter(
+            variants__color__in=selected_colors
+        )
+
+    products = products.distinct()
 
     if sort_by == 'price_asc':
-        variants = variants.order_by('price')
-        
+        products = products.order_by('variants__price')
+
     elif sort_by == 'price_desc':
-        variants = variants.order_by('-price')
-        
+        products = products.order_by('-variants__price')
+
     elif sort_by == 'name_asc':
-        variants = variants.order_by('product__product_name', 'color', 'size')
+        products = products.order_by('product_name')
 
     elif sort_by == 'name_desc':
-        variants = variants.order_by('-product__product_name', 'color', 'size')   
-        
-    elif sort_by == 'stock_desc':
-        variants = variants.order_by('-stock')
-        
-    else:
-        variants = variants.order_by('-created_at')
-        
-      
-    unique_variants = []
-    seen_product_ids = set()
-    
-    for variant in variants:
-        if variant.product_id not in seen_product_ids:
-            unique_variants.append(variant)
-            seen_product_ids.add(variant.product_id)    
+        products = products.order_by('-product_name')
 
-    paginator = Paginator(unique_variants, 8)
+    else:
+        products = products.order_by(
+            '-variants__stock',
+            '-created_at'
+        )
+
+    product_cards = []
+    seen_product_ids = set()
+
+    for product in products:
+        if product.id in seen_product_ids:
+            continue
+
+        representative_variant = None
+
+        in_stock_variants = [
+            v for v in product.active_variants
+            if v.stock > 0
+        ]
+
+        if in_stock_variants:
+            representative_variant = in_stock_variants[0]
+        elif product.active_variants:
+            representative_variant = product.active_variants[0]
+
+        if representative_variant:
+            product.representative_variant = representative_variant
+            product.total_colors = len(set(v.color for v in product.active_variants))
+            product.is_out_of_stock = all(v.stock <= 0 for v in product.active_variants)
+
+            product_cards.append(product)
+            seen_product_ids.add(product.id)
+
+    paginator = Paginator(product_cards, 8)
+
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -99,29 +139,31 @@ def product_listing_view(request):
         is_active=True,
         is_deleted=False
     ).order_by('category_name')
-    
+
     available_sizes = Variant.objects.filter(
         is_active=True,
-        is_deleted=False,
-        product__is_active=True,
-        product__is_deleted=False,
-        product__category__is_active=True,
-        product__category__is_deleted=False,
-    ).values_list('size', flat=True).distinct().order_by('size')
+        is_deleted=False
+    ).values_list(
+        'size',
+        flat=True
+    ).distinct().order_by('size')
 
     available_colors = Variant.objects.filter(
         is_active=True,
-        is_deleted=False,
-        product__is_active=True,
-        product__is_deleted=False,
-        product__category__is_active=True,
-        product__category__is_deleted=False,
-    ).values_list('color', flat=True).distinct().order_by('color')
+        is_deleted=False
+    ).values_list(
+        'color',
+        flat=True
+    ).distinct().order_by('color')
     
-    
+    if request.user.is_authenticated:
+        wishlisted_variant_ids = list(
+            Wishlist.objects.filter(user=request.user)
+            .values_list('variant_id', flat=True)
+    )
 
     return render(request, 'products/product_listing.html', {
-        'variants':page_obj ,
+        'products': page_obj,
         'page_obj': page_obj,
         'categories': categories,
         'search_query': search_query,
@@ -133,6 +175,7 @@ def product_listing_view(request):
         'available_colors': available_colors,
         'selected_sizes': selected_sizes,
         'selected_colors': selected_colors,
+        'wishlisted_variant_ids': wishlisted_variant_ids,
     })
 
 
