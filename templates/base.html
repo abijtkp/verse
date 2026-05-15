@@ -310,8 +310,13 @@
         .profile-sidebar {
             position: fixed;
             top: 0;
+            right: -360px;
+            height: auto;
+            max-height: calc(100vh - 40px);
+            border-radius: 28px;
+            top: 20px;
             right: -340px;
-            height: 100dvh;
+            overflow-y: auto;
             width: 320px;
             z-index: 500;
             background: rgba(253,253,253,0.92);
@@ -322,9 +327,10 @@
             flex-direction: column;
             transition: right 0.5s cubic-bezier(0.4,0,0.2,1);
             padding: 28px 24px 32px;
+            box-shadow: 0 30px 80px rgba(10,10,10,0.12);
         }
 
-        .profile-sidebar.open { right: 0; }
+        .profile-sidebar.open { right: 20px; }
 
         .sidebar-close {
             align-self: flex-end;
@@ -708,46 +714,65 @@
 
     <!-- ─── PROFILE SIDEBAR ──────────────────────────────────── -->
     <aside id="profileSidebar" class="profile-sidebar" role="dialog" aria-label="Account menu">
-        <button onclick="toggleSidebar()" class="sidebar-close" aria-label="Close">
+        {% comment %} <button onclick="toggleSidebar()" class="sidebar-close" aria-label="Close">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
-        </button>
+        </button> {% endcomment %}
 
         <!-- Profile card -->
-        <div class="flex flex-col items-center text-center mt-6 mb-8">
-            <div class="w-[72px] h-[72px] rounded-full overflow-hidden mb-4 ring-4 ring-white shadow-xl">
+        <!-- Profile compact card -->
+        <a href="{% url 'profile' %}"
+        class="flex items-center gap-4 bg-white border border-slate-200 rounded-[24px] p-4 mt-2 mb-5 shadow-sm hover:shadow-md transition-all group">
+
+            <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
                 {% if user.profile.image and user.profile.image.name != 'default.png' %}
                     <img src="{{ user.profile.image.url }}" alt="Profile" class="w-full h-full object-cover">
                 {% else %}
                     <img src="{% static 'images/no_profile.png' %}" alt="Profile" class="w-full h-full object-cover">
                 {% endif %}
             </div>
-            <h3 class="text-sm font-black uppercase italic tracking-tight">{{ user.full_name }}</h3>
-            <span class="section-eyebrow mt-2" style="font-size:8px;">Verse Member</span>
-        </div>
+
+            <div class="flex-1 min-w-0 text-left">
+                <h3 class="text-sm font-black tracking-tight text-slate-900 truncate">
+                    {{ user.full_name|default:user.email }}
+                </h3>
+                <p class="text-[11px] font-semibold text-slate-400 truncate">
+                    {{ user.email }}
+                </p>
+            </div>
+
+            <span class="material-symbols-outlined text-slate-400 group-hover:text-black transition-colors"
+                style="font-size:22px;">
+                chevron_right
+            </span>
+        </a>
 
         <!-- Nav -->
-        <nav class="flex flex-col gap-1 flex-1">
+        <nav class="flex flex-col gap-2 flex-none bg-white border border-slate-200 rounded-[26px] p-5 shadow-sm">
+            <p class="text-[9px] font-black uppercase tracking-[0.28em] text-slate-400 px-3 mb-2">
+                Account Settings
+            </p>
+
             <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                 <img src="{% static 'images/profile.svg' %}" class="sidebar-icon" alt="">Profile
             </a>
+
             <a href="{% url 'address_list' %}" class="sidebar-link {% if 'address' in request.path %}active{% endif %}">
-                <img src="{% static 'images/location.svg' %}" class="sidebar-icon" alt="">Addresses
+                <img src="{% static 'images/location.svg' %}" class="sidebar-icon" alt="">Address
             </a>
-            <a href="{% url 'order_list' %}" class="sidebar-link">
-                <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon" alt="">Orders
+
+            <a href="{% url 'order_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">
+                <img src="{% static 'images/myorders.svg' %}" class="sidebar-icon" alt="">My Orders
             </a>
-            {% comment %} <a href="{% url 'wishlist_view' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
-                <img src="{% static 'images/wishlist.svg' %}" class="sidebar-icon" alt="">Wishlist
-            </a> {% endcomment %}
-            <a href="#" class="sidebar-link">
+
+            <a href="{% url 'wallet' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
                 <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon" alt="">Wallet
             </a>
         </nav>
 
         <!-- Logout -->
-        <div class="pt-6 border-t" style="border-color:var(--border);">
+        <div class="pt-5 mt-5 border-t"style="border-color:var(--border);">
             <form method="POST" action="{% url 'logout' %}" id="logoutForm">
                 {% csrf_token %}
                 <button type="button" onclick="triggerLogoutModal()"

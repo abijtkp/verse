@@ -75,8 +75,21 @@ def add_to_cart(request, variant_id):
         variant=variant
     ).delete()   
 
+    cart_count = cart.total_items
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': 'Product added to cart.',
+            'cart_count': cart_count,
+        })
+
     messages.success(request, "Product added to cart.")
-    return redirect('cart_view')
+
+    if request.POST.get('next') == 'checkout':
+        return redirect('checkout')
+
+    return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
 
 
 @user_required

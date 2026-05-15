@@ -399,6 +399,25 @@
     }
     .badge-cancelled::before { background: #e02020; }
 
+        .badge-return_requested {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+    .badge-return_requested::before { background: #f97316; }
+
+    .badge-return_rejected {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+    .badge-return_rejected::before { background: #ef4444; }
+
+    .badge-returned {
+        background: #f3e8ff;
+        color: #7e22ce;
+    }
+    .badge-returned::before { background: #9333ea; }
+
+
     {% comment %} .badge-placed {
         background: #f0fdf4;
         color: #166534;
@@ -719,6 +738,7 @@
     <!-- ── PROGRESS TRACKER ───────────────────────────────── -->
     <div class="tracker-card">
         {% if order.status == 'cancelled' %}
+
             <!-- Cancelled state -->
             <div style="display:flex;align-items:center;gap:14px;padding:4px 0;">
                 <div class="tracker-dot cancelled">
@@ -727,21 +747,46 @@
                     </svg>
                 </div>
                 <div>
-                    <div style="font-size:13px;font-weight:900;letter-spacing:-0.01em;text-transform:uppercase;color:#e02020;">Order Cancelled</div>
-                    <div style="font-size:10px;font-weight:500;color:#94a3b8;margin-top:2px;">This order has been cancelled</div>
+                    <div style="font-size:13px;font-weight:900;letter-spacing:-0.01em;text-transform:uppercase;color:#e02020;">
+                        Order Cancelled
+                    </div>
+                    <div style="font-size:10px;font-weight:500;color:#94a3b8;margin-top:2px;">
+                        This order has been cancelled
+                    </div>
                 </div>
             </div>
+
+        {% elif order.status == 'returned' %}
+
+            <!-- Returned / Refunded state -->
+            <div style="display:flex;align-items:center;gap:14px;padding:4px 0;">
+                <div class="tracker-dot active" style="background:#9333ea;border-color:#9333ea;">
+                    <svg width="14" height="14" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 12h16M10 6l-6 6 6 6"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:900;letter-spacing:-0.01em;text-transform:uppercase;color:#9333ea;">
+                        Order Returned
+                    </div>
+                    <div style="font-size:10px;font-weight:500;color:#94a3b8;margin-top:2px;">
+                        Refund successfully processed to your wallet
+                    </div>
+                </div>
+            </div>
+
         {% else %}
+
             {% with status=order.status %}
             <div class="tracker-wrap">
                 <div class="tracker-line">
                     <div class="tracker-line-fill"
-                         style="width:
-                         {% if status == 'pending' %}0%
-                         {% elif status == 'shipped' %}33%
-                         {% elif status == 'out_for_delivery' %}66%
-                         {% elif status == 'delivered' %}100%
-                         {% else %}0%{% endif %};"></div>
+                        style="width:
+                        {% if status == 'pending' %}0%
+                        {% elif status == 'shipped' %}33%
+                        {% elif status == 'out_for_delivery' %}66%
+                        {% elif status == 'delivered' %}100%
+                        {% else %}0%{% endif %};"></div>
                 </div>
 
                 <!-- Step 1: Ordered -->
@@ -792,6 +837,7 @@
                 </div>
             </div>
             {% endwith %}
+
         {% endif %}
     </div>
 
@@ -834,7 +880,7 @@
                                     <span class="meta-chip">SKU: {{ item.sku }}</span>
                                 {% endif %}
                             </div>
-                            <span class="status-badge badge-{{ item.status|default:'placed' }}">{{ item.status|default:"Placed"|title }}</span>
+                            <span class="status-badge badge-{{ item.status|default:'placed' }}">{{ item.status|default:"Placed"|cut:"_"|title }}</span>
                         </div>
 
                         <!-- Right: qty + price -->

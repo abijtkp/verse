@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Money to Wallet — VERSE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ─── PAGE LAYOUT ──────────────────────────────────────────── */
+    .add-money-page {
+        min-height: 100vh;
+        background: var(--site-bg);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 52px 24px 80px;
+    }
+
+    .add-money-wrap {
+        width: 100%;
+        max-width: 480px;
+    }
+
+    /* ─── BACK LINK ────────────────────────────────────────────── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-decoration: none;
+        margin-bottom: 32px;
+        transition: color 0.2s ease, gap 0.25s ease;
+    }
+
+    .back-link:hover {
+        color: var(--ink);
+        gap: 12px;
+    }
+
+    .back-link:hover svg { transform: translateX(-3px); }
+    .back-link svg { transition: transform 0.25s ease; }
+
+    /* ─── PAGE HEADER ──────────────────────────────────────────── */
+    .add-money-header {
+        margin-bottom: 28px;
+        opacity: 0;
+        animation: fadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.05s forwards;
+    }
+
+    .add-money-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+    }
+
+    .add-money-eyebrow::before {
+        content: '';
+        display: block;
+        width: 22px;
+        height: 1.5px;
+        background: currentColor;
+    }
+
+    .add-money-title {
+        font-size: clamp(26px, 5vw, 36px);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        color: var(--ink);
+        line-height: 1;
+        margin: 0;
+    }
+
+    .add-money-subtitle {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        margin-top: 8px;
+    }
+
+    /* ─── CARD BASE ────────────────────────────────────────────── */
+    .am-card {
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 24px;
+        padding: 36px 32px;
+        opacity: 0;
+        animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.12s forwards;
+    }
+
+    /* ─── AMOUNT INPUT FORM ────────────────────────────────────── */
+    .field-label {
+        display: block;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+    }
+
+    .amount-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--subtle);
+        border: 1.5px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 0 20px;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        margin-bottom: 8px;
+    }
+
+    .amount-input-wrap:focus-within {
+        border-color: var(--ink);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(10,10,10,0.05);
+    }
+
+    .amount-prefix {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--muted);
+        margin-right: 6px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color 0.25s ease;
+    }
+
+    .amount-input-wrap:focus-within .amount-prefix { color: var(--ink); }
+
+    .amount-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-family: 'Manrope', sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        padding: 22px 0;
+        min-width: 0;
+    }
+
+    .amount-input::placeholder { color: #d1d5db; }
+
+    /* Remove number input spinners */
+    .amount-input::-webkit-inner-spin-button,
+    .amount-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .amount-input[type=number] { -moz-appearance: textfield; }
+
+    .amount-hint {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 28px;
+    }
+
+    /* Quick-pick pills */
+    .quick-picks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 28px;
+    }
+
+    .quick-pick {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1.5px solid #e2e8f0;
+        background: #fff;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        font-family: 'Manrope', sans-serif;
+    }
+
+    .quick-pick:hover {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fdfdfd;
+        transform: translateY(-1px);
+    }
+
+    /* ─── SUBMIT BUTTON ────────────────────────────────────────── */
+    .btn-pay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 18px 28px;
+        background: var(--ink);
+        color: #fdfdfd;
+        font-family: 'Manrope', sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-pay::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.1);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(10,10,10,0.22); }
+    .btn-pay:hover::after { opacity: 1; }
+    .btn-pay:active { transform: translateY(0); }
+
+    /* ─── PAYMENT CONFIRMATION CARD ────────────────────────────── */
+    .confirm-icon-ring {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--subtle);
+        border: 1.5px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        position: relative;
+    }
+
+    .confirm-icon-ring::after {
+        content: '';
+        position: absolute;
+        inset: -7px;
+        border-radius: 50%;
+        border: 1px dashed #d1d5db;
+    }
+
+    .confirm-heading {
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .confirm-amount {
+        font-size: clamp(36px, 8vw, 52px);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        color: var(--ink);
+        text-align: center;
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+
+    .confirm-desc {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    /* Divider */
+    .confirm-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 24px 0;
+    }
+
+    /* Info row */
+    .confirm-info-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        padding: 6px 0;
+        border-bottom: 1px solid #f8fafc;
+    }
+
+    .confirm-info-row:last-child { border-bottom: none; }
+
+    .confirm-info-label {
+        font-weight: 600;
+        color: var(--muted);
+    }
+
+    .confirm-info-value {
+        font-weight: 800;
+        color: var(--ink);
+    }
+
+    .gateway-notice {
+        font-size: 10.5px;
+        font-weight: 500;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 16px;
+        line-height: 1.6;
+    }
+
+    /* ─── ANIMATION ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(22px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+        .add-money-page { padding: 36px 16px 60px; }
+        .am-card { padding: 26px 20px; }
+        .amount-input { font-size: 24px; padding: 18px 0; }
+        .amount-prefix { font-size: 18px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="add-money-page">
+    <div class="add-money-wrap">
+
+        <!-- ── BACK LINK ─────────────────────────────────────── -->
+        <a href="{% url 'wallet' %}" class="back-link">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            Back to Wallet
+        </a>
+
+        <!-- ── PAGE HEADER ────────────────────────────────────── -->
+        <div class="add-money-header">
+            <p class="add-money-eyebrow">Wallet</p>
+            <h1 class="add-money-title">Add Money</h1>
+            <p class="add-money-subtitle">Top up your VERSE wallet instantly</p>
+        </div>
+
+        {% if razorpay_order_id %}
+        <!-- ══════════════════════════════════════════════════════
+             STEP 2 — PAYMENT CONFIRMATION
+        ══════════════════════════════════════════════════════ -->
+        <div class="am-card">
+
+            <!-- Icon -->
+            <div class="confirm-icon-ring">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" style="color:var(--ink);">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M12 15h.01M17 15h.01M3 10a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/>
+                </svg>
+            </div>
+
+            <p class="confirm-heading">Amount to Add</p>
+            <div class="confirm-amount">₹{{ amount }}</div>
+            <p class="confirm-desc">
+                Please wait while we redirect you to the secure payment gateway.<br>
+                If the popup doesn't open, click the button below.
+            </p>
+
+            <!-- Summary rows -->
+            <div class="confirm-divider"></div>
+            <div class="confirm-info-row">
+                <span class="confirm-info-label">Payment Method</span>
+                <span class="confirm-info-value">Razorpay</span>
+            </div>
+            <div class="confirm-info-row">
+                <span class="confirm-info-label">Destination</span>
+                <span class="confirm-info-value">VERSE Wallet</span>
+            </div>
+            <div class="confirm-divider"></div>
+
+            <!-- Pay Button -->
+            <button id="rzp-button" class="btn-pay">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h.01M12 15h.01M17 15h.01M3 10a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z"/>
+                </svg>
+                Pay ₹{{ amount }} Securely
+            </button>
+
+            <p class="gateway-notice">
+                🔒 Secured by Razorpay. Your payment details are encrypted.
+            </p>
+        </div>
+
+        <!-- Hidden verify form -->
+        <form id="walletTopupVerifyForm" action="{% url 'verify_wallet_topup' %}" method="POST" style="display:none;">
+            {% csrf_token %}
+            <input type="hidden" name="razorpay_order_id"  id="rzp_order_id">
+            <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
+            <input type="hidden" name="razorpay_signature"  id="rzp_signature">
+            <input type="hidden" name="amount" value="{{ amount }}">
+        </form>
+
+        {% else %}
+        <!-- ══════════════════════════════════════════════════════
+             STEP 1 — ENTER AMOUNT
+        ══════════════════════════════════════════════════════ -->
+        <div class="am-card">
+            <form method="POST" action="{% url 'create_wallet_topup' %}" id="addMoneyForm">
+                {% csrf_token %}
+
+                <label for="amountInput" class="field-label">Enter Amount</label>
+
+                <div class="amount-input-wrap">
+                    <span class="amount-prefix">₹</span>
+                    <input
+                        type="number"
+                        name="amount"
+                        id="amountInput"
+                        class="amount-input"
+                        placeholder="0"
+                        min="1"
+                        step="1"
+                        required
+                        autocomplete="off"
+                        aria-label="Amount to add to wallet"
+                    >
+                </div>
+                <p class="amount-hint">Minimum top-up: ₹1</p>
+
+                <!-- Quick-pick amounts -->
+                <div class="quick-picks" aria-label="Quick amount options">
+                    <button type="button" class="quick-pick" onclick="setAmount(100)">+ ₹100</button>
+                    <button type="button" class="quick-pick" onclick="setAmount(250)">+ ₹250</button>
+                    <button type="button" class="quick-pick" onclick="setAmount(500)">+ ₹500</button>
+                    <button type="button" class="quick-pick" onclick="setAmount(1000)">+ ₹1,000</button>
+                    <button type="button" class="quick-pick" onclick="setAmount(2000)">+ ₹2,000</button>
+                </div>
+
+                <button type="submit" class="btn-pay">
+                    Continue to Pay
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if razorpay_order_id %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key":      "{{ razorpay_key_id }}",
+        "amount":   "{{ razorpay_amount }}",
+        "currency": "INR",
+        "name":     "VERSE",
+        "description": "Wallet Top-up",
+        "order_id": "{{ razorpay_order_id }}",
+        "handler": function (response) {
+            document.getElementById('rzp_order_id').value   = response.razorpay_order_id;
+            document.getElementById('rzp_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('rzp_signature').value  = response.razorpay_signature;
+            document.getElementById('walletTopupVerifyForm').submit();
+        },
+        "modal": {
+            "ondismiss": function () {
+                // Stay on page so user can retry manually
+            }
+        },
+        "theme": {
+            "color": "#000000"
+        }
+    };
+
+    var rzp = new Razorpay(options);
+
+    rzp.on('payment.failed', function (response) {
+        window.location.href = "{% url 'wallet' %}";
+    });
+
+    // Manual retry via button
+    document.getElementById('rzp-button').addEventListener('click', function (e) {
+        e.preventDefault();
+        rzp.open();
+    });
+
+    // Auto-open on page load
+    window.addEventListener('load', function () {
+        rzp.open();
+    });
+</script>
+{% else %}
+<script>
+    // Quick-pick helper
+    function setAmount(val) {
+        var input = document.getElementById('amountInput');
+        input.value = val;
+        input.focus();
+    }
+</script>
+{% endif %}
+{% endblock %}

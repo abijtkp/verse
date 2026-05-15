@@ -278,7 +278,7 @@ def admin_return_list_view(request):
 @transaction.atomic
 def approve_return_request_view(request, item_id):
     item = get_object_or_404(
-        OrderItem.objects.select_related('order','order__user' 'variant'),
+        OrderItem.objects.select_related('order','order__user', 'variant'),
         id=item_id,
         status='return_requested'
     )
@@ -296,7 +296,7 @@ def approve_return_request_view(request, item_id):
         item.variant.save(update_fields=['stock', 'is_active'])   
 
     
-    if order.payment_method == 'razorpay' and order.payment_status == 'paid':
+    if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
         credit_wallet(
             user=order.user,
             amount=item.item_total,
@@ -311,7 +311,7 @@ def approve_return_request_view(request, item_id):
     if not remaining_active_items.exists():
         order.status = 'returned'
 
-        if order.payment_method == 'razorpay':
+        if order.payment_method in ['razorpay', 'wallet']:
             order.payment_status = 'refunded'
 
             if hasattr(order, 'payment'):

@@ -555,7 +555,7 @@ def cancel_order(request, order_id):
                 item.variant.save(update_fields=['stock', 'is_active'])
                 
     
-    if order.payment_method == 'razorpay' and order.payment_status == 'paid':
+    if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
         refund_amount = order.final_total
 
         credit_wallet(
@@ -616,7 +616,7 @@ def cancel_order_item(request, item_id):
         order.cancellation_reason = reason
         order.save(update_fields=['status', 'cancelled_at', 'cancellation_reason', 'updated_at'])
         
-    if order.payment_method == 'razorpay' and order.payment_status == 'paid':
+    if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
         refund_amount = item.item_total
 
         credit_wallet(
