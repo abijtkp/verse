@@ -469,7 +469,10 @@ def verify_razorpay_payment(request):
                 variant.save(update_fields=['stock', 'is_active'])
 
         cart = Cart.objects.filter(user=request.user).first()
-        if cart:
+
+        if request.session.get('buy_now_variant_id'):
+            del request.session['buy_now_variant_id']
+        elif cart:
             CartItem.objects.filter(cart=cart).delete()
 
         messages.success(request, "Payment completed successfully.")
