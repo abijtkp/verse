@@ -498,7 +498,7 @@
                 <div class="h-px bg-slate-100"></div>
 
                 <div class="hidden md:flex flex-col gap-3">
-                    <form method="POST" action="{% url 'add_to_cart' variant.id %}" class="w-full">
+                    <form method="POST" action="{% url 'add_to_cart' variant.id %}" class="w-full ajax-cart-form">    
                         {% csrf_token %}
                         <button type="submit" class="btn-primary"
                                 {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
@@ -521,7 +521,7 @@
 
                         <form method="POST"
                             action="{% url 'toggle_wishlist' variant.id %}"
-                            class="w-14 h-14 flex-shrink-0 flex items-center justify-center">
+                            class="ajax-wishlist-form w-14 h-14 flex-shrink-0 flex items-center justify-center">
                             {% csrf_token %}
 
                             <button type="submit" class="btn-outline w-full h-full flex items-center justify-center p-0">
@@ -871,7 +871,7 @@
 
         <form method="POST"
             action="{% url 'add_to_cart' variant.id %}"
-            class="flex-1">
+            class="flex-1" ajax-cart-form>
             {% csrf_token %}
 
             <button type="submit"
@@ -904,7 +904,7 @@
 
         <form method="POST"
             action="{% url 'toggle_wishlist' variant.id %}"
-            class="w-14 h-14 flex-shrink-0">
+            class="ajax-wishlist-form w-14 h-14 flex-shrink-0">
             {% csrf_token %}
 
             <button type="submit"
@@ -1026,5 +1026,97 @@
             if (previewBox.style.display !== 'none') setupPreview();
         }).observe(mainImg, { attributes: true, attributeFilter: ['src'] });
     }());
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        document.querySelectorAll('.ajax-cart-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: new FormData(this)
+                    });
+
+                    const data = await response.json();
+
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Product added to cart.', data.success ? 'success' : 'error');
+                    }
+
+                    const cartCount = document.getElementById('cart-count-badge');
+                    if (cartCount && data.cart_count !== undefined) {
+                        cartCount.textContent = data.cart_count;
+                    }
+
+                } catch (error) {
+                    if (typeof showToast === 'function') {
+                        showToast('Something went wrong.', 'error');
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.ajax-wishlist-form').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: new FormData(this)
+                    });
+
+                    const data = await response.json();
+
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Wishlist updated.', data.success ? 'success' : 'error');
+                    }
+
+                    const icon = this.querySelector('.material-symbols-outlined');
+
+                    if (icon && data.is_wishlisted !== undefined) {
+                        if (data.is_wishlisted) {
+                            icon.classList.add('text-red-500');
+                            icon.style.fontVariationSettings = "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24";
+                        } else {
+                            icon.classList.remove('text-red-500');
+                            icon.style.fontVariationSettings = "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24";
+                        }
+                    }
+
+                    const wishlistCount = document.getElementById('wishlistCount');
+
+                    if (wishlistCount && data.wishlist_count !== undefined) {
+                        wishlistCount.textContent = data.wishlist_count;
+
+                        if (data.wishlist_count > 0) {
+                            wishlistCount.classList.remove('hidden');
+                        } else {
+                            wishlistCount.classList.add('hidden');
+                        }
+                    }
+
+
+                } catch (error) {
+                    if (typeof showToast === 'function') {
+                        showToast('Something went wrong.', 'error');
+                    }
+                }
+            });
+        });
+
+    });
+
+    
 </script>
 {% endblock %}
