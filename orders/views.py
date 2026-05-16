@@ -37,41 +37,71 @@ def credit_wallet(user, amount, order, reason):
 
 @login_required
 def checkout_view(request):
-    cart = Cart.objects.filter(user=request.user).first()
+    buy_now_variant_id = request.session.get('buy_now_variant_id')
 
-    if not cart:
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart_view')
+    if buy_now_variant_id:
 
-    cart_items = CartItem.objects.filter(
-        cart=cart
-    ).select_related(
-        'variant',
-        'variant__product',
-        'variant__product__category'
-    ).prefetch_related(
-        'variant__images'
-    )
+        variant = Variant.objects.filter(
+            id=buy_now_variant_id,
+            is_active=True,
+            is_deleted=False,
+            product__is_active=True,
+            product__is_deleted=False,
+            product__category__is_active=True,
+            product__category__is_deleted=False,
+        ).prefetch_related('images').first()
 
-    if not cart_items.exists():
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart_view')
-    
-    for item in cart_items:
-        variant = item.variant
-        
-        if (
-            not variant or 
-            variant.is_deleted or
-            not variant.is_active or
-            variant.stock <= 0 or
-            variant.stock < item.quantity
-        ):
-            messages.error(
-                request,
-                f"{variant.product.product_name if variant and variant.product else 'A product'} is no longer available."
-            )
+        if not variant or variant.stock <= 0:
+            messages.error(request, "Selected product is unavailable.")
+            return redirect('product_listing')
+
+        class BuyNowItem:
+            def __init__(self, variant, quantity):
+                self.variant = variant
+                self.variant_id = variant.id
+                self.quantity = quantity
+                self.subtotal = variant.price * quantity
+
+        cart = None
+        cart_items = [BuyNowItem(variant, 1)]
+
+    else:
+
+        cart = Cart.objects.filter(user=request.user).first()
+
+        if not cart:
+            messages.error(request, "Your cart is empty.")
             return redirect('cart_view')
+
+        cart_items = CartItem.objects.filter(
+            cart=cart
+        ).select_related(
+            'variant',
+            'variant__product',
+            'variant__product__category'
+        ).prefetch_related(
+            'variant__images'
+        )
+
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty.")
+            return redirect('cart_view')
+
+        for item in cart_items:
+            variant = item.variant
+
+            if (
+                not variant or
+                variant.is_deleted or
+                not variant.is_active or
+                variant.stock <= 0 or
+                variant.stock < item.quantity
+            ):
+                messages.error(
+                    request,
+                    f"{variant.product.product_name if variant and variant.product else 'A product'} is no longer available."
+                )
+                return redirect('cart_view')
     
 
     addresses = Address.objects.filter(
