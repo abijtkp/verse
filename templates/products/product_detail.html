@@ -508,27 +508,38 @@
                     </form>
 
                     <div class="flex gap-3">
-                        <form method="POST" action="{% url 'toggle_wishlist' variant.id %}" class="flex-1">
+                        <form method="GET"
+                            action="{% url 'buy_now' variant.id %}"
+                            class="flex-[0_0_calc(100%-68px)]">
+
+                            <button type="submit"
+                                    class="btn-outline w-full"
+                                    {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
+                                Buy Now
+                            </button>
+                        </form>
+
+                        <form method="POST"
+                            action="{% url 'toggle_wishlist' variant.id %}"
+                            class="w-14 h-14 flex-shrink-0 flex items-center justify-center">
                             {% csrf_token %}
-                            <button type="submit" class="btn-outline w-full">
+
+                            <button type="submit" class="btn-outline w-full h-full flex items-center justify-center p-0">
                                 <span class="material-symbols-outlined {% if is_in_wishlist %}text-red-500{% endif %}"
-                                      style="
-                                        font-size:18px;
+                                    style="
+                                        font-size:22px;
                                         font-variation-settings:
                                         'FILL' {% if is_in_wishlist %}1{% else %}0{% endif %},
                                         'wght' 500,
                                         'GRAD' 0,
                                         'opsz' 24;
-                                      ">
+                                    ">
                                     favorite
                                 </span>
-                                Wishlist
                             </button>
                         </form>
 
-                        <button type="button" class="btn-outline w-14 flex-shrink-0">
-                            <span class="material-symbols-outlined" style="font-size:18px;">share</span>
-                        </button>
+        
                     </div>
                 </div>
 
@@ -857,31 +868,62 @@
 
 <div class="sticky-mobile-cta md:hidden">
     <div class="flex gap-3">
-        <form method="POST" action="{% url 'add_to_cart' variant.id %}" class="flex-1">
+
+        <form method="POST"
+            action="{% url 'add_to_cart' variant.id %}"
+            class="flex-1">
             {% csrf_token %}
-            <button type="submit" class="btn-primary"
+
+            <button type="submit"
+                    class="btn-primary"
                     {% if variant.stock == 0 or not variant.is_active or variant.is_deleted or not variant.product.is_active or variant.product.is_deleted %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
-                <span class="material-symbols-outlined" style="font-size:18px;">shopping_bag</span>
-                {% if variant.stock == 0 %}Unavailable{% else %}Add to Cart{% endif %}
+
+                <span class="material-symbols-outlined"
+                    style="font-size:18px;">
+                    shopping_bag
+                </span>
+
+                {% if variant.stock == 0 %}
+                    Unavailable
+                {% else %}
+                    Add to Cart
+                {% endif %}
             </button>
         </form>
 
-        <form method="POST" action="{% url 'toggle_wishlist' variant.id %}" class="w-14 flex-shrink-0">
+        <form method="GET"
+            action="{% url 'buy_now' variant.id %}"
+            class="flex-1">
+
+            <button type="submit"
+                    class="btn-outline w-full"
+                    {% if variant.stock == 0 %}disabled style="opacity:0.4;pointer-events:none;"{% endif %}>
+                Buy Now
+            </button>
+        </form>
+
+        <form method="POST"
+            action="{% url 'toggle_wishlist' variant.id %}"
+            class="w-14 h-14 flex-shrink-0">
             {% csrf_token %}
-            <button type="submit" class="btn-outline w-full">
+
+            <button type="submit"
+                    class="btn-outline w-full h-full flex items-center justify-center p-0">
+
                 <span class="material-symbols-outlined {% if is_in_wishlist %}text-red-500{% endif %}"
-                      style="
-                        font-size:18px;
+                    style="
+                        font-size:20px;
                         font-variation-settings:
                         'FILL' {% if is_in_wishlist %}1{% else %}0{% endif %},
                         'wght' 500,
                         'GRAD' 0,
                         'opsz' 24;
-                      ">
+                    ">
                     favorite
                 </span>
             </button>
         </form>
+
     </div>
 </div>
 
