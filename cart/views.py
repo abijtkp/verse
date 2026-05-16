@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
+from django.contrib.auth.decorators import login_required
 from accounts.decorators import user_required
 from products.models import Variant
 from .models import Cart, CartItem, Wishlist
@@ -289,3 +290,26 @@ def toggle_wishlist(request, variant_id):
         messages.success(request, "Product added to wishlist.")
 
     return redirect(request.META.get('HTTP_REFERER', 'wishlist_view'))
+
+
+@login_required
+def buy_now(request, variant_id):
+    variant = get_object_or_404(
+        Variant,
+        id=variant_id,
+        is_active=True,
+        is_deleted=False,
+        product__is_active=True,
+        product__is_deleted=False,
+        product__category__is_active=True,
+        product__category__is_deleted=False,
+    )
+
+    if variant.stock <= 0:
+        messages.error(request, "Product is out of stock.")
+        return redirect('product_detail', variant_id=variant.id)
+
+    request.session['buy_now_variant_id'] = variant.id
+    request.session['buy_now_quantity'] = 1
+
+    return redirect('checkout')
