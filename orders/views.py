@@ -169,25 +169,56 @@ def place_order_view(request):
         return redirect('checkout')
 
 
-    cart = Cart.objects.filter(user=request.user).first()
+    buy_now_variant_id = request.session.get('buy_now_variant_id')
 
-    if not cart:
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart_view')
+    if buy_now_variant_id:
 
-    cart_items = CartItem.objects.filter(
-        cart=cart
-    ).select_related(
-        'variant',
-        'variant__product',
-        'variant__product__category'
-    ).order_by('variant_id')
+        variant = Variant.objects.filter(
+            id=buy_now_variant_id,
+            is_active=True,
+            is_deleted=False,
+            product__is_active=True,
+            product__is_deleted=False,
+            product__category__is_active=True,
+            product__category__is_deleted=False,
+        ).first()
 
-    if not cart_items.exists():
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart_view')
+        if not variant or variant.stock <= 0:
+            messages.error(request, "Selected product is unavailable.")
+            return redirect('checkout')
 
-    variant_ids = list(cart_items.values_list('variant_id', flat=True))
+        class BuyNowItem:
+            def __init__(self, variant, quantity):
+                self.variant = variant
+                self.variant_id = variant.id
+                self.quantity = quantity
+                self.subtotal = variant.price * quantity
+
+        cart = None
+        cart_items = [BuyNowItem(variant, 1)]
+        variant_ids = [variant.id]
+
+    else:
+
+        cart = Cart.objects.filter(user=request.user).first()
+
+        if not cart:
+            messages.error(request, "Your cart is empty.")
+            return redirect('cart_view')
+
+        cart_items = CartItem.objects.filter(
+            cart=cart
+        ).select_related(
+            'variant',
+            'variant__product',
+            'variant__product__category'
+        ).order_by('variant_id')
+
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty.")
+            return redirect('cart_view')
+
+        variant_ids = list(cart_items.values_list('variant_id', flat=True))
 
     locked_variants = {
         variant.id: variant
@@ -281,7 +312,11 @@ def place_order_view(request):
 
             variant.save(update_fields=['stock', 'is_active'])
 
-        cart_items.delete()
+        if cart:
+            cart_items.delete()
+
+        if request.session.get('buy_now_variant_id'):
+            del request.session['buy_now_variant_id']
         
     
     if payment_method == 'wallet':
@@ -319,7 +354,11 @@ def place_order_view(request):
         order.payment_status = 'paid'
         order.save(update_fields=['payment_status', 'updated_at'])
 
-        cart_items.delete()
+        if cart:
+            cart_items.delete()
+
+        if request.session.get('buy_now_variant_id'):
+            del request.session['buy_now_variant_id']
 
         messages.success(request, "Order placed successfully using wallet.")
         return redirect('order_success', order_id=order.order_id)    
