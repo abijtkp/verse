@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     
     <style>
-        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
+        body { font-family: 'Manrope', sans-serif; background-color: #f1f5f9; color: #1e293b; overflow-x: hidden; }
         .sidebar-link.active { background: #f1f5f9; border-radius: 12px; color: #000; font-weight: 800; }
         .sidebar-link { transition: all 0.2s ease; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -32,7 +32,7 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 opacity-0 invisible transition-all duration-300 lg:hidden" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar / Mobile Drawer -->
-    <aside id="admin-sidebar" class="w-72 bg-white border-r border-slate-100 p-6 flex flex-col fixed h-full z-50 overflow-y-auto no-scrollbar lg:translate-x-0">
+    <aside id="admin-sidebar" class="w-72 bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-[0_0_40px_rgba(15,23,42,0.03)] p-6 flex flex-col fixed h-full z-50 overflow-y-auto no-scrollbar lg:translate-x-0">
         <div class="flex items-center justify-between mb-10">
             <div>
                 <h1 class="text-2xl font-black tracking-tighter uppercase italic leading-none">VERSE</h1>
@@ -71,7 +71,12 @@
                 <span class="material-symbols-outlined text-xl">assignment_return</span>
                 <span class="text-sm font-semibold">Returns</span>
             </a>
-            
+
+            <a href="{% url 'coupon_list' %}" class="sidebar-link {% if 'coupon' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+                <span class="material-symbols-outlined text-xl">confirmation_number</span>
+                <span class="text-sm font-semibold">Coupons</span>
+            </a>
+                        
         </nav>
 
         <!-- Fixed Footer/Logout Area -->

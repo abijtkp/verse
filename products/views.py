@@ -156,6 +156,8 @@ def product_listing_view(request):
         flat=True
     ).distinct().order_by('color')
     
+    wishlisted_variant_ids = []
+    
     if request.user.is_authenticated:
         wishlisted_variant_ids = list(
             Wishlist.objects.filter(user=request.user)

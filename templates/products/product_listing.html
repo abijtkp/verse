@@ -773,7 +773,7 @@
 
                     <!-- Wishlist button -->
                     <button type="button"
-                            class="wishlist-btn absolute top-3 right-3 z-[5] w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center transition-all hover:scale-110 {% if product.representative_variant.id in wishlisted_variant_ids %}active{% endif %}"
+                            class="wishlist-btn absolute top-3 right-3 z-[5] w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center transition-all hover:scale-110 {% if user.is_authenticated and  product.representative_variant.id in wishlisted_variant_ids %}active{% endif %}"
                             data-variant-id="{{ product.representative_variant.id }}"
                             onclick="toggleWishlist(event, this)">
                         <span class="material-symbols-outlined wishlist-icon text-[21px]">

@@ -19,6 +19,8 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from payments.models import Payment, Wallet, WalletTransaction
 import razorpay
+from coupons.models import Coupon
+from django.db import models
 
 
 def credit_wallet(user, amount, order, reason):
@@ -34,6 +36,84 @@ def credit_wallet(user, amount, order, reason):
         amount=amount,
         reason=reason
     )
+    
+@login_required
+def apply_coupon_view(request):
+
+    if request.method != 'POST':
+        return redirect('checkout')
+
+    coupon_code = request.POST.get('coupon_code', '').strip().upper()
+
+    if not coupon_code:
+        messages.error(request, "Please enter a coupon code.")
+        return redirect('checkout')
+
+    cart = Cart.objects.filter(user=request.user).first()
+
+    if not cart:
+        messages.error(request, "Cart not found.")
+        return redirect('checkout')
+
+    cart_items = CartItem.objects.filter(cart=cart)
+
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty.")
+        return redirect('checkout')
+
+    subtotal = sum(item.subtotal for item in cart_items)
+
+    coupon = Coupon.objects.filter(
+        code__iexact=coupon_code,
+        is_active=True
+    ).first()
+
+    if not coupon:
+        messages.error(request, "Invalid or inactive coupon.")
+        return redirect('checkout')
+
+    current_time = timezone.now()
+
+    if coupon.valid_from > current_time:
+        messages.error(request, "This coupon is not active yet.")
+        return redirect('checkout')
+
+    if coupon.valid_to < current_time:
+        messages.error(request, "This coupon has expired.")
+        return redirect('checkout')
+
+    if coupon.used_count >= coupon.usage_limit:
+        messages.error(request, "Coupon usage limit exceeded.")
+        return redirect('checkout')
+
+    discount_amount, message = coupon.calculate_discount(subtotal)
+
+    if discount_amount <= 0:
+        messages.error(request, message)
+        return redirect('checkout')
+
+    request.session['applied_coupon_code'] = coupon.code
+    request.session['coupon_discount'] = str(discount_amount)
+
+    messages.success(
+        request,
+        f'Coupon "{coupon.code}" applied successfully.'
+    )
+
+    return redirect('checkout')
+
+
+@login_required
+def remove_coupon_view(request):
+
+    request.session.pop('applied_coupon_code', None)
+    request.session.pop('coupon_discount', None)
+
+    messages.success(request, "Coupon removed successfully.")
+
+    return redirect('checkout')
+
+    
 
 @login_required
 def checkout_view(request):
@@ -115,8 +195,44 @@ def checkout_view(request):
     discount = Decimal('0.00')
     shipping_charge = Decimal('0.00')
     tax = Decimal('0.00')
+    applied_coupon_code = request.session.get('applied_coupon_code')
+
+    if applied_coupon_code:
+        coupon = Coupon.objects.filter(
+            code__iexact=applied_coupon_code,
+            is_active=True
+        ).first()
+
+        if coupon:
+            discount, message = coupon.calculate_discount(subtotal)
+
+            if discount <= 0:
+                request.session.pop('applied_coupon_code', None)
+                request.session.pop('coupon_discount', None)
+                messages.error(request, message)
+        else:
+            request.session.pop('applied_coupon_code', None)
+            request.session.pop('coupon_discount', None)
+            messages.error(request, "Applied coupon is no longer available.")
 
     final_total = subtotal + tax + shipping_charge - discount
+    
+    available_coupons = Coupon.objects.filter(
+        is_active=True,
+        valid_from__lte=timezone.now(),
+        valid_to__gte=timezone.now(),
+        used_count__lt=models.F('usage_limit')
+    )
+    
+    best_coupon = None
+    best_discount = 0
+
+    for coupon in available_coupons:
+        discount_amount, _ = coupon.calculate_discount(subtotal)
+
+        if discount_amount > best_discount:
+            best_discount = discount_amount
+            best_coupon = coupon
 
     context = {
         'cart': cart,
@@ -128,6 +244,9 @@ def checkout_view(request):
         'shipping_charge': shipping_charge,
         'tax': tax,
         'final_total': final_total,
+        'applied_coupon_code': applied_coupon_code,
+        'available_coupons': available_coupons,
+        'best_coupon': best_coupon,
     }
 
     return render(request, 'orders/checkout.html', context)
@@ -247,6 +366,30 @@ def place_order_view(request):
     discount = Decimal('0.00')
     shipping_charge = Decimal('0.00')
     tax = Decimal('0.00')
+    coupon_code = None
+
+    applied_coupon_code = request.session.get('applied_coupon_code')
+
+    if applied_coupon_code:
+
+        coupon = Coupon.objects.filter(
+            code__iexact=applied_coupon_code,
+            is_active=True
+        ).first()
+
+        if coupon:
+
+            discount, message = coupon.calculate_discount(subtotal)
+
+            if discount > 0:
+                coupon_code = coupon.code
+            else:
+                request.session.pop('applied_coupon_code', None)
+                request.session.pop('coupon_discount', None)
+
+        else:
+            request.session.pop('applied_coupon_code', None)
+            request.session.pop('coupon_discount', None)
 
     final_total = subtotal + tax + shipping_charge - discount
     
@@ -276,6 +419,7 @@ def place_order_view(request):
 
         subtotal=subtotal,
         discount=discount,
+        coupon_code=coupon_code,
         shipping_charge=shipping_charge,
         tax=tax,
         final_total=final_total,
@@ -318,6 +462,14 @@ def place_order_view(request):
         if request.session.get('buy_now_variant_id'):
             del request.session['buy_now_variant_id']
         
+        if coupon_code:
+            Coupon.objects.filter(code__iexact=coupon_code).update(
+                used_count=models.F('used_count') + 1
+            )
+
+        request.session.pop('applied_coupon_code', None)
+        request.session.pop('coupon_discount', None)
+                
     
     if payment_method == 'wallet':
         wallet, created = Wallet.objects.get_or_create(user=request.user)
@@ -360,6 +512,13 @@ def place_order_view(request):
         if request.session.get('buy_now_variant_id'):
             del request.session['buy_now_variant_id']
 
+        if coupon_code:
+            Coupon.objects.filter(code__iexact=coupon_code).update(
+                used_count=models.F('used_count') + 1
+            )
+
+        request.session.pop('applied_coupon_code', None)
+        request.session.pop('coupon_discount', None)
         messages.success(request, "Order placed successfully using wallet.")
         return redirect('order_success', order_id=order.order_id)    
         
@@ -449,7 +608,17 @@ def verify_razorpay_payment(request):
         ])
 
         order = payment.order
+        
+        if order.coupon_code:
+            Coupon.objects.filter(code__iexact=order.coupon_code).update(
+                used_count=models.F('used_count') + 1
+            )
+
+        request.session.pop('applied_coupon_code', None)
+        request.session.pop('coupon_discount', None)
+        
         order.payment_status = 'paid'
+        
 
         if order.status == 'payment_failed':
             order.status = 'pending'

@@ -952,9 +952,54 @@
                     </div>
 
                     <!-- Coupon -->
-                    <div class="coupon-wrap">
-                        <input type="text" class="coupon-input" placeholder="Enter coupon code" disabled>
-                        <button type="button" class="coupon-btn" disabled>Apply</button>
+                   <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 mt-4">
+
+                        {% if applied_coupon_code %}
+
+                            <div class="flex items-center justify-between gap-4">
+
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-wider text-green-700">
+                                        Coupon Applied
+                                    </p>
+
+                                    <p class="text-sm font-extrabold text-black mt-1">
+                                        {{ applied_coupon_code }}
+                                    </p>
+
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        You saved ₹{{ discount }}
+                                    </p>
+                                </div>
+
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    Desktop to manage
+                                </p>
+
+                            </div>
+
+                        {% else %}
+
+                            <div class="flex items-center justify-between gap-4">
+
+                                <div>
+                                    <p class="text-sm font-extrabold text-black">
+                                        Coupons Available
+                                    </p>
+
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Apply coupons from desktop view
+                                    </p>
+                                </div>
+
+                                <span class="material-symbols-outlined text-slate-400">
+                                    local_offer
+                                </span>
+
+                            </div>
+
+                        {% endif %}
+
                     </div>
 
                     <a href="#"
@@ -1089,25 +1134,64 @@
                 </div>
 
                 <!-- Coupon -->
-                <div class="coupon-wrap">
-                    <input type="text" class="coupon-input" placeholder="Enter coupon code" disabled>
-                    <button type="button" class="coupon-btn" disabled>Apply</button>
-                </div>
-                <a href="#"
-                    style="
-                            font-size:10.5px;
-                            font-weight:800;
-                            color:var(--accent-blue);
-                            display:block;
-                            margin-top:-4px;
-                            margin-bottom:4px;
-                            text-decoration:none;
-                            transition:opacity 0.2s ease;
-                    "
-                    onmouseover="this.style.opacity='0.7'"
-                    onmouseout="this.style.opacity='1'">
+                {% if applied_coupon_code %}
+
+<div class="bg-green-50 border border-green-200 rounded-2xl p-4 mt-4 flex items-center justify-between gap-4">
+
+    <div>
+        <p class="text-[11px] font-black uppercase tracking-wider text-green-700">
+            Coupon Applied
+        </p>
+
+        <div class="flex items-center gap-2 mt-1">
+            <span class="material-symbols-outlined text-[18px] text-green-600">
+                local_offer
+            </span>
+
+            <span class="text-sm font-extrabold text-black">
+                {{ applied_coupon_code }}
+            </span>
+        </div>
+
+        <p class="text-xs text-slate-500 mt-1">
+            You saved ₹{{ discount }}
+        </p>
+    </div>
+
+    <form method="POST" action="{% url 'remove_coupon' %}">
+        {% csrf_token %}
+
+        <button type="submit"
+            class="px-4 py-2 rounded-xl border border-red-200 bg-white text-red-600 text-xs font-bold hover:bg-red-50 transition-all">
+            Remove
+        </button>
+    </form>
+
+</div>
+
+{% else %}
+
+    <form method="POST" action="{% url 'apply_coupon' %}" class="coupon-wrap">
+        {% csrf_token %}
+
+        <input type="text"
+            name="coupon_code"
+            class="coupon-input"
+            placeholder="Enter coupon code">
+
+        <button type="submit" class="coupon-btn">
+            Apply
+        </button>
+    </form>
+
+    {% endif %}
+                {% if available_coupons and not applied_coupon_code %}
+                    <button type="button"
+                            onclick="openCouponModal()"
+                            class="mt-3 text-[10.5px] font-extrabold text-blue-600 hover:opacity-70 transition-opacity">
                         View all available coupons
-                    </a>
+                    </button>
+                {% endif %}
 
                 <div class="summary-total-row">
                     <span class="summary-total-label">Total</span>
@@ -1141,6 +1225,65 @@
 
     </div>
 </div>
+{% if available_coupons and not applied_coupon_code %}
+<div id="couponModal"
+     class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+
+    <div class="bg-white rounded-3xl w-full max-w-md p-5 shadow-2xl border border-slate-100">
+
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-black uppercase tracking-wider text-black">
+                Available Coupons
+            </h3>
+
+            <button type="button"
+                    onclick="closeCouponModal()"
+                    class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+
+        <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+            {% for coupon in available_coupons %}
+                <button type="button"
+                        onclick="autoApplyCoupon('{{ coupon.code }}')"
+                        class="w-full text-left rounded-2xl border border-slate-200 bg-slate-50 p-3 hover:bg-white hover:border-black transition-all">
+
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-xs font-black uppercase tracking-wider text-black">
+                            {{ coupon.code }}
+                        </span>
+
+                        {% if best_coupon and coupon.id == best_coupon.id %}
+                            <span class="text-[9px] font-black uppercase tracking-wider text-white bg-black rounded-full px-2 py-1">
+                                Best Deal
+                            </span>
+                        {% else %}
+                            <span class="text-[10px] font-black uppercase tracking-wider text-green-600">
+                                Apply
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-[11px] text-slate-500 mt-1">
+                        {% if coupon.discount_type == 'percentage' %}
+                            {{ coupon.discount_value }}% OFF
+                            {% if coupon.maximum_discount_amount %}
+                                up to ₹{{ coupon.maximum_discount_amount }}
+                            {% endif %}
+                        {% else %}
+                            ₹{{ coupon.discount_value }} OFF
+                        {% endif %}
+                        • Min order ₹{{ coupon.minimum_order_amount }}
+                    </p>
+                </button>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1186,5 +1329,33 @@
             showMoreIcon.style.transition = 'transform 0.3s ease';
         }
     });
+
+    function openCouponModal() {
+        const modal = document.getElementById('couponModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function closeCouponModal() {
+        const modal = document.getElementById('couponModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function autoApplyCoupon(code) {
+        const input = document.querySelector('input[name="coupon_code"]');
+        const form = document.querySelector('form[action="{% url 'apply_coupon' %}"]');
+
+        if (input && form) {
+            input.value = code;
+            closeCouponModal();
+            form.submit();
+        }
+    }
+
 </script>
 {% endblock %}

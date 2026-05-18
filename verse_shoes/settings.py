@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'orders',
     'payments',
     'offers',
+    'coupons',
     'adminpanel',
     
     'django.contrib.sites',
