@@ -692,6 +692,8 @@
         .tracker-step { min-width: 90px; }
     }
 
+
+    
 </style>
 {% endblock %}
 
@@ -853,7 +855,7 @@
 
                 {% if order.items.exists %}
                     {% for item in order.items.all %}
-                    <div class="item-row">
+                    <div class="item-row {% if item.status == 'returned' %}returned-item{% elif item.status == 'return_rejected' %}rejected-item{% endif %}">
                         <!-- Image -->
                         <div class="item-img-wrap">
                             {% if item.variant and item.variant.images.first %}
@@ -880,7 +882,23 @@
                                     <span class="meta-chip">SKU: {{ item.sku }}</span>
                                 {% endif %}
                             </div>
-                            <span class="status-badge badge-{{ item.status|default:'placed' }}">{{ item.status|default:"Placed"|cut:"_"|title }}</span>
+                           <span class="status-badge badge-{{ item.status|default:'placed' }}">
+                                {{ item.status|default:"Placed"|cut:"_"|title }}
+                            </span>
+
+                            {% if item.status == 'return_rejected' and item.return_rejection_reason %}
+                                <p class="mt-2 text-[10px] font-bold text-red-500 leading-snug max-w-md">
+                                    Reason: {{ item.return_rejection_reason }}
+                                </p>
+                            {% elif item.status == 'return_requested' and item.return_reason %}
+                                <p class="mt-2 text-[10px] font-bold text-orange-500 leading-snug max-w-md">
+                                    Return requested: {{ item.return_reason }}
+                                </p>
+                            {% elif item.status == 'returned' %}
+                                <p class="mt-2 text-[10px] font-bold text-purple-500 leading-snug max-w-md">
+                                    Return approved and refund processed.
+                                </p>
+                            {% endif %}
                         </div>
 
                         <!-- Right: qty + price -->
@@ -903,7 +921,7 @@
                             {% if order.status == 'delivered' and item.status == 'delivered' %}
                             <button type="button"
                                     onclick="triggerReturnItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
-                                    class="text-[9px] font-black uppercase tracking-widest text-slate-700 hover:text-black transition-colors mt-2">
+                                    class="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-slate-700 hover:bg-black hover:text-white hover:border-black transition-all"
                                 Return Item
                             </button>
 
@@ -1025,7 +1043,7 @@
                 </form>
                 {% endif %}
 
-                {% if order.status == 'delivered' %}
+                {% if order.status == 'delivered' and has_returnable_items %}
                 <button type="button" onclick="triggerReturnOrderModal()" class="action-btn btn-return">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>

@@ -11,6 +11,7 @@ from adminpanel.views.core_views import admin_required
 from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
+from django.db.models.functions import Coalesce
 
 
 def credit_wallet(user, amount, order, reason):
@@ -250,7 +251,15 @@ def admin_return_list_view(request):
         OrderItem.objects
         .filter(status__in=['return_requested', 'return_rejected', 'returned'])
         .select_related('order', 'order__user', 'variant')
-        .order_by('-return_requested', '-created_at')
+        .annotate(
+            latest_return_date=Coalesce(
+                'returned_at',
+                'return_reviewed_at',
+                'return_requested',
+                'created_at'
+            )
+        )
+        .order_by('-latest_return_date', '-id')
     )
 
     if search_query:
@@ -283,7 +292,6 @@ def admin_return_list_view(request):
     }
 
     return render(request, 'adminpanel/return_list.html', context)
-
 
 @login_required
 @admin_required

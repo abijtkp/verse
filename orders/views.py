@@ -770,8 +770,13 @@ def order_detail_view(request, order_id):
         messages.error(request, "Order not found.")
         return redirect('order_list')
 
+    has_returnable_items = order.items.filter(
+        status='delivered'
+    ).exists()
+
     return render(request, 'orders/order_detail.html', {
         'order': order,
+        'has_returnable_items': has_returnable_items,
     })
 
 

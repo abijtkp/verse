@@ -246,9 +246,34 @@
                 </div>
 
                 <!-- Date -->
+                <!-- Date -->
                 <div class="col-span-1">
-                    <p class="text-[11px] font-bold text-slate-500">{{ item.return_requested|date:"M d, Y" }}</p>
-                    <p class="text-[10px] font-semibold text-slate-300">{{ item.return_requested|date:"M d, Y" }}</p>
+
+                    {% if item.status == 'return_requested' %}
+                        <p class="text-[11px] font-bold text-slate-500">
+                            {{ item.return_requested|date:"M d, Y" }}
+                        </p>
+                        <p class="text-[10px] font-semibold text-slate-300">
+                            Requested
+                        </p>
+
+                    {% elif item.status == 'returned' %}
+                        <p class="text-[11px] font-bold text-emerald-600">
+                            {{ item.returned_at|date:"M d, Y" }}
+                        </p>
+                        <p class="text-[10px] font-semibold text-emerald-300">
+                            Approved
+                        </p>
+
+                    {% elif item.status == 'return_rejected' %}
+                        <p class="text-[11px] font-bold text-red-500">
+                            {{ item.return_reviewed_at|date:"M d, Y" }}
+                        </p>
+                        <p class="text-[10px] font-semibold text-red-300">
+                            Rejected
+                        </p>
+                    {% endif %}
+
                 </div>
 
                 <!-- Actions -->
