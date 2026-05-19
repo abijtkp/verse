@@ -38,16 +38,14 @@ def credit_wallet(user, amount, order, reason):
     )
 
 def get_refund_amount(order, items):
-    if order.subtotal <= 0:
-        return Decimal('0.00')
-
     items = list(items)
-    items_total = sum(item.item_total for item in items)
 
-    refund_amount = (items_total / order.subtotal) * order.final_total
+    refund_amount = sum(
+        item.final_item_total if item.final_item_total > 0 else item.item_total
+        for item in items
+    )
 
-    return refund_amount.quantize(Decimal('0.01'))    
-    
+    return Decimal(refund_amount).quantize(Decimal('0.01'))
     
 @login_required
 def apply_coupon_view(request):
@@ -460,6 +458,30 @@ def place_order_view(request):
         tax=tax,
         final_total=final_total,
     )
+    
+    
+    item_pricing_data = {}
+
+    for item in cart_items:
+        original_item_total = item.subtotal
+        offer_discount = Decimal('0.00')
+
+        coupon_discount_share = Decimal('0.00')
+
+        if subtotal > 0 and discount > 0:
+            coupon_discount_share = (original_item_total / subtotal) * discount
+            coupon_discount_share = coupon_discount_share.quantize(Decimal('0.01'))
+
+        final_item_total = original_item_total - coupon_discount_share
+
+        item_pricing_data[item.variant_id] = {
+            "original_item_total": original_item_total,
+            "offer_discount": offer_discount,
+            "coupon_discount_share": coupon_discount_share,
+            "final_item_total": final_item_total,
+        }
+    
+    
 
     for item in cart_items:
         variant = locked_variants[item.variant_id]
@@ -475,6 +497,10 @@ def place_order_view(request):
             price=variant.price,
             quantity=item.quantity,
             item_total=item.subtotal,
+            original_item_total=item_pricing_data[item.variant_id]["original_item_total"],
+            offer_discount=item_pricing_data[item.variant_id]["offer_discount"],
+            coupon_discount_share=item_pricing_data[item.variant_id]["coupon_discount_share"],
+            final_item_total=item_pricing_data[item.variant_id]["final_item_total"],
             status='pending',
         )
 

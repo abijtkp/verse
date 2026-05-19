@@ -174,6 +174,11 @@ class OrderItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
     item_total = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    original_item_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    offer_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    coupon_discount_share = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    final_item_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     status = models.CharField(
         max_length=30,
