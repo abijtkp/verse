@@ -871,7 +871,7 @@
 
         <form method="POST"
             action="{% url 'add_to_cart' variant.id %}"
-            class="flex-1" ajax-cart-form>
+            class="flex-1 ajax-cart-form">
             {% csrf_token %}
 
             <button type="submit"
@@ -1050,8 +1050,15 @@
                     }
 
                     const cartCount = document.getElementById('cart-count-badge');
+
                     if (cartCount && data.cart_count !== undefined) {
                         cartCount.textContent = data.cart_count;
+
+                        if (data.cart_count > 0) {
+                            cartCount.classList.remove('hidden');
+                        } else {
+                            cartCount.classList.add('hidden');
+                        }
                     }
 
                 } catch (error) {

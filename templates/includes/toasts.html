@@ -53,6 +53,7 @@
     {% endfor %}
 </div>
 
+{% endif %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const toasts = document.querySelectorAll('.toast-message');
@@ -94,5 +95,92 @@
             }
         }, 300);
     }
+
+    window.showToast = function(message, type = 'success') {
+
+        document.querySelectorAll('.toast-message').forEach(toast => toast.remove());
+
+        let container = document.getElementById('toast-container');
+
+        if (!container) {
+            container = document.createElement('div');
+
+            container.id = 'toast-container';
+
+            container.className = `
+                fixed top-6 right-5 z-[9999]
+                flex flex-col items-end gap-3
+                w-full max-w-sm pointer-events-none
+            `;
+
+            document.body.appendChild(container);
+        }
+
+        const borderClass = {
+            success: 'border-green-500',
+            error: 'border-red-500',
+            warning: 'border-yellow-500',
+            info: 'border-blue-500'
+        };
+
+        const iconClass = {
+            success: 'text-green-500 bg-green-100',
+            error: 'text-red-500 bg-red-100',
+            warning: 'text-yellow-500 bg-yellow-100',
+            info: 'text-blue-500 bg-blue-100'
+        };
+
+        const icons = {
+            success: `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                </svg>
+            `,
+            error: `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.5a1 1 0 0 1-1.414 1.414L10 11.414l-2.086 2.086a1 1 0 0 1-1.414-1.414L8.586 10 6.5 7.914A1 1 0 0 1 7.914 6.5L10 8.586l2.086-2.086a1 1 0 0 1 1.414 1.414L11.414 10l2.086 2.086Z"/>
+                </svg>
+            `
+        };
+
+        const toast = document.createElement('div');
+
+        toast.className = `
+            toast-message pointer-events-auto
+            transform transition-all duration-300
+            -translate-y-5 scale-95 opacity-0
+            flex items-center w-full p-4
+            bg-gray-800 rounded-xl shadow-xl
+            border-l-4 ${borderClass[type] || borderClass.success}
+        `;
+
+        toast.innerHTML = `
+            <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${iconClass[type] || iconClass.success}">
+                ${icons[type] || icons.success}
+            </div>
+
+            <div class="ml-3 text-sm font-medium text-gray-300">
+                ${message}
+            </div>
+
+            <button type="button"
+                    onclick="closeToast(this)"
+                    class="ml-auto -mx-1.5 -my-1.5 text-gray-500 hover:text-white rounded-lg p-1.5 h-8 w-8">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                </svg>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.remove('-translate-y-5', 'scale-95', 'opacity-0');
+            toast.classList.add('translate-y-0', 'scale-100', 'opacity-100');
+        }, 50);
+
+        setTimeout(() => {
+            dismissToast(toast);
+        }, 4000);
+    };
 </script>
-{% endif %}

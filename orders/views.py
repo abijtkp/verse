@@ -6,7 +6,7 @@ from cart.models import Cart, CartItem
 from userprofile.models import Address
 from .models import Order, OrderItem
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -107,11 +107,15 @@ def apply_coupon_view(request):
     request.session['applied_coupon_code'] = coupon.code
     request.session['coupon_discount'] = str(discount_amount)
 
-    messages.success(
-        request,
-        f'Coupon "{coupon.code}" applied successfully.'
-    )
+    success_message = f'Coupon "{coupon.code}" applied successfully.'
 
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': success_message,
+        })
+
+    messages.success(request, success_message)
     return redirect('checkout')
 
 
@@ -121,8 +125,13 @@ def remove_coupon_view(request):
     request.session.pop('applied_coupon_code', None)
     request.session.pop('coupon_discount', None)
 
-    messages.success(request, "Coupon removed successfully.")
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': "Coupon removed successfully.",
+        })
 
+    messages.success(request, "Coupon removed successfully.")
     return redirect('checkout')
 
     
@@ -229,6 +238,16 @@ def checkout_view(request):
 
     final_total = subtotal + tax + shipping_charge - discount
     
+    for item in cart_items:
+        item_discount = Decimal('0.00')
+        
+        if subtotal > 0 and discount > 0:
+            item_discount = (item.subtotal / subtotal) * discount
+            item_discount = item_discount.quantize(Decimal('0.01'))
+            
+        item.discount_share = item_discount
+        item.final_price_after_discount = item.subtotal - item_discount    
+    
     available_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=timezone.now(),
@@ -270,6 +289,7 @@ def place_order_view(request):
 
     if request.method != 'POST':
         return redirect('checkout')
+
 
     selected_address_id = request.POST.get('selected_address')
     payment_method = request.POST.get('payment_method')
