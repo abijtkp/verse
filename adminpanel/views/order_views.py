@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from adminpanel.views.core_views import admin_required
 from django.utils import timezone
 from django.db import transaction
+from decimal import Decimal
 
 
 def credit_wallet(user, amount, order, reason):
@@ -25,6 +26,18 @@ def credit_wallet(user, amount, order, reason):
         amount=amount,
         reason=reason
     )
+    
+def get_refund_amount(order, items):
+    if order.subtotal <= 0:
+        return Decimal('0.00')
+
+    items = list(items)
+    items_total = sum(item.item_total for item in items)
+
+    refund_amount = (items_total / order.subtotal) * order.final_total
+
+    return refund_amount.quantize(Decimal('0.01'))    
+    
 
 
 
@@ -177,7 +190,7 @@ def update_order_status_view(request, order_id):
         )
         return redirect('admin_order_detail', order_id=order.order_id)
 
-    if new_status in'cancelled':
+    if new_status == 'cancelled':
         for item in order.items.exclude(status__in=['cancelled', 'returned']):
             item.status = new_status
 
@@ -278,13 +291,15 @@ def admin_return_list_view(request):
 @transaction.atomic
 def approve_return_request_view(request, item_id):
     item = get_object_or_404(
-        OrderItem.objects.select_related('order','order__user', 'variant'),
+        OrderItem.objects.select_related('order', 'order__user', 'variant'),
         id=item_id,
         status='return_requested'
     )
 
     order = item.order
-    
+
+    refund_amount = get_refund_amount(order, [item])
+
     item.status = 'returned'
     item.return_reviewed_at = timezone.now()
     item.returned_at = timezone.now()
@@ -293,13 +308,16 @@ def approve_return_request_view(request, item_id):
     if item.variant:
         item.variant.stock += item.quantity
         item.variant.is_active = True
-        item.variant.save(update_fields=['stock', 'is_active'])   
+        item.variant.save(update_fields=['stock', 'is_active'])
 
-    
-    if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
+    if (
+        order.payment_method in ['razorpay', 'wallet']
+        and order.payment_status == 'paid'
+        and refund_amount > 0
+    ):
         credit_wallet(
             user=order.user,
-            amount=item.item_total,
+            amount=refund_amount,
             order=order,
             reason=f"Refund for returned item: {item.product_name}"
         )
@@ -319,7 +337,6 @@ def approve_return_request_view(request, item_id):
                 order.payment.save(update_fields=['status', 'updated_at'])
 
         order.save(update_fields=['status', 'payment_status', 'updated_at'])
-    
 
     messages.success(request, f"Return approved for '{item.product_name}'. Stock restored.")
     return redirect('admin_return_list')

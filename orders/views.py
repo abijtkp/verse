@@ -36,6 +36,18 @@ def credit_wallet(user, amount, order, reason):
         amount=amount,
         reason=reason
     )
+
+def get_refund_amount(order, items):
+    if order.subtotal <= 0:
+        return Decimal('0.00')
+
+    items = list(items)
+    items_total = sum(item.item_total for item in items)
+
+    refund_amount = (items_total / order.subtotal) * order.final_total
+
+    return refund_amount.quantize(Decimal('0.01'))    
+    
     
 @login_required
 def apply_coupon_view(request):
@@ -777,6 +789,8 @@ def cancel_order(request, order_id):
         return redirect('order_detail', order_id=order.order_id)
 
     reason = request.POST.get('reason', '').strip()
+    
+    refundable_items = list(order.items.exclude(status__in=['cancelled', 'returned']))
 
     order.status = 'cancelled'
     order.cancelled_at = timezone.now()
@@ -797,7 +811,7 @@ def cancel_order(request, order_id):
                 
     
     if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
-        refund_amount = order.final_total
+        refund_amount = get_refund_amount(order, refundable_items)
 
         credit_wallet(
             user=request.user,
@@ -858,7 +872,7 @@ def cancel_order_item(request, item_id):
         order.save(update_fields=['status', 'cancelled_at', 'cancellation_reason', 'updated_at'])
         
     if order.payment_method in ['razorpay', 'wallet'] and order.payment_status == 'paid':
-        refund_amount = item.item_total
+        refund_amount = get_refund_amount(order, [item])
 
         credit_wallet(
             user=request.user,
