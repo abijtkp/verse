@@ -158,13 +158,24 @@
 
                         <!-- Status -->
                         <td class="px-6 sm:px-8 py-5">
-                            {% if coupon.is_active %}
-                                <span class="px-3 py-1 bg-green-100 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-full">
-                                    Active
+                            {% if coupon.current_status == "expired" %}
+                                <span class="px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                                    Expired
                                 </span>
-                            {% else %}
+
+                            {% elif coupon.current_status == "scheduled" %}
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                                    Scheduled
+                                </span>
+
+                            {% elif coupon.current_status == "inactive" %}
                                 <span class="px-3 py-1 bg-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-wider rounded-full">
                                     Inactive
+                                </span>
+
+                            {% else %}
+                                <span class="px-3 py-1 bg-green-100 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                                    Active
                                 </span>
                             {% endif %}
                         </td>

@@ -156,7 +156,7 @@
                     <label for="coupon-valid-from" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid From <span class="text-red-400">*</span>
                     </label>
-                    <input type="datetime-local"
+                    <input type="date"
                            id="coupon-valid-from"
                            name="valid_from"
                            value="{{ form_data.valid_from|default:'' }}"
@@ -170,7 +170,7 @@
                     <label for="coupon-valid-to" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid To <span class="text-red-400">*</span>
                     </label>
-                    <input type="datetime-local"
+                    <input type="date"
                            id="coupon-valid-to"
                            name="valid_to"
                            value="{{ form_data.valid_to|default:'' }}"

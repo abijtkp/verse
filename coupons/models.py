@@ -1,8 +1,8 @@
 from decimal import Decimal
-
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class Coupon(models.Model):
@@ -59,6 +59,21 @@ class Coupon(models.Model):
 
     def __str__(self):
         return self.code
+    
+    @property
+    def current_status(self):
+        now = timezone.now()
+
+        if self.valid_to < now:
+            return "expired"
+
+        if self.valid_from > now:
+            return "scheduled"
+
+        if not self.is_active:
+            return "inactive"
+
+        return "active"
 
     def is_valid_now(self):
         now = timezone.now()
@@ -104,3 +119,30 @@ class Coupon(models.Model):
         discount = min(discount, subtotal)
 
         return discount.quantize(Decimal("0.01")), "Coupon applied successfully."
+    
+ 
+    
+class CouponUsage(models.Model):
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        related_name="usages"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    order = models.ForeignKey(
+        "orders.Order",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "coupon_usages"
+        unique_together = ("coupon", "user")
+
+    def __str__(self):
+        return f"{self.user} used {self.coupon.code}"    

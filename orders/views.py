@@ -19,7 +19,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from payments.models import Payment, Wallet, WalletTransaction
 import razorpay
-from coupons.models import Coupon
+from coupons.models import Coupon, CouponUsage
 from django.db import models
 
 
@@ -96,6 +96,10 @@ def apply_coupon_view(request):
 
     if coupon.used_count >= coupon.usage_limit:
         messages.error(request, "Coupon usage limit exceeded.")
+        return redirect('checkout')
+    
+    if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
+        messages.error(request, "You have already used this coupon.")
         return redirect('checkout')
 
     discount_amount, message = coupon.calculate_discount(subtotal)
@@ -495,9 +499,18 @@ def place_order_view(request):
             del request.session['buy_now_variant_id']
         
         if coupon_code:
-            Coupon.objects.filter(code__iexact=coupon_code).update(
-                used_count=models.F('used_count') + 1
-            )
+            used_coupon = Coupon.objects.filter(code__iexact=coupon_code).first()
+
+            if used_coupon:
+                CouponUsage.objects.get_or_create(
+                    coupon=used_coupon,
+                    user=request.user,
+                    defaults={"order": order}
+                )
+
+                Coupon.objects.filter(id=used_coupon.id).update(
+                    used_count=models.F('used_count') + 1
+                )
 
         request.session.pop('applied_coupon_code', None)
         request.session.pop('coupon_discount', None)
@@ -545,9 +558,18 @@ def place_order_view(request):
             del request.session['buy_now_variant_id']
 
         if coupon_code:
-            Coupon.objects.filter(code__iexact=coupon_code).update(
-                used_count=models.F('used_count') + 1
-            )
+            used_coupon = Coupon.objects.filter(code__iexact=coupon_code).first()
+
+            if used_coupon:
+                CouponUsage.objects.get_or_create(
+                    coupon=used_coupon,
+                    user=request.user,
+                    defaults={"order": order}
+                )
+
+                Coupon.objects.filter(id=used_coupon.id).update(
+                    used_count=models.F('used_count') + 1
+                )
 
         request.session.pop('applied_coupon_code', None)
         request.session.pop('coupon_discount', None)
@@ -642,9 +664,18 @@ def verify_razorpay_payment(request):
         order = payment.order
         
         if order.coupon_code:
-            Coupon.objects.filter(code__iexact=order.coupon_code).update(
-                used_count=models.F('used_count') + 1
-            )
+            used_coupon = Coupon.objects.filter(code__iexact=order.coupon_code).first()
+
+            if used_coupon:
+                CouponUsage.objects.get_or_create(
+                    coupon=used_coupon,
+                    user=request.user,
+                    defaults={"order": order}
+                )
+
+                Coupon.objects.filter(id=used_coupon.id).update(
+                    used_count=models.F('used_count') + 1
+                )
 
         request.session.pop('applied_coupon_code', None)
         request.session.pop('coupon_discount', None)

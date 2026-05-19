@@ -52,10 +52,25 @@
 
                 <!-- Current status badge -->
                 <div class="flex-shrink-0">
-                    {% if coupon.is_active %}
-                        <span class="px-3 py-1.5 bg-green-100 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-full">Active</span>
+                    {% if coupon.current_status == "expired" %}
+                        <span class="px-3 py-1.5 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                            Expired
+                        </span>
+
+                    {% elif coupon.current_status == "scheduled" %}
+                        <span class="px-3 py-1.5 bg-yellow-100 text-yellow-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                            Scheduled
+                        </span>
+
+                    {% elif coupon.current_status == "inactive" %}
+                        <span class="px-3 py-1.5 bg-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-wider rounded-full">
+                            Inactive
+                        </span>
+
                     {% else %}
-                        <span class="px-3 py-1.5 bg-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-wider rounded-full">Inactive</span>
+                        <span class="px-3 py-1.5 bg-green-100 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-full">
+                            Active
+                        </span>
                     {% endif %}
                 </div>
             </div>
@@ -192,11 +207,11 @@
                     <label for="edit-coupon-valid-from" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid From <span class="text-red-400">*</span>
                     </label>
-                    <input type="datetime-local"
-                           id="edit-coupon-valid-from"
-                           name="valid_from"
-                           value="{% if form_data.valid_from %}{{ form_data.valid_from }}{% else %}{{ coupon.valid_from|date:'Y-m-d\TH:i' }}{% endif %}"
-                           class="coupon-field w-full bg-white border {% if field_errors.valid_from %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
+                    <input type="date"
+                        id="edit-coupon-valid-from"
+                        value="{{ coupon.valid_from|date:'Y-m-d' }}"
+                        disabled
+                        class="w-full bg-slate-100 border border-slate-200 rounded-xl py-4 px-5 text-sm font-medium text-slate-500 cursor-not-allowed outline-none">
                     {% if field_errors.valid_from %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_from }}</p>
                     {% endif %}
@@ -206,10 +221,10 @@
                     <label for="edit-coupon-valid-to" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid To <span class="text-red-400">*</span>
                     </label>
-                    <input type="datetime-local"
+                    <input type="date"
                            id="edit-coupon-valid-to"
                            name="valid_to"
-                           value="{% if form_data.valid_to %}{{ form_data.valid_to }}{% else %}{{ coupon.valid_to|date:'Y-m-d\TH:i' }}{% endif %}"
+                           value="{% if form_data.valid_to %}{{ form_data.valid_to }}{% else %}{{ coupon.valid_to|date:'Y-m-d' }}{% endif %}"
                            class="coupon-field w-full bg-white border {% if field_errors.valid_to %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
                     {% if field_errors.valid_to %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_to }}</p>

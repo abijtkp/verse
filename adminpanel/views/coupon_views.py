@@ -6,8 +6,7 @@ from adminpanel.views.core_views import admin_required
 from coupons.models import Coupon
 from decimal import Decimal
 from django.utils import timezone
-from datetime import datetime
-
+from datetime import datetime, time 
 
 @admin_required
 def coupon_list_view(request):
@@ -139,24 +138,28 @@ def add_coupon_view(request):
 
         try:
 
-            valid_from_obj = datetime.strptime(
+            valid_from_date = datetime.strptime(
                 valid_from,
-                '%Y-%m-%dT%H:%M'
-            )
+                "%Y-%m-%d"
+            ).date()
 
-            valid_from_obj = timezone.make_aware(valid_from_obj)
+            valid_from_obj = timezone.make_aware(
+                datetime.combine(valid_from_date, time.min)
+            )
 
         except:
             field_errors['valid_from'] = 'Enter a valid start date.'
 
         try:
 
-            valid_to_obj = datetime.strptime(
+            valid_to_date = datetime.strptime(
                 valid_to,
-                '%Y-%m-%dT%H:%M'
-            )
+                "%Y-%m-%d"
+            ).date()
 
-            valid_to_obj = timezone.make_aware(valid_to_obj)
+            valid_to_obj = timezone.make_aware(
+                datetime.combine(valid_to_date, time.max)
+            )
 
         except:
             field_errors['valid_to'] = 'Enter a valid expiry date.'
@@ -240,7 +243,7 @@ def edit_coupon_view(request, coupon_id):
             'discount_value': request.POST.get('discount_value', '').strip(),
             'minimum_order_amount': request.POST.get('minimum_order_amount', '').strip(),
             'maximum_discount_amount': request.POST.get('maximum_discount_amount', '').strip(),
-            'valid_from': request.POST.get('valid_from', '').strip(),
+            'valid_from': coupon.valid_from.date().strftime("%Y-%m-%d"),
             'valid_to': request.POST.get('valid_to', '').strip(),
             'usage_limit': request.POST.get('usage_limit', '').strip(),
             'is_active': request.POST.get('is_active') == 'on',
@@ -339,13 +342,13 @@ def edit_coupon_view(request, coupon_id):
 
         try:
 
-            valid_from_obj = datetime.strptime(
+            valid_from_date = datetime.strptime(
                 valid_from,
-                '%Y-%m-%dT%H:%M'
-            )
+                "%Y-%m-%d"
+            ).date()
 
             valid_from_obj = timezone.make_aware(
-                valid_from_obj
+                datetime.combine(valid_from_date, time.min)
             )
 
         except:
@@ -353,24 +356,19 @@ def edit_coupon_view(request, coupon_id):
 
         try:
 
-            valid_to_obj = datetime.strptime(
+            valid_to_date = datetime.strptime(
                 valid_to,
-                '%Y-%m-%dT%H:%M'
-            )
+                "%Y-%m-%d"
+            ).date()
 
             valid_to_obj = timezone.make_aware(
-                valid_to_obj
+                datetime.combine(valid_to_date, time.max)
             )
 
         except:
             field_errors['valid_to'] = 'Enter a valid expiry date.'
 
         if 'valid_from' not in field_errors and 'valid_to' not in field_errors:
-
-            now = timezone.now()
-
-            if valid_from_obj < now:
-                field_errors['valid_from'] = 'Start date and time cannot be in the past.'
 
             if valid_to_obj <= valid_from_obj:
                 field_errors['valid_to'] = 'Expiry date must be after start date.'
@@ -399,7 +397,6 @@ def edit_coupon_view(request, coupon_id):
             coupon.discount_value = discount_value
             coupon.minimum_order_amount = minimum_order_amount
             coupon.maximum_discount_amount = maximum_discount_amount
-            coupon.valid_from = valid_from_obj
             coupon.valid_to = valid_to_obj
             coupon.usage_limit = usage_limit
             coupon.is_active = is_active
