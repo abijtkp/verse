@@ -46,7 +46,7 @@
                 <span class="material-symbols-outlined text-xl">dashboard</span> 
                 <span class="text-sm font-semibold">Dashboard</span>
             </a>
-            <a href="#" class="sidebar-link flex items-center gap-3 p-3 text-slate-400 hover:text-black">
+            <a href="{% url 'sales_report' %}" class="sidebar-link {% if 'sales_report' in request.resolver_match.url_name %}active{% endif %} flex items-center gap-3 p-3 text-slate-400 hover:text-black">
                 <span class="material-symbols-outlined text-xl">trending_up</span> 
                 <span class="text-sm font-semibold">Sales</span>
             </a>

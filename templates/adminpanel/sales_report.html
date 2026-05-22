@@ -1,0 +1,599 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}VERSE | Sales Report{% endblock %}
+
+{% block page_title %}Sales Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Status badges ── */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 4px 10px; border-radius: 999px;
+        font-size: 11px; font-weight: 700;
+        letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .status-pending       { background: #fef3c7; color: #b45309; }
+    .status-shipped       { background: #dbeafe; color: #1d4ed8; }
+    .status-out_for_delivery { background: #e0e7ff; color: #4338ca; }
+    .status-delivered     { background: #dcfce7; color: #15803d; }
+    .status-cancelled     { background: #fee2e2; color: #dc2626; }
+    .status-returned      { background: #f1f5f9; color: #64748b; }
+
+    /* ── Payment status badges ── */
+    .pay-paid     { background: #dcfce7; color: #15803d; }
+    .pay-pending  { background: #fef3c7; color: #b45309; }
+    .pay-failed   { background: #fee2e2; color: #dc2626; }
+    .pay-refunded { background: #f1f5f9; color: #64748b; }
+
+    /* ── Metric cards ── */
+    .metric-card { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+    .metric-card:hover { box-shadow: 0 6px 28px 0 rgba(30,41,59,0.09); transform: translateY(-2px); }
+
+    /* ── Table row hover ── */
+    .table-row { transition: background 0.15s ease; }
+    .table-row:hover { background: #f8fafc; }
+
+    /* ── Filter form inputs ── */
+    .filter-input {
+        background: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 12px; padding: 10px 14px;
+        font-size: 13px; font-weight: 600; color: #475569;
+        outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        width: 100%;
+    }
+    .filter-input:focus { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(15,23,42,0.06); }
+
+    /* ── Divider accent on active filter card ── */
+    .filter-active-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; background: #f1f5f9; border-radius: 999px;
+        font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+        text-transform: uppercase; color: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+    <div>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Analytics &amp; Insights</p>
+        <p class="text-sm font-medium text-slate-500 max-w-md">
+            Financial performance overview — revenue, discounts, and order breakdown.
+        </p>
+    </div>
+    {% if filter_type %}
+    <div class="shrink-0">
+        <span class="filter-active-pill">
+            <span class="material-symbols-outlined" style="font-size:13px;">filter_list</span>
+            {{ filter_type|title }} view
+        </span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm mb-8 overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-slate-400 text-base">tune</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Filter &amp; Date Range
+            </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'sales_report_excel' %}?{{ request.GET.urlencode }}"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wide text-slate-600 hover:border-slate-400 hover:text-black transition-all">
+                <span class="material-symbols-outlined text-sm">download</span>
+                Excel
+            </a>
+
+            <a href="{% url 'sales_report_pdf' %}?{{ request.GET.urlencode }}"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all">
+                <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+                PDF
+            </a>
+        </div>
+    </div>
+
+    <form method="GET" action="{% url 'sales_report' %}" class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+
+            {# ── Period select ── #}
+            <div class="lg:col-span-1">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Period</label>
+                <div class="relative">
+                    <select name="filter" class="filter-input appearance-none pr-9 cursor-pointer">
+                        <option value="daily"   {% if filter_type == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly"  {% if filter_type == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if filter_type == 'monthly' or not filter_type %}selected{% endif %}>Monthly</option>
+                        <option value="yearly"  {% if filter_type == 'yearly' %}selected{% endif %}>Yearly</option>
+                        <option value="custom"  {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-base">expand_more</span>
+                </div>
+            </div>
+
+            {# ── Start date ── #}
+            <div class="lg:col-span-1">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Start Date</label>
+                <input
+                    type="date"
+                    name="start_date"
+                    value="{{ request.GET.start_date }}"
+                    class="filter-input"
+                >
+            </div>
+
+            {# ── End date ── #}
+            <div class="lg:col-span-1">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">End Date</label>
+                <input
+                    type="date"
+                    name="end_date"
+                    value="{{ request.GET.end_date }}"
+                    class="filter-input"
+                >
+            </div>
+
+            {# ── Apply button ── #}
+            <div class="lg:col-span-1">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-transparent mb-2 select-none">Apply</label>
+                <button
+                    type="submit"
+                    class="w-full flex items-center justify-center gap-2 py-[10px] bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 active:scale-95 transition-all"
+                >
+                    <span class="material-symbols-outlined text-base">search</span>
+                    Apply Filter
+                </button>
+            </div>
+
+            {# ── Clear button ── #}
+            <div class="lg:col-span-1">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-transparent mb-2 select-none">Clear</label>
+                <a
+                    href="{% url 'sales_report' %}"
+                    class="w-full flex items-center justify-center gap-2 py-[10px] border border-slate-200 bg-white text-slate-500 rounded-xl text-xs font-black uppercase tracking-wide hover:border-slate-400 hover:text-black transition-all"
+                >
+                    <span class="material-symbols-outlined text-base">close</span>
+                    Clear
+                </a>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+    {# Total Orders #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Orders</p>
+            <span class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500" style="font-size:16px;">receipt_long</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">{{ total_orders }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-sky-500">bar_chart</span>
+            <span class="text-[11px] font-bold text-sky-500">Orders placed</span>
+        </div>
+    </div>
+
+    {# Total Revenue #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Revenue</p>
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-500" style="font-size:16px;">currency_rupee</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ total_revenue|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-emerald-500">trending_up</span>
+            <span class="text-[11px] font-bold text-emerald-500">Gross revenue</span>
+        </div>
+    </div>
+
+    {# Net Revenue #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Net Revenue</p>
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-600" style="font-size:16px;">account_balance_wallet</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ net_revenue|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+            <span class="text-[11px] font-bold text-emerald-600">After deductions</span>
+        </div>
+    </div>
+
+    {# Total Discounts #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Discounts</p>
+            <span class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-500" style="font-size:16px;">discount</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ total_discount|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-amber-500">info</span>
+            <span class="text-[11px] font-bold text-amber-500">All discounts</span>
+        </div>
+    </div>
+
+    {# Offer Discounts #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Offer Discounts</p>
+            <span class="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-violet-500" style="font-size:16px;">local_offer</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ total_offer_discount|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-violet-400">sell</span>
+            <span class="text-[11px] font-bold text-violet-400">Product offers</span>
+        </div>
+    </div>
+
+    {# Coupon Discounts #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Coupon Discounts</p>
+            <span class="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-orange-500" style="font-size:16px;">confirmation_number</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ total_coupon_discount|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-orange-400">redeem</span>
+            <span class="text-[11px] font-bold text-orange-400">Coupon savings</span>
+        </div>
+    </div>
+
+    {# Cancelled Amount #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cancelled Amount</p>
+            <span class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-400" style="font-size:16px;">cancel</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ cancelled_amount|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            {% if cancelled_amount %}
+            <span class="material-symbols-outlined text-sm text-red-400">error</span>
+            <span class="text-[11px] font-bold text-red-400">Needs review</span>
+            {% else %}
+            <span class="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
+            <span class="text-[11px] font-bold text-emerald-500">None</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Returned Amount #}
+    <div class="metric-card bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Returned Amount</p>
+            <span class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500" style="font-size:16px;">assignment_return</span>
+            </span>
+        </div>
+        <p class="text-3xl font-black tracking-tight text-slate-900">₹{{ returned_amount|floatformat:2 }}</p>
+        <div class="mt-2 flex items-center gap-1.5">
+            {% if returned_amount %}
+            <span class="material-symbols-outlined text-sm text-slate-400">undo</span>
+            <span class="text-[11px] font-bold text-slate-400">Refunded</span>
+            {% else %}
+            <span class="material-symbols-outlined text-sm text-emerald-500">check_circle</span>
+            <span class="text-[11px] font-bold text-emerald-500">None</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 mb-8">
+    
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Revenue Analytics
+            </p>
+            <h3 class="text-lg font-black tracking-tight text-slate-900 mt-1">
+                Sales Trend
+            </h3>
+        </div>
+    </div>
+
+    <div class="h-[350px]">
+        <canvas id="salesChart"></canvas>
+    </div>
+
+</div>
+
+
+
+<div class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+
+    {# Table header bar #}
+    <div class="px-6 py-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-slate-400 text-base">table_rows</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Order Breakdown</span>
+            {% if orders %}
+            <span class="ml-2 px-2.5 py-0.5 bg-slate-100 rounded-full text-[10px] font-black text-slate-500">{{ total_orders }} orders</span>
+            {% endif %}
+        </div>
+        {% if filter_type %}
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Filtered by: <span class="text-slate-700 font-black">{{ filter_type|title }}</span>
+        </span>
+        {% endif %}
+    </div>
+
+    {% if orders %}
+
+    {# ── Scrollable table ── #}
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[860px]">
+            <thead>
+                <tr class="border-b border-slate-100">
+                    <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Order ID</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Customer</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Payment Method</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Payment Status</th>
+                    <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Order Status</th>
+                    <th class="text-right px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Final Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                {% for order in page_obj %}
+                <tr class="table-row">
+
+                    {# ── Order ID ── #}
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-black text-slate-900 tracking-tight">#{{ order.order_id }}</span>
+                    </td>
+
+                    {# ── Customer ── #}
+                    <td class="px-4 py-4">
+                        <p class="text-sm font-bold text-slate-800 leading-tight truncate max-w-[160px]">
+                            {{ order.user.full_name|default:order.user.email }}
+                        </p>
+                        {% if order.user.full_name %}
+                        <p class="text-[11px] font-medium text-slate-400 mt-0.5 truncate max-w-[160px]">
+                            {{ order.user.email }}
+                        </p>
+                        {% endif %}
+                    </td>
+
+                    {# ── Date ── #}
+                    <td class="px-4 py-4">
+                        <span class="text-xs font-semibold text-slate-500 whitespace-nowrap">
+                            {{ order.created_at|date:"M d, Y" }}
+                        </span>
+                        <p class="text-[10px] font-medium text-slate-400 mt-0.5 whitespace-nowrap">
+                            {{ order.created_at|date:"h:i A" }}
+                        </p>
+                    </td>
+
+                    {# ── Payment Method ── #}
+                    <td class="px-4 py-4">
+                        <div class="flex items-center gap-1.5">
+                            {% with pm=order.payment_method|lower %}
+                            {% if pm == 'cod' or pm == 'cash_on_delivery' %}
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:14px;">payments</span>
+                            {% elif pm == 'razorpay' or pm == 'online' %}
+                                <span class="material-symbols-outlined text-sky-400" style="font-size:14px;">credit_card</span>
+                            {% elif pm == 'wallet' %}
+                                <span class="material-symbols-outlined text-violet-400" style="font-size:14px;">account_balance_wallet</span>
+                            {% else %}
+                                <span class="material-symbols-outlined text-slate-300" style="font-size:14px;">help</span>
+                            {% endif %}
+                            {% endwith %}
+                            <span class="text-xs font-bold text-slate-600">{{ order.payment_method|upper }}</span>
+                        </div>
+                    </td>
+
+                    {# ── Payment Status ── #}
+                    <td class="px-4 py-4">
+                        {% with ps=order.payment_status|lower %}
+                        <span class="status-badge
+                            {% if ps == 'paid' or ps == 'completed' %}pay-paid
+                            {% elif ps == 'pending' %}pay-pending
+                            {% elif ps == 'failed' %}pay-failed
+                            {% elif ps == 'refunded' %}pay-refunded
+                            {% else %}pay-pending{% endif %}">
+                            {{ order.payment_status|title }}
+                        </span>
+                        {% endwith %}
+                    </td>
+
+                    {# ── Order Status ── #}
+                    <td class="px-4 py-4">
+                        {% with s=order.status %}
+                        <span class="status-badge
+                            {% if s == 'pending' %}status-pending
+                            {% elif s == 'shipped' %}status-shipped
+                            {% elif s == 'out_for_delivery' %}status-out_for_delivery
+                            {% elif s == 'delivered' %}status-delivered
+                            {% elif s == 'cancelled' %}status-cancelled
+                            {% elif s == 'returned' %}status-returned
+                            {% else %}status-returned{% endif %}">
+                            {% if s == 'pending' %}<span class="material-symbols-outlined" style="font-size:11px;">schedule</span>{% endif %}
+                            {% if s == 'shipped' %}<span class="material-symbols-outlined" style="font-size:11px;">local_shipping</span>{% endif %}
+                            {% if s == 'out_for_delivery' %}<span class="material-symbols-outlined" style="font-size:11px;">delivery_dining</span>{% endif %}
+                            {% if s == 'delivered' %}<span class="material-symbols-outlined" style="font-size:11px;">check_circle</span>{% endif %}
+                            {% if s == 'cancelled' %}<span class="material-symbols-outlined" style="font-size:11px;">cancel</span>{% endif %}
+                            {% if s == 'returned' %}<span class="material-symbols-outlined" style="font-size:11px;">undo</span>{% endif %}
+                            {{ s|title|cut:"_" }}
+                        </span>
+                        {% endwith %}
+                    </td>
+
+                    {# ── Final Total ── #}
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-black text-slate-900">₹{{ order.final_total|floatformat:2 }}</span>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            {# ── Table Footer: Summary Row ── #}
+            <tfoot>
+                <tr class="border-t-2 border-slate-100 bg-slate-50/60">
+                    <td colspan="6" class="px-6 py-4">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Total — {{ total_orders }} Orders
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-base font-black text-slate-900">₹{{ net_revenue|floatformat:2 }}</span>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Net Revenue</p>
+                    </td>
+                </tr>
+            </tfoot>
+       </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="p-6 md:p-8 border-t border-slate-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </p>
+
+        <div class="flex gap-2">
+
+            {% if page_obj.has_previous %}
+                <a href="?filter={{ filter_type }}&page={{ page_obj.previous_page_number }}"
+                class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-lg border border-slate-100 material-symbols-outlined text-sm hover:bg-black hover:text-white transition-all">
+                    chevron_left
+                </a>
+            {% endif %}
+
+            <div class="flex gap-1">
+                {% for num in page_obj.paginator.page_range %}
+
+                    {% if page_obj.number == num %}
+                        <span class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-black text-white text-xs font-black">
+                            {{ num }}
+                        </span>
+
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?filter={{ filter_type }}&page={{ num }}"
+                        class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-lg border border-slate-100 text-xs font-black hover:bg-slate-50 transition-all">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_next %}
+                <a href="?filter={{ filter_type }}&page={{ page_obj.next_page_number }}"
+                class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-lg border border-slate-100 material-symbols-outlined text-sm hover:bg-black hover:text-white transition-all">
+                    chevron_right
+                </a>
+            {% endif %}
+
+        </div>
+
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    <div class="flex flex-col items-center justify-center py-24 px-6 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
+            <span class="material-symbols-outlined text-slate-400 text-3xl">trending_up</span>
+        </div>
+        <h3 class="text-base font-black uppercase tracking-tight text-slate-800 mb-2">No Sales Data Found</h3>
+        {% if filter_type or request.GET.start_date or request.GET.end_date %}
+        <p class="text-sm font-medium text-slate-400 mb-6 max-w-xs">
+            No orders match the selected filter. Try a different period or clear the filters.
+        </p>
+        <a href="{% url 'sales_report' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-wide hover:bg-slate-800 transition-all">
+            <span class="material-symbols-outlined text-sm">close</span>
+            Clear Filters
+        </a>
+        {% else %}
+        <p class="text-sm font-medium text-slate-400 max-w-xs">
+            Sales data will appear here once orders are placed in the store.
+        </p>
+        {% endif %}
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const chartLabels = JSON.parse('{{ chart_labels|escapejs }}');
+    const chartValues = JSON.parse('{{ chart_values|escapejs }}');
+
+    const ctx = document.getElementById('salesChart');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Revenue',
+                data: chartValues,
+                tension: 0.35,
+                fill: true,
+                borderWidth: 3,
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15, 23, 42, 0.08)',
+                pointBackgroundColor: '#0f172a',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.18)'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+
+{% endblock %}

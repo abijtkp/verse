@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>VERSE Sales Report</title>
+
+    <style>
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 12px;
+            color: #111;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .metrics {
+            margin-bottom: 25px;
+        }
+
+        .metrics table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .metrics td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        table.orders {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.orders th {
+            background: #111;
+            color: white;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        table.orders td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .right {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>VERSE Sales Report</h1>
+
+    <p class="subtitle">
+        {{ filter_type|title }} Report
+    </p>
+
+    <div class="metrics">
+        <table>
+            <tr>
+                <td>Total Orders</td>
+                <td>{{ total_orders }}</td>
+            </tr>
+
+            <tr>
+                <td>Total Revenue</td>
+                <td>₹{{ total_revenue }}</td>
+            </tr>
+
+            <tr>
+                <td>Net Revenue</td>
+                <td>₹{{ net_revenue }}</td>
+            </tr>
+
+            <tr>
+                <td>Total Discounts</td>
+                <td>₹{{ total_discount }}</td>
+            </tr>
+
+            <tr>
+                <td>Offer Discounts</td>
+                <td>₹{{ total_offer_discount }}</td>
+            </tr>
+
+            <tr>
+                <td>Coupon Discounts</td>
+                <td>₹{{ total_coupon_discount }}</td>
+            </tr>
+
+            <tr>
+                <td>Cancelled Amount</td>
+                <td>₹{{ cancelled_amount }}</td>
+            </tr>
+
+            <tr>
+                <td>Returned Amount</td>
+                <td>₹{{ returned_amount }}</td>
+            </tr>
+
+            <tr>
+                <td>Products Sold</td>
+                <td>{{ products_sold }}</td>
+            </tr>
+
+            <tr>
+                <td>Average Order Value</td>
+                <td>₹{{ average_order_value|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="orders">
+
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th class="right">Total</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_id }}</td>
+
+                <td>
+                    {{ order.user.email }}
+                </td>
+
+                <td>
+                    {{ order.created_at|date:"d M Y" }}
+                </td>
+
+                <td>
+                    {{ order.status|title }}
+                </td>
+
+                <td class="right">
+                    ₹{{ order.final_total }}
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</body>
+</html>
