@@ -798,9 +798,51 @@
                     <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-3">
                         <span>{{ product.total_colors }} Colour{{ product.total_colors|pluralize }}</span>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-base font-black">₹{{ product.representative_variant.price }}</span>
-                        <span class="material-symbols-outlined icon-sm text-slate-300 group-hover:text-black transition-colors">arrow_forward</span>
+                    <div class="flex items-end justify-between gap-2">
+
+                        <div class="flex flex-col">
+
+                            {% if product.offer_data.discount_amount > 0 %}
+
+                                <div class="flex items-center gap-2 flex-wrap">
+
+                                    <span class="text-base md:text-lg font-black text-black">
+                                        ₹{{ product.offer_data.final_price|floatformat:0 }}
+                                    </span>
+
+                                    <span class="text-xs font-bold text-slate-400 line-through">
+                                        ₹{{ product.offer_data.base_price|floatformat:0 }}
+                                    </span>
+
+                                </div>
+
+                                <div class="flex items-center gap-2 mt-1 flex-wrap">
+
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full bg-black text-white text-[9px] font-black uppercase tracking-[0.14em]">
+                                        Save ₹{{ product.offer_data.discount_amount|floatformat:0 }}
+                                    </span>
+
+                                    {% if product.offer_data.applied_offer %}
+                                    <span class="text-[9px] font-black uppercase tracking-[0.14em] text-green-600">
+                                        {{ product.offer_data.applied_offer.offer_name }}
+                                    </span>
+                                    {% endif %}
+
+                                </div>
+
+                            {% else %}
+
+                                <span class="text-base md:text-lg font-black text-black">
+                                    ₹{{ product.offer_data.base_price|floatformat:0 }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <span class="material-symbols-outlined icon-sm text-slate-300 group-hover:text-black transition-colors">
+                            arrow_forward
+                        </span>
                     </div>
                 </div>
             </a>

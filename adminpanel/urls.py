@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import order_views, coupon_views
+from .views import order_views, coupon_views, offer_views
 
 urlpatterns = [
     path('', views.admin_dashboard_view, name='admin_dashboard'),
@@ -42,5 +42,10 @@ urlpatterns = [
     path('coupons/add/', coupon_views.add_coupon_view, name='add_coupon'),
     path('coupons/edit/<int:coupon_id>/', coupon_views.edit_coupon_view, name='edit_coupon'),
     path('coupons/toggle-status/<int:coupon_id>/', coupon_views.toggle_coupon_status_view, name='toggle_coupon_status'),
+    
+    path('offers/', offer_views.offer_list_view, name='offer_list'),
+    path('offers/add/', offer_views.add_offer_view, name='add_offer'),
+    path('offers/edit/<str:offer_type>/<int:offer_id>/', offer_views.edit_offer_view, name='edit_offer'),
+    path('offers/toggle-status/<str:offer_type>/<int:offer_id>/', offer_views.toggle_offer_status_view, name='toggle_offer_status'),
 
 ]

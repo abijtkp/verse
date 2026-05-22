@@ -6,6 +6,7 @@ from django.contrib import messages
 from accounts.decorators import user_required
 from django.contrib.auth.decorators import login_required
 from .models import Category, Product, Variant, VariantImage
+from offers.utils import calculate_best_offer
 
 
 def product_listing_view(request):
@@ -123,7 +124,9 @@ def product_listing_view(request):
             representative_variant = product.active_variants[0]
 
         if representative_variant:
+            offer_data = calculate_best_offer(representative_variant)
             product.representative_variant = representative_variant
+            product.offer_data = offer_data
             product.total_colors = len(set(v.color for v in product.active_variants))
             product.is_out_of_stock = all(v.stock <= 0 for v in product.active_variants)
 
@@ -199,6 +202,8 @@ def product_detail_view(request, variant_id):
         product__category__is_active=True,
         product__category__is_deleted=False,
     )
+    
+    offer_data = calculate_best_offer(variant)
 
 
     all_color_variants = Variant.objects.filter(
@@ -300,11 +305,11 @@ def product_detail_view(request, variant_id):
 
     context = {
         'variant': variant,
+        'offer_data': offer_data,
         'same_product_variants': same_product_variants,
         'size_variants': size_variants,
         'related_products': related_products,
         'is_in_wishlist': is_in_wishlist,
-       
     }
 
     return render(

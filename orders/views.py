@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from payments.models import Payment, Wallet, WalletTransaction
 import razorpay
 from coupons.models import Coupon, CouponUsage
+from offers.utils import calculate_best_offer
 from django.db import models
 
 
@@ -71,7 +72,11 @@ def apply_coupon_view(request):
         messages.error(request, "Your cart is empty.")
         return redirect('checkout')
 
-    subtotal = sum(item.subtotal for item in cart_items)
+    subtotal = Decimal("0.00")
+
+    for item in cart_items:
+        offer_data = calculate_best_offer(item.variant)
+        subtotal += offer_data["final_price"] * item.quantity
 
     coupon = Coupon.objects.filter(
         code__iexact=coupon_code,
@@ -213,7 +218,17 @@ def checkout_view(request):
 
     default_address = addresses.filter(is_default=True).first()
 
-    subtotal = sum(item.subtotal for item in cart_items)
+    subtotal = Decimal('0.00')
+
+    for item in cart_items:
+        offer_data = calculate_best_offer(item.variant)
+
+        item.offer_data = offer_data
+        item.discounted_price = offer_data['final_price']
+        item.offer_discount = offer_data['discount_amount']
+        item.discounted_subtotal = item.discounted_price * item.quantity
+
+        subtotal += item.discounted_subtotal
 
     discount = Decimal('0.00')
     shipping_charge = Decimal('0.00')
@@ -241,15 +256,18 @@ def checkout_view(request):
     final_total = subtotal + tax + shipping_charge - discount
     
     for item in cart_items:
+
         item_discount = Decimal('0.00')
-        
+
+        item_subtotal = item.discounted_subtotal
+
         if subtotal > 0 and discount > 0:
-            item_discount = (item.subtotal / subtotal) * discount
+            item_discount = (item_subtotal / subtotal) * discount
             item_discount = item_discount.quantize(Decimal('0.01'))
-            
+
         item.discount_share = item_discount
-        item.final_price_after_discount = item.subtotal - item_discount    
-    
+        item.final_price_after_discount = item_subtotal - item_discount
+        
     available_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=timezone.now(),
@@ -395,7 +413,17 @@ def place_order_view(request):
             return redirect('cart_view')
 
 
-    subtotal = sum(item.subtotal for item in cart_items)
+    subtotal = Decimal('0.00')
+
+    for item in cart_items:
+        offer_data = calculate_best_offer(item.variant)
+
+        item.original_subtotal = item.variant.price * item.quantity
+        item.offer_discount = offer_data['discount_amount'] * item.quantity
+        item.discounted_price = offer_data['final_price']
+        item.discounted_subtotal = item.discounted_price * item.quantity
+
+        subtotal += item.discounted_subtotal
 
     discount = Decimal('0.00')
     shipping_charge = Decimal('0.00')
@@ -463,16 +491,17 @@ def place_order_view(request):
     item_pricing_data = {}
 
     for item in cart_items:
-        original_item_total = item.subtotal
-        offer_discount = Decimal('0.00')
+        original_item_total = item.original_subtotal
+        offer_discount = item.offer_discount
+        discounted_item_total = item.discounted_subtotal
 
         coupon_discount_share = Decimal('0.00')
 
         if subtotal > 0 and discount > 0:
-            coupon_discount_share = (original_item_total / subtotal) * discount
+            coupon_discount_share = (discounted_item_total / subtotal) * discount
             coupon_discount_share = coupon_discount_share.quantize(Decimal('0.01'))
 
-        final_item_total = original_item_total - coupon_discount_share
+        final_item_total = discounted_item_total - coupon_discount_share
 
         item_pricing_data[item.variant_id] = {
             "original_item_total": original_item_total,
@@ -496,7 +525,7 @@ def place_order_view(request):
             sku=variant.sku,
             price=variant.price,
             quantity=item.quantity,
-            item_total=item.subtotal,
+            item_total=item.discounted_subtotal,
             original_item_total=item_pricing_data[item.variant_id]["original_item_total"],
             offer_discount=item_pricing_data[item.variant_id]["offer_discount"],
             coupon_discount_share=item_pricing_data[item.variant_id]["coupon_discount_share"],

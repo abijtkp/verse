@@ -1,0 +1,292 @@
+{% extends 'adminpanel/admin_base.html' %}
+{% load static %}
+
+{% block title %}VERSE | Add Product Offer{% endblock %}
+
+{% block page_title %}
+<div class="flex items-center gap-4">
+    <a href="{% url 'product_offer_list' %}" class="text-slate-400 hover:text-black transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <span class="text-xl font-black italic uppercase tracking-tight">Add Product Offer</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-140px)] flex items-start lg:items-center justify-center px-3 sm:px-6 py-6 sm:py-10">
+<form method="POST" action="{% url 'add_product_offer' %}" class="w-full max-w-3xl" id="add-product-offer-form">
+    {% csrf_token %}
+
+    <!-- Action Buttons Row -->
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mb-5">
+        <a href="{% url 'product_offer_list' %}"
+           class="w-full sm:w-auto text-center px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all">
+            Cancel
+        </a>
+
+        <button type="submit"
+                class="w-full sm:w-auto px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-white bg-black hover:opacity-90 transition-all shadow-xl shadow-black/10">
+            Create Offer
+        </button>
+    </div>
+
+    <!-- Modal-style Card -->
+    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+
+        <!-- Card Header -->
+        <div class="px-5 sm:px-8 md:px-10 pt-10 pb-6 border-b border-slate-50">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-slate-900 text-2xl">local_offer</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black tracking-tight text-slate-900">Offer Details</h3>
+                    <p class="text-sm font-medium text-slate-400 mt-0.5">
+                        Fill in the product offer configuration below.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Fields -->
+        <div class="px-5 sm:px-8 md:px-10 py-10 space-y-8">
+
+
+            <!-- Offer Name -->
+            <div>
+                <label for="offer-name" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Offer Name <span class="text-red-400">*</span>
+                </label>
+
+                <input type="text"
+                    id="offer-name"
+                    name="offer_name"
+                    value="{{ form_data.offer_name|default:'' }}"
+                    placeholder="e.g. Summer Sale"
+                    class="coupon-field w-full bg-white border {% if field_errors.offer_name %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-slate-300">
+
+                {% if field_errors.offer_name %}
+                    <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">
+                        {{ field_errors.offer_name }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Product Select -->
+            <div>
+                <label for="offer-product" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Product <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                    <select id="offer-product"
+                            name="product"
+                            class="coupon-field w-full bg-white border {% if field_errors.product %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 pl-5 pr-10 text-sm font-semibold focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none cursor-pointer">
+                        <option value="" disabled {% if not form_data.product %}selected{% endif %}>Select a product</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}"
+                                {% if form_data.product|stringformat:"s" == product.id|stringformat:"s" %}selected{% endif %}>
+                                {{ product.product_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">expand_more</span>
+                </div>
+                {% if field_errors.product %}
+                    <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.product }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Discount Percentage -->
+            <!-- Discount Configuration -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                <!-- Discount Type -->
+                <div>
+                    <label for="offer-discount-type" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Discount Type <span class="text-red-400">*</span>
+                    </label>
+
+                    <div class="relative">
+                        <select id="offer-discount-type"
+                                name="discount_type"
+                                class="coupon-field w-full bg-white border {% if field_errors.discount_type %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 pl-5 pr-10 text-sm font-semibold focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none cursor-pointer">
+
+                            <option value="">Select Type</option>
+
+                            <option value="percentage"
+                                {% if form_data.discount_type == 'percentage' %}selected{% endif %}>
+                                Percentage
+                            </option>
+
+                            <option value="flat"
+                                {% if form_data.discount_type == 'flat' %}selected{% endif %}>
+                                Flat Amount
+                            </option>
+                        </select>
+
+                        <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">
+                            expand_more
+                        </span>
+                    </div>
+
+                    {% if field_errors.discount_type %}
+                        <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">
+                            {{ field_errors.discount_type }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Discount Value -->
+                <div>
+                    <label for="offer-discount-value" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Discount Value <span class="text-red-400">*</span>
+                    </label>
+
+                    <input type="number"
+                        id="offer-discount-value"
+                        name="discount_value"
+                        value="{{ form_data.discount_value|default:'' }}"
+                        placeholder="e.g. 20"
+                        step="0.01"
+                        min="0"
+                        class="coupon-field w-full bg-white border {% if field_errors.discount_value %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-slate-300">
+
+                    {% if field_errors.discount_value %}
+                        <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">
+                            {{ field_errors.discount_value }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Maximum Discount -->
+            <div id="maximum-discount-wrapper">
+                <label for="offer-maximum-discount" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    Maximum Discount Amount
+                </label>
+
+                <input type="number"
+                    id="offer-maximum-discount"
+                    name="maximum_discount_amount"
+                    value="{{ form_data.maximum_discount_amount|default:'' }}"
+                    placeholder="e.g. 500"
+                    step="0.01"
+                    min="0"
+                    class="coupon-field w-full bg-white border {% if field_errors.maximum_discount_amount %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-slate-300">
+
+                {% if field_errors.maximum_discount_amount %}
+                    <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">
+                        {{ field_errors.maximum_discount_amount }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Valid From + Valid To Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="offer-valid-from" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Valid From <span class="text-red-400">*</span>
+                    </label>
+                    <input type="date"
+                           id="offer-valid-from"
+                           name="valid_from"
+                           value="{{ form_data.valid_from|default:'' }}"
+                           class="coupon-field w-full bg-white border {% if field_errors.valid_from %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
+                    {% if field_errors.valid_from %}
+                        <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_from }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="offer-valid-to" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Valid To <span class="text-red-400">*</span>
+                    </label>
+                    <input type="date"
+                           id="offer-valid-to"
+                           name="valid_to"
+                           value="{{ form_data.valid_to|default:'' }}"
+                           class="coupon-field w-full bg-white border {% if field_errors.valid_to %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
+                    {% if field_errors.valid_to %}
+                        <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_to }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Is Active Toggle -->
+            <div class="flex items-center justify-between p-5 bg-slate-50 rounded-2xl">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-900">Active</p>
+                    <p class="text-[9px] font-medium text-slate-400 mt-0.5">Offer is applied to the product immediately</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox"
+                           name="is_active"
+                           id="offer-is-active"
+                           class="sr-only peer"
+                           {% if form_data %}
+                               {% if form_data.is_active %}checked{% endif %}
+                           {% else %}
+                               checked
+                           {% endif %}>
+                    <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-black after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+            </div>
+
+        </div>
+    </div>
+</form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const form = document.getElementById('add-product-offer-form');
+        if (!form) return;
+
+        const fields = form.querySelectorAll('.coupon-field');
+
+        fields.forEach(function (field) {
+            field.addEventListener('input', function () {
+                const wrapper = field.closest('div');
+                if (!wrapper) return;
+
+                const errorText = wrapper.querySelector('[data-inline-error]');
+                if (errorText) errorText.remove();
+
+                field.classList.remove('border-red-500');
+                field.classList.add('border-slate-200');
+            });
+
+            // Also clear errors on change for select elements
+            field.addEventListener('change', function () {
+                const wrapper = field.closest('div');
+                if (!wrapper) return;
+
+                const errorText = wrapper.querySelector('[data-inline-error]');
+                if (errorText) errorText.remove();
+
+                field.classList.remove('border-red-500');
+                field.classList.add('border-slate-200');
+            });
+        });
+    })();
+
+    const discountTypeField = document.getElementById('offer-discount-type');
+    const maximumDiscountWrapper = document.getElementById('maximum-discount-wrapper');
+
+    function toggleMaximumDiscountField() {
+        if (!discountTypeField || !maximumDiscountWrapper) return;
+
+        if (discountTypeField.value === 'flat') {
+            maximumDiscountWrapper.style.display = 'none';
+        } else {
+            maximumDiscountWrapper.style.display = 'block';
+        }
+    }
+
+    toggleMaximumDiscountField();
+
+    discountTypeField.addEventListener('change', toggleMaximumDiscountField);
+</script>
+{% endblock %}

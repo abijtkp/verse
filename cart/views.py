@@ -7,6 +7,7 @@ from accounts.decorators import user_required
 from products.models import Variant
 from .models import Cart, CartItem, Wishlist
 from userprofile.models import Address
+from offers.utils import calculate_best_offer
 
 MAX_CART_QUANTITY = 5
 
@@ -21,6 +22,16 @@ def cart_view(request):
         .prefetch_related('variant__images')
         .order_by('-created_at')
     )
+    
+    cart_total = 0
+
+    for item in cart_items:
+        item.offer_data = calculate_best_offer(item.variant)
+        item.discounted_price = item.offer_data['final_price']
+        item.discount_amount = item.offer_data['discount_amount']
+        item.discounted_subtotal = item.discounted_price * item.quantity
+
+        cart_total += item.discounted_subtotal
 
     has_address = Address.objects.filter(user=request.user).exists() 
     
@@ -28,6 +39,7 @@ def cart_view(request):
         'cart': cart,
         'cart_items': cart_items,
         'has_address': has_address,
+        'cart_total': cart_total,
     })
 
 
@@ -117,11 +129,20 @@ def increase_cart_item(request, item_id):
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         cart = cart_item.cart
+
+        offer_data = calculate_best_offer(cart_item.variant)
+        discounted_subtotal = offer_data['final_price'] * cart_item.quantity
+
+        cart_total = sum(
+            calculate_best_offer(item.variant)['final_price'] * item.quantity
+            for item in cart.items.all()
+        )
+
         return JsonResponse({
             'success': True,
             'quantity': cart_item.quantity,
-            'item_subtotal': cart_item.subtotal,
-            'cart_total': cart.total_price,
+            'item_subtotal': discounted_subtotal,
+            'cart_total': cart_total,
             'cart_count': cart.total_items,
             'max_reached': cart_item.quantity >= min(MAX_CART_QUANTITY, cart_item.variant.stock),
             'min_reached': cart_item.quantity <= 1,
@@ -152,12 +173,24 @@ def decrease_cart_item(request, item_id):
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         cart = Cart.objects.get(user=request.user)
+
+        if deleted:
+            item_subtotal = 0
+        else:
+            offer_data = calculate_best_offer(cart_item.variant)
+            item_subtotal = offer_data['final_price'] * cart_item.quantity
+
+        cart_total = sum(
+            calculate_best_offer(item.variant)['final_price'] * item.quantity
+            for item in cart.items.all()
+        )
+
         return JsonResponse({
             'success': True,
             'deleted': deleted,
             'quantity': 0 if deleted else cart_item.quantity,
-            'item_subtotal': 0 if deleted else cart_item.subtotal,
-            'cart_total': cart.total_price,
+            'item_subtotal': item_subtotal,
+            'cart_total': cart_total,
             'cart_count': cart.total_items,
             'max_reached': False if deleted else (cart_item.quantity >= min(MAX_CART_QUANTITY, cart_item.variant.stock)),
             'min_reached': True if deleted else (cart_item.quantity <= 1),
