@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-
+import uuid
 
 
 class CustomUserManager(BaseUserManager):
@@ -29,6 +29,9 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True")
 
         return self.create_user(email, password, **extra_fields)
+    
+def generate_referral_code():
+        return f"VERSE{uuid.uuid4().hex[:8].upper()}"        
 
 class User(AbstractUser):
     username = None  
@@ -41,6 +44,9 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True) 
     is_blocked = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
+    referral_code = models.CharField(max_length=20, unique=True, blank=True,null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    referral_reward_given = models.BooleanField(default=False)
     
 
     AUTH_PROVIDER_CHOICES = [
@@ -58,6 +64,17 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
     
     objects = CustomUserManager()
+    
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            code = generate_referral_code()
+
+            while User.objects.filter(referral_code=code).exists():
+                code = generate_referral_code()
+
+            self.referral_code = code
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email

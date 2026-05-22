@@ -22,11 +22,13 @@ def signup_view(request):
         password = request.POST.get('password', '').strip()
         confirm_password = request.POST.get('confirm_password', '').strip()
         terms = request.POST.get('terms')
+        referral_code = request.POST.get('referral_code', '').strip().upper()
 
         form_data = {
             'email': email,
             'full_name': full_name,
-            'terms':terms
+            'terms':terms,
+            'referral_code': referral_code,
             }
         
         field_errors = {}
@@ -47,6 +49,18 @@ def signup_view(request):
             existing_user = User.objects.filter(email=email).first()
             if existing_user and existing_user.is_verified:
                 field_errors['email'] = "An account with this email already exists."
+                
+        referrer = None
+
+        if referral_code:
+            referrer = User.objects.filter(
+                referral_code=referral_code,
+                is_verified=True,
+                is_blocked=False
+            ).first()
+
+            if not referrer:
+                field_errors['referral_code'] = "Invalid referral code."        
 
         password_errors = []
         
@@ -76,6 +90,10 @@ def signup_view(request):
         if existing_user and not existing_user.is_verified:
             existing_user.full_name = full_name
             existing_user.set_password(password)
+
+            if referrer and existing_user.referred_by is None:
+                existing_user.referred_by = referrer
+
             existing_user.save()
             user = existing_user
         else:
@@ -84,6 +102,7 @@ def signup_view(request):
                 full_name=full_name,
                 password=password,
                 is_verified=False,
+                referred_by=referrer,
             )
 
         request.session['otp_user_id'] = user.id

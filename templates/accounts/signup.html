@@ -104,7 +104,28 @@
 
 
 
+        
+        <div class="space-y-1">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+            Referral Code (Optional)
+          </label>
+          
+          <input
+          type="text"
+          name="referral_code"
+          value="{{ form_data.referral_code|default:'' }}"
+          class="w-full h-11 px-4 rounded-xl border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white transition-all outline-none {% if field_errors.referral_code %}border-red-400 focus:ring-red-400{% endif %}"
+          placeholder="Enter referral code"/>
+          
+          {% if field_errors.referral_code %}
+          <p class="field-error text-xs text-red-500 font-semibold ml-1 mt-1">
+            {{ field_errors.referral_code }}
+          </p>
+          {% endif %}
+        </div>
+        
         <!-- change 3: password fields intentionally not repopulated (security best practice) -->
+
         <!-- change 4: per-field errors shown below each password input -->
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">

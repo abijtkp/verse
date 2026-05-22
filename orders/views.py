@@ -18,6 +18,7 @@ from products.models import Variant
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from payments.models import Payment, Wallet, WalletTransaction
+from payments.utils import reward_referrer_after_first_order
 import razorpay
 from coupons.models import Coupon, CouponUsage
 from offers.utils import calculate_best_offer
@@ -628,6 +629,9 @@ def place_order_view(request):
 
         request.session.pop('applied_coupon_code', None)
         request.session.pop('coupon_discount', None)
+        
+        reward_referrer_after_first_order(order)
+        
         messages.success(request, "Order placed successfully using wallet.")
         return redirect('order_success', order_id=order.order_id)    
         
@@ -653,6 +657,8 @@ def place_order_view(request):
 
         return redirect('razorpay_payment', order_id=order.order_id)
 
+    reward_referrer_after_first_order(order)
+    
     messages.success(request, "Order placed successfully.")
     return redirect('order_success', order_id=order.order_id)
 
@@ -761,6 +767,8 @@ def verify_razorpay_payment(request):
             del request.session['buy_now_variant_id']
         elif cart:
             CartItem.objects.filter(cart=cart).delete()
+        
+        reward_referrer_after_first_order(order)    
 
         messages.success(request, "Payment completed successfully.")
         return redirect('order_success', order_id=order.order_id)
