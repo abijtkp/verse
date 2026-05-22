@@ -137,32 +137,18 @@ def add_coupon_view(request):
 
 
         try:
-
-            valid_from_date = datetime.strptime(
-                valid_from,
-                "%Y-%m-%d"
-            ).date()
-
             valid_from_obj = timezone.make_aware(
-                datetime.combine(valid_from_date, time.min)
+                datetime.strptime(valid_from, "%Y-%m-%dT%H:%M")
             )
-
         except:
-            field_errors['valid_from'] = 'Enter a valid start date.'
+            field_errors['valid_from'] = 'Enter a valid start date and time.'
 
         try:
-
-            valid_to_date = datetime.strptime(
-                valid_to,
-                "%Y-%m-%d"
-            ).date()
-
             valid_to_obj = timezone.make_aware(
-                datetime.combine(valid_to_date, time.max)
+                datetime.strptime(valid_to, "%Y-%m-%dT%H:%M")
             )
-
         except:
-            field_errors['valid_to'] = 'Enter a valid expiry date.'
+            field_errors['valid_to'] = 'Enter a valid expiry date and time.'
 
         if 'valid_from' not in field_errors and 'valid_to' not in field_errors:
 
@@ -355,18 +341,11 @@ def edit_coupon_view(request, coupon_id):
             field_errors['valid_from'] = 'Enter a valid start date.'
 
         try:
-
-            valid_to_date = datetime.strptime(
-                valid_to,
-                "%Y-%m-%d"
-            ).date()
-
             valid_to_obj = timezone.make_aware(
-                datetime.combine(valid_to_date, time.max)
+                datetime.strptime(valid_to, "%Y-%m-%dT%H:%M")
             )
-
         except:
-            field_errors['valid_to'] = 'Enter a valid expiry date.'
+            field_errors['valid_to'] = 'Enter a valid expiry date and time.'
 
         if 'valid_from' not in field_errors and 'valid_to' not in field_errors:
 

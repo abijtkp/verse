@@ -303,10 +303,10 @@
                     <label for="edit-offer-valid-from" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid From <span class="text-red-400">*</span>
                     </label>
-                    <input type="date"
+                    <input type="datetime-local"
                            id="edit-offer-valid-from"
                            name="valid_from"
-                           value="{% if form_data.valid_from %}{{ form_data.valid_from }}{% else %}{{ offer.valid_from|date:'Y-m-d' }}{% endif %}"
+                           value="{% if form_data.valid_from %}{{ form_data.valid_from }}{% else %}{{ offer.valid_from|date:'Y-m-d\\TH:i' }} endif %}"
                            class="coupon-field w-full bg-white border {% if field_errors.valid_from %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
                     {% if field_errors.valid_from %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_from }}</p>
@@ -317,10 +317,10 @@
                     <label for="edit-offer-valid-to" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid To <span class="text-red-400">*</span>
                     </label>
-                    <input type="date"
+                    <input type="datetime-local"
                            id="edit-offer-valid-to"
                            name="valid_to"
-                           value="{% if form_data.valid_to %}{{ form_data.valid_to }}{% else %}{{ offer.valid_to|date:'Y-m-d' }}{% endif %}"
+                           value="{% if form_data.valid_to %}{{ form_data.valid_to }}{% else %}{{ offer.valid_to|date:'Y-m-d\\TH:i' }}{% endif %}"
                            class="coupon-field w-full bg-white border {% if field_errors.valid_to %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
                     {% if field_errors.valid_to %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_to }}</p>

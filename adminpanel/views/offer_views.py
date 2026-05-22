@@ -91,19 +91,38 @@ def _validate_offer_form(form_data):
     valid_to_obj = None
 
     try:
-        valid_from_date = datetime.strptime(form_data["valid_from"], "%Y-%m-%d").date()
-        valid_from_obj = timezone.make_aware(datetime.combine(valid_from_date, time.min))
+        valid_from_obj = timezone.make_aware(
+            datetime.strptime(
+                form_data["valid_from"],
+                "%Y-%m-%dT%H:%M"
+            )
+        )
     except:
-        field_errors["valid_from"] = "Enter a valid start date."
+        field_errors["valid_from"] = "Enter a valid start date and time."
 
     try:
-        valid_to_date = datetime.strptime(form_data["valid_to"], "%Y-%m-%d").date()
-        valid_to_obj = timezone.make_aware(datetime.combine(valid_to_date, time.max))
+        valid_to_obj = timezone.make_aware(
+            datetime.strptime(
+                form_data["valid_to"],
+                "%Y-%m-%dT%H:%M"
+            )
+        )
     except:
-        field_errors["valid_to"] = "Enter a valid expiry date."
+        field_errors["valid_to"] = "Enter a valid expiry date and time."
 
-    if valid_from_obj and valid_to_obj and valid_to_obj <= valid_from_obj:
-        field_errors["valid_to"] = "Expiry date must be after start date."
+    if valid_from_obj and valid_to_obj:
+
+        now = timezone.now()
+
+        if valid_from_obj < now:
+            field_errors["valid_from"] = (
+                "Start date and time cannot be in the past."
+            )
+
+        if valid_to_obj <= valid_from_obj:
+            field_errors["valid_to"] = (
+                "Expiry date must be after start date."
+            )
 
     return {
         "field_errors": field_errors,

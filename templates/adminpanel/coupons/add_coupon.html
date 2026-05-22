@@ -156,10 +156,10 @@
                     <label for="coupon-valid-from" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid From <span class="text-red-400">*</span>
                     </label>
-                    <input type="date"
-                           id="coupon-valid-from"
-                           name="valid_from"
-                           value="{{ form_data.valid_from|default:'' }}"
+                    <input type="datetime-local"
+                            id="coupon-valid-from"
+                            name="valid_from"
+                            value="{{ form_data.valid_from|default:'' }}"
                            class="coupon-field w-full bg-white border {% if field_errors.valid_from %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
                     {% if field_errors.valid_from %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_from }}</p>
@@ -170,10 +170,10 @@
                     <label for="coupon-valid-to" class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                         Valid To <span class="text-red-400">*</span>
                     </label>
-                    <input type="date"
-                           id="coupon-valid-to"
-                           name="valid_to"
-                           value="{{ form_data.valid_to|default:'' }}"
+                    <input type="datetime-local"
+                            id="coupon-valid-to"
+                            name="valid_to"
+                            value="{{ form_data.valid_to|default:'' }}"
                            class="coupon-field w-full bg-white border {% if field_errors.valid_to %}border-red-500{% else %}border-slate-200{% endif %} rounded-xl py-4 px-5 text-sm font-medium focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all">
                     {% if field_errors.valid_to %}
                         <p data-inline-error class="text-red-500 text-[10px] font-bold mt-2 uppercase tracking-wide">{{ field_errors.valid_to }}</p>
