@@ -19,7 +19,7 @@ from orders.models import Order, OrderItem
 
 
 def _get_filtered_orders(request):
-    filter_type = request.GET.get('filter', 'daily')
+    filter_type = request.GET.get('filter', 'montly')
     today = timezone.now()
 
     base_orders = Order.objects.exclude(payment_status='failed')

@@ -8,6 +8,7 @@ from products.models import Variant
 from .models import Cart, CartItem, Wishlist
 from userprofile.models import Address
 from offers.utils import calculate_best_offer
+from django.core.paginator import Paginator
 
 MAX_CART_QUANTITY = 5
 
@@ -227,8 +228,17 @@ def wishlist_view(request):
         .order_by('-created_at')
     )
 
+    paginator = Paginator(wishlist_items, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    for item in page_obj:
+        item.offer_data = calculate_best_offer(item.variant)
+
     return render(request, 'cart/wishlist.html', {
-        'wishlist_items': wishlist_items,
+        'wishlist_items': page_obj,
+        'page_obj': page_obj,
+        'total_wishlist_items': wishlist_items.count(),
     })
 
 

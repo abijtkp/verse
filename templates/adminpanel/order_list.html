@@ -18,6 +18,49 @@
     .table-row { transition: background 0.15s ease; }
     .table-row:hover { background: #f8fafc; }
 </style>
+
+<style>
+.admin-pagination > div {
+    margin-top: 0 !important;
+    gap: 10px !important;
+}
+
+.admin-pagination .page-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 10px !important;
+    border: 1.5px solid #e2e8f0 !important;
+
+    background: #fff !important;
+    color: #475569 !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+
+    text-decoration: none !important;
+}
+
+.admin-pagination .page-btn.active {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+}
+
+.admin-pagination .page-btn.disabled {
+    opacity: 0.35 !important;
+    pointer-events: none !important;
+}
+</style>
+
+
 {% endblock %}
 
 {% block content %}
@@ -274,60 +317,20 @@
         </table>
     </div>
 
-    <!-- ===== PAGINATION ===== -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-slate-100">
-        <p class="text-xs font-semibold text-slate-400">
-            Showing
-            <span class="font-black text-slate-600">{{ page_obj.start_index }}</span>
-            to
-            <span class="font-black text-slate-600">{{ page_obj.end_index }}</span>
-            of
-            <span class="font-black text-slate-600">{{ page_obj.paginator.count }}</span>
-            entries
+   <!-- ===== PAGINATION ===== -->
+    {% if page_obj.has_other_pages %}
+    <div class="p-6 border-t border-slate-100 flex flex-col items-center justify-center gap-4">
+
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} orders
         </p>
 
-        <div class="flex items-center gap-1">
-            <!-- Previous -->
-            {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-               class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">
-                <span class="material-symbols-outlined text-sm">chevron_left</span>
-                Prev
-            </a>
-            {% else %}
-            <span class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-300 bg-white border border-slate-100 rounded-xl cursor-not-allowed">
-                <span class="material-symbols-outlined text-sm">chevron_left</span>
-                Prev
-            </span>
-            {% endif %}
-
-            <!-- Page numbers -->
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <span class="w-9 h-9 flex items-center justify-center text-xs font-black text-white bg-black rounded-xl">{{ num }}</span>
-                {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
-                <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-                   class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">{{ num }}</a>
-                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
-                <span class="w-9 h-9 flex items-center justify-center text-xs font-bold text-slate-300">…</span>
-                {% endif %}
-            {% endfor %}
-
-            <!-- Next -->
-            {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-               class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-500 bg-white border border-slate-200 rounded-xl hover:border-slate-400 hover:text-black transition-all">
-                Next
-                <span class="material-symbols-outlined text-sm">chevron_right</span>
-            </a>
-            {% else %}
-            <span class="flex items-center gap-1 px-3 py-2 text-xs font-black text-slate-300 bg-white border border-slate-100 rounded-xl cursor-not-allowed">
-                Next
-                <span class="material-symbols-outlined text-sm">chevron_right</span>
-            </span>
-            {% endif %}
+        <div class="admin-pagination">
+            {% include "includes/pagination.html" %}
         </div>
+
     </div>
+    {% endif %}
 
     {% else %}
 

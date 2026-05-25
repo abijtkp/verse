@@ -6,6 +6,48 @@
 {% block page_title %}Offer Management{% endblock %}
 
 {% block content %}
+
+<style>
+.admin-pagination > div {
+    margin-top: 0 !important;
+    gap: 10px !important;
+}
+
+.admin-pagination .page-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 10px !important;
+    border: 1.5px solid #e2e8f0 !important;
+
+    background: #fff !important;
+    color: #475569 !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+
+    text-decoration: none !important;
+}
+
+.admin-pagination .page-btn.active {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+}
+
+.admin-pagination .page-btn.disabled {
+    opacity: 0.35 !important;
+    pointer-events: none !important;
+}
+</style>
+
 <div class="flex flex-col gap-8">
 
     <!-- Header -->
@@ -232,40 +274,18 @@
         </div>
 
         <!-- Pagination -->
-        {% if page_obj.paginator.num_pages > 1 %}
-        <div class="p-5 sm:p-6 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <!-- Pagination Footer -->
+        {% if page_obj.has_other_pages %}
+        <div class="p-5 sm:p-6 border-t border-slate-50 flex flex-col items-center justify-center gap-4">
+
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">
                 Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} offers
             </p>
 
-            <div class="flex items-center gap-1">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
-                       class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 text-slate-400 hover:bg-black hover:text-white transition-all">
-                        <span class="material-symbols-outlined text-lg">chevron_left</span>
-                    </a>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-black text-white text-xs font-black">
-                            {{ num }}
-                        </span>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <a href="?page={{ num }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
-                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 text-slate-400 text-xs font-bold hover:bg-slate-50 transition-all">
-                            {{ num }}
-                        </a>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
-                       class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-100 text-slate-400 hover:bg-black hover:text-white transition-all">
-                        <span class="material-symbols-outlined text-lg">chevron_right</span>
-                    </a>
-                {% endif %}
+            <div class="admin-pagination">
+                {% include "includes/pagination.html" %}
             </div>
+
         </div>
         {% endif %}
 

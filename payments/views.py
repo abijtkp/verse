@@ -8,21 +8,27 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from payments.models import WalletTransaction
+from django.core.paginator import Paginator
 
 
 @login_required
 def wallet_view(request):
     wallet, created = Wallet.objects.get_or_create(user=request.user)
 
-    transactions = (
+    transactions_queryset = (
         wallet.transactions
         .select_related('order')
         .order_by('-created_at')
     )
 
+    paginator = Paginator(transactions_queryset, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'payments/wallet.html', {
         'wallet': wallet,
-        'transactions': transactions,
+        'transactions': page_obj,
+        'page_obj': page_obj,
     })
     
 @login_required

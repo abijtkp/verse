@@ -95,7 +95,7 @@
                     </h1>
                     {% if wishlist_items %}
                     <p class="text-[11px] font-semibold text-slate-400 mt-2 uppercase tracking-wider">
-                        {{ wishlist_items|length }} saved item{% if wishlist_items|length != 1 %}s{% endif %} &mdash; manage your saved picks below
+                        {{ total_wishlist_items }} saved item{% if wishlist_items|length != 1 %}s{% endif %} &mdash; manage your saved picks below
                     </p>
                     {% else %}
                     <p class="text-[11px] font-semibold text-slate-400 mt-2 uppercase tracking-wider">
@@ -205,9 +205,35 @@
 
                     <!-- Price -->
                     <div class="mt-auto">
-                        <p class="text-xl font-[900] tracking-tight text-black mb-3">
-                            ₹{{ item.variant.price }}
-                        </p>
+                        <div class="flex items-end gap-2 flex-wrap mb-3">
+
+                            <p class="text-xl font-[900] tracking-tight text-black">
+                                ₹{{ item.offer_data.final_price|floatformat:0 }}
+                            </p>
+
+                            {% if item.offer_data.discount_amount > 0 %}
+                                <p class="text-sm font-bold text-slate-400 line-through">
+                                    ₹{{ item.offer_data.base_price|floatformat:0 }}
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                        {% if item.offer_data.discount_amount > 0 %}
+                        <div class="flex items-center gap-2 mb-3 flex-wrap">
+
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-black text-white text-[9px] font-black uppercase tracking-widest">
+                                Save ₹{{ item.offer_data.discount_amount|floatformat:0 }}
+                            </span>
+
+                            {% if item.offer_data.applied_offer %}
+                            <span class="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">
+                                {{ item.offer_data.applied_offer.offer_name }}
+                            </span>
+                            {% endif %}
+
+                        </div>
+                        {% endif %}
 
                         <!-- Move to Cart -->
                         {% if item.variant.stock > 0 %}
@@ -244,6 +270,9 @@
             </div>
             {% endfor %}
         </div>
+
+
+        {% include "includes/pagination.html" %}
 
         <!-- Continue Shopping -->
         <div class="mt-12 flex justify-center">

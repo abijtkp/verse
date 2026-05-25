@@ -32,6 +32,47 @@
     .modal-enter { animation: fadeUp 0.2s ease; }
     @keyframes fadeUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
 </style>
+
+<style>
+.admin-pagination > div {
+    margin-top: 0 !important;
+    gap: 10px !important;
+}
+
+.admin-pagination .page-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 10px !important;
+    border: 1.5px solid #e2e8f0 !important;
+
+    background: #fff !important;
+    color: #475569 !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+
+    text-decoration: none !important;
+}
+
+.admin-pagination .page-btn.active {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+}
+
+.admin-pagination .page-btn.disabled {
+    opacity: 0.35 !important;
+    pointer-events: none !important;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -349,55 +390,17 @@
 </div>
 
 <!-- ===== PAGINATION ===== -->
+<!-- ===== PAGINATION ===== -->
 {% if page_obj.has_other_pages %}
-<div class="flex items-center justify-between px-2">
+<div class="p-6 border-t border-slate-100 flex flex-col items-center justify-center gap-4">
 
-    <p class="text-[11px] font-bold text-slate-400">
-        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} returns
+    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} return requests
     </p>
 
-    <nav class="flex items-center gap-1">
-
-        <!-- Prev -->
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-           class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-black transition-all shadow-sm">
-            <span class="material-symbols-outlined text-sm">chevron_left</span>
-        </a>
-        {% else %}
-        <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-300 cursor-not-allowed">
-            <span class="material-symbols-outlined text-sm">chevron_left</span>
-        </span>
-        {% endif %}
-
-        <!-- Page numbers -->
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-black text-white text-xs font-black shadow-sm">{{ num }}</span>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-               class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:border-slate-400 hover:text-black transition-all shadow-sm">{{ num }}</a>
-            {% elif num == 1 or num == page_obj.paginator.num_pages %}
-            <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-               class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:border-slate-400 hover:text-black transition-all shadow-sm">{{ num }}</a>
-            {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'3' %}
-            <span class="w-8 h-8 flex items-center justify-center text-slate-300 text-xs font-bold">…</span>
-            {% endif %}
-        {% endfor %}
-
-        <!-- Next -->
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
-           class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:border-slate-400 hover:text-black transition-all shadow-sm">
-            <span class="material-symbols-outlined text-sm">chevron_right</span>
-        </a>
-        {% else %}
-        <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-300 cursor-not-allowed">
-            <span class="material-symbols-outlined text-sm">chevron_right</span>
-        </span>
-        {% endif %}
-
-    </nav>
+    <div class="admin-pagination">
+        {% include "includes/pagination.html" %}
+    </div>
 
 </div>
 {% endif %}

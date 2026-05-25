@@ -750,30 +750,7 @@
             {% endfor %}
         </div>
 
-        {% if page_obj.has_other_pages %}
-        <div class="pagination-wrap"
-             style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:34px;">
-
-            {% if page_obj.has_previous %}
-                <a href="?q={{ search_query }}&status={{ status_filter }}&page={{ page_obj.previous_page_number }}"
-                   class="filter-clear-btn">
-                    Prev
-                </a>
-            {% endif %}
-
-            <span style="font-size:11px;font-weight:800;color:var(--muted);">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?q={{ search_query }}&status={{ status_filter }}&page={{ page_obj.next_page_number }}"
-                   class="filter-clear-btn">
-                    Next
-                </a>
-            {% endif %}
-
-        </div>
-        {% endif %}
+        {% include "includes/pagination.html" %}
 
     </div>
 </div>

@@ -1,0 +1,46 @@
+{% if page_obj.has_other_pages %}
+        <div class="flex items-center justify-center gap-2 mt-4">
+
+            {% with q=search_query sort=sort_by cat=selected_category mn=min_price mx=max_price %}
+
+            <!-- Previous -->
+            <a {% if page_obj.has_previous %}
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ page_obj.previous_page_number }}"
+            {% else %}
+                href="#"
+            {% endif %}
+            class="page-btn {% if not page_obj.has_previous %}disabled{% endif %}">
+                <span class="material-symbols-outlined icon-sm">chevron_left</span>
+            </a>
+
+            <!-- Page Numbers -->
+            {% for num in page_obj.paginator.page_range%}
+                {% if page_obj.number == num %}
+                    <span class="page-btn active">{{ num }}</span>
+
+                {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
+                    class="page-btn">{{ num }}</a>
+
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ num }}"
+                    class="page-btn">{{ num }}</a>
+
+                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                    <span class="page-btn" style="border:none;cursor:default;">…</span>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next -->
+            <a {% if page_obj.has_next %}
+                href="?{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}{% if cat %}category={{ cat }}&{% endif %}{% if mn %}min_price={{ mn }}&{% endif %}{% if mx %}max_price={{ mx }}&{% endif %}{% for size in selected_sizes %}size={{ size }}&{% endfor %}{% for color in selected_colors %}color={{ color }}&{% endfor %}page={{ page_obj.next_page_number}}"
+            {% else %}
+                href="#"
+            {% endif %}
+            class="page-btn {% if not page_obj.has_next %}disabled{% endif %}">
+                <span class="material-symbols-outlined icon-sm">chevron_right</span>
+            </a>
+
+            {% endwith %}
+        </div>
+        {% endif %}
