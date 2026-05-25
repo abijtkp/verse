@@ -202,6 +202,46 @@
 
         </div>
 
+        <!-- REFERRAL CARD -->
+        <div class="mt-8 p-6 rounded-2xl border border-slate-100 bg-slate-50">
+            <p class="label">Invite & Earn</p>
+
+            <h3 class="text-xl font-black uppercase italic tracking-tight text-black mt-1">
+                Share Your Referral Code
+            </h3>
+
+            <p class="text-sm text-gray-500 mt-2">
+                Invite a friend. When they place their first order, you earn ₹200 in your wallet.
+            </p>
+
+            <div class="mt-5 flex flex-col sm:flex-row gap-3">
+                <input
+                    id="referralCode"
+                    type="text"
+                    value="{{ user.referral_code }}"
+                    readonly
+                    class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black tracking-widest text-black">
+
+                <button
+                    type="button"
+                    onclick="copyReferralCode()"
+                    class="btn-primary">
+                    Copy Code
+                </button>
+            </div>
+
+            <p id="copyMessage" class="hidden mt-3 text-xs font-bold text-green-600">
+                Referral code copied!
+            </p>
+
+            {% comment %} <p class="text-xs text-slate-400 mt-4 font-medium break-all">
+                Share Link:
+                <span class="font-bold text-black">
+                    {{ request.scheme }}://{{ request.get_host }}{% url 'signup' %}?ref={{ user.referral_code }}
+                </span>
+            </p> {% endcomment %}
+        </div>
+
         <!-- ACTIONS -->
         <div class="actions">
 
@@ -218,5 +258,26 @@
     </div>
 
 </div>
+
+<script>
+function copyReferralCode() {
+    const input = document.getElementById("referralCode");
+    const message = document.getElementById("copyMessage");
+
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        message.classList.remove("hidden");
+
+        setTimeout(function () {
+            message.classList.add("hidden");
+        }, 2000);
+    } catch (err) {
+        alert("Unable to copy referral code. Please copy it manually.");
+    }
+}
+</script>
 
 {% endblock %}

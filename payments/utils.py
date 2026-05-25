@@ -4,8 +4,8 @@ from orders.models import Order
 from payments.models import Wallet, WalletTransaction
 
 
-REFERRAL_REWARD_AMOUNT = Decimal("200.00")
-
+REFERRER_REWARD_AMOUNT = Decimal("500.00")
+REFERRED_USER_REWARD_AMOUNT = Decimal("200.00")
 
 @transaction.atomic
 def reward_referrer_after_first_order(order):
@@ -34,15 +34,28 @@ def reward_referrer_after_first_order(order):
 
     wallet, created = Wallet.objects.get_or_create(user=referrer)
 
-    wallet.balance += REFERRAL_REWARD_AMOUNT
+    wallet.balance += REFERRER_REWARD_AMOUNT
     wallet.save(update_fields=["balance", "updated_at"])
 
     WalletTransaction.objects.create(
         wallet=wallet,
         order=order,
         transaction_type="credit",
-        amount=REFERRAL_REWARD_AMOUNT,
-        reason=f"Referral reward for {user.email}'s first order"
+        amount=REFERRER_REWARD_AMOUNT,
+        reason=f"Referral reward for inviting {user.email}"
+    )
+    
+    referred_user_wallet, created = Wallet.objects.get_or_create(user=user)
+
+    referred_user_wallet.balance += REFERRED_USER_REWARD_AMOUNT
+    referred_user_wallet.save(update_fields=["balance", "updated_at"])
+
+    WalletTransaction.objects.create(
+        wallet=referred_user_wallet,
+        order=order,
+        transaction_type="credit",
+        amount=REFERRED_USER_REWARD_AMOUNT,
+        reason="Referral signup reward after first order"
     )
 
     user.referral_reward_given = True

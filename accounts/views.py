@@ -114,7 +114,13 @@ def signup_view(request):
         messages.success(request, "OTP sent to your email")
         return redirect('verify_otp')
 
-    return render(request, 'accounts/signup.html')
+    referral_code = request.GET.get('ref', '').strip().upper()
+
+    return render(request, 'accounts/signup.html', {
+        'form_data': {
+            'referral_code': referral_code
+        }
+    })
 
 @never_cache
 def verify_otp_view(request):
