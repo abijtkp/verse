@@ -63,15 +63,15 @@ def product_listing_view(request):
             )
 
 
-    if min_price:
-        products = products.filter(
-            variants__price__gte=min_price
-        )
+    # if min_price:
+    #     products = products.filter(
+    #         variants__price__gte=min_price
+    #     )
 
-    if max_price:
-        products = products.filter(
-            variants__price__lte=max_price
-        )
+    # if max_price:
+    #     products = products.filter(
+    #         variants__price__lte=max_price
+    #     )
 
     
     if selected_sizes:
@@ -86,13 +86,7 @@ def product_listing_view(request):
 
     products = products.distinct()
 
-    if sort_by == 'price_asc':
-        products = products.order_by('variants__price')
-
-    elif sort_by == 'price_desc':
-        products = products.order_by('-variants__price')
-
-    elif sort_by == 'name_asc':
+    if sort_by == 'name_asc':
         products = products.order_by('product_name')
 
     elif sort_by == 'name_desc':
@@ -132,6 +126,43 @@ def product_listing_view(request):
 
             product_cards.append(product)
             seen_product_ids.add(product.id)
+    
+    
+    
+    try:
+        min_price_value = float(min_price) if min_price else None
+    except ValueError:
+        min_price_value = None
+
+    try:
+        max_price_value = float(max_price) if max_price else None
+    except ValueError:
+        max_price_value = None
+
+    if min_price_value is not None:
+        product_cards = [
+            product for product in product_cards
+            if float(product.offer_data["final_price"]) >= min_price_value
+        ]
+
+    if max_price_value is not None:
+        product_cards = [
+            product for product in product_cards
+            if float(product.offer_data["final_price"]) <= max_price_value
+        ]
+
+    if sort_by == "price_asc":
+        product_cards.sort(
+            key=lambda product: product.offer_data["final_price"]
+        )
+
+    elif sort_by == "price_desc":
+        product_cards.sort(
+            key=lambda product: product.offer_data["final_price"],
+            reverse=True
+        )
+    
+            
 
     paginator = Paginator(product_cards, 8)
 
@@ -171,6 +202,7 @@ def product_listing_view(request):
         'products': page_obj,
         'page_obj': page_obj,
         'categories': categories,
+        
         'search_query': search_query,
         'sort_by': sort_by,
         'selected_category': selected_category,
