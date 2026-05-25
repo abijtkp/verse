@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Category(models.Model):
@@ -99,30 +100,31 @@ class VariantImage(models.Model):
         
         
         
-# class ProductReview(models.Model):
-#     product = models.ForeignKey(
-#         Product,
-#         on_delete=models.CASCADE,
-#         related_name='reviews'
-#     )
+class ProductReview(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
 
-#     user = models.ForeignKey(
-#         settings.AUTH_USER_MODEL,
-#         on_delete=models.CASCADE,
-#         related_name='product_reviews'
-#     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        
+        related_name='product_reviews'
+    )
 
-#     rating = models.PositiveSmallIntegerField()
-#     review_text = models.TextField(blank=True, null=True)
+    rating = models.PositiveSmallIntegerField()
+    review_text = models.TextField(blank=True, null=True)
 
-#     is_active = models.BooleanField(default=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#     class Meta:
-#         db_table = 'product_reviews'
-#         unique_together = ('product', 'user')
-#         ordering = ['-created_at']
+    class Meta:
+        db_table = 'product_reviews'
+        unique_together = ('product', 'user')
+        ordering = ['-created_at']
 
-#     def __str__(self):
-#         return f"{self.product.product_name} - {self.rating} stars by {self.user.email}"        
+    def __str__(self):
+        return f"{self.product.product_name} - {self.rating} stars by {self.user.email}"        

@@ -740,9 +740,9 @@
                                     </div>
                                 </div>
 
-                                {% if request.user.is_authenticated %}
+                                {% if can_review %}
                                 <form method="POST"
-                                    action="#"
+                                    action="{% url 'submit_review' variant.id %}"
                                     class="mb-10 bg-slate-50 border border-slate-100 rounded-3xl p-6 md:p-8">
                                     {% csrf_token %}
 
@@ -795,6 +795,14 @@
                                         {% if user_review %}Update Review{% else %}Submit Review{% endif %}
                                     </button>
                                 </form>
+                                {% elif request.user.is_authenticated %}
+
+                                <div class="mb-10 bg-slate-50 border border-slate-100 rounded-3xl p-6 md:p-8">
+                                    <p class="text-sm font-medium text-slate-500">
+                                        Only verified purchasers can review this product.
+                                    </p>
+                                </div>
+
                                 {% endif %}
 
                                 <div class="space-y-5">
@@ -1162,6 +1170,7 @@
                 }
             });
         });
+
 
     });
 

@@ -5,8 +5,9 @@ from cart.models import Wishlist
 from django.contrib import messages
 from accounts.decorators import user_required
 from django.contrib.auth.decorators import login_required
-from .models import Category, Product, Variant, VariantImage
+from .models import Category, Product, Variant, VariantImage, ProductReview
 from offers.utils import calculate_best_offer
+from orders.models import OrderItem
 
 
 def product_listing_view(request):
@@ -314,25 +315,34 @@ def product_detail_view(request, variant_id):
             variant=variant
         ).exists()
         
-    # reviews = ProductReview.objects.filter(
-    #     product=variant.product,
-    #     is_active=True,
-    # ).select_related('user')
-    
-    # review_summary = reviews.aggregate(
-    #     average_rating=Avg('rating'),
-    #     review_count=Count('id')
-    # )
-    
-    # user_review = None
-    
-    # if request.user.is_authenticated:
-    #     user_review = ProductReview.objects.filter(
-    #         product=variant.product,
-    #         user=request.user
-    #     ).first()  
-        
-          
+    reviews = ProductReview.objects.filter(
+        product=variant.product,
+        is_active=True,
+    ).select_related('user')
+
+    review_summary = reviews.aggregate(
+        average_rating=Avg('rating'),
+        review_count=Count('id')
+    )
+
+    average_rating = review_summary.get('average_rating') or 0
+    review_count = review_summary.get('review_count') or 0
+
+    user_review = None
+    can_review = False
+
+    if request.user.is_authenticated:
+
+        can_review = OrderItem.objects.filter(
+            order__user=request.user,
+            variant__product=variant.product,
+            status='delivered'
+        ).exists()
+
+        user_review = ProductReview.objects.filter(
+            product=variant.product,
+            user=request.user
+        ).first()  
     
 
     context = {
@@ -342,6 +352,12 @@ def product_detail_view(request, variant_id):
         'size_variants': size_variants,
         'related_products': related_products,
         'is_in_wishlist': is_in_wishlist,
+        
+        'reviews': reviews,
+        'average_rating': average_rating,
+        'review_count': review_count,
+        'user_review': user_review,
+        'can_review': can_review,
     }
 
     return render(
@@ -351,36 +367,46 @@ def product_detail_view(request, variant_id):
     )
     
     
-    
-# @user_required
-# def submit_review(request, variant_id):
+@user_required
+def submit_review(request, variant_id):
+    variant = get_object_or_404(
+        Variant,
+        id=variant_id,
+        is_active=True,
+        is_deleted=False,
+        product__is_active=True,
+        product__is_deleted=False
+    )
 
-#     variant = get_object_or_404(
-#         Variant,
-#         id=variant_id,
-#         is_active=True,
-#         product__is_active=True,
-#         product__is_deleted=False
-#     )
+    if request.method == 'POST':
+            has_purchased = OrderItem.objects.filter(
+                order__user=request.user,
+                variant__product=variant.product,
+                status='delivered'
+            ).exists()
 
-#     if request.method == 'POST':
+            if not has_purchased:
+                messages.error(
+                request,
+                "Only verified purchasers can review this product"
+                )
+                return redirect('product_detail', variant.id)
+            rating = request.POST.get('rating')
+            review_text = request.POST.get('review_text', '').strip()
 
-#         rating = request.POST.get('rating')
-#         review_text = request.POST.get('review_text', '').strip()
+            if not rating:
+                messages.error(request, "Please select a rating")
+                return redirect('product_detail', variant.id)
 
-#         if not rating:
-#             messages.error(request, "Please select a rating")
-#             return redirect('product_detail', variant.id)
+            ProductReview.objects.update_or_create(
+                user=request.user,
+                product=variant.product,
+                defaults={
+                    'rating': int(rating),
+                    'review_text': review_text
+                }
+            )
 
-#         ProductReview.objects.update_or_create(
-#             user=request.user,
-#             variant=variant,
-#             defaults={
-#                 'rating': int(rating),
-#                 'review_text': review_text
-#             }
-#         )
+            messages.success(request, "Review submitted successfully")
 
-#         messages.success(request, "Review submitted successfully")
-
-#     return redirect('product_detail', variant.id)
+    return redirect('product_detail', variant.id)

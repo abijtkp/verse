@@ -110,6 +110,7 @@ class Order(models.Model):
     @property
     def returned_total(self):
         return sum(
+            
             item.item_total
             for item in self.items.filter(status='returned')
         )
