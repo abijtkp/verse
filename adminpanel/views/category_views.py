@@ -1,13 +1,17 @@
+import logging
+import re 
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 from django.db.models import Q
+
 from products.models import Category
 from .core_views import admin_required
-import re 
 
+logger = logging.getLogger(__name__)
 
 @never_cache
 @admin_required
@@ -18,6 +22,15 @@ def category_list_view(request):
     categories = all_categories.order_by('-created_at')
 
     if search_query:
+        
+        logger.info(
+            "Admin searched categories | admin_id=%s | admin_email=%s | query=%s",
+            request.user.id,
+            request.user.email,
+            search_query,
+        )
+
+        
         categories = categories.filter(
             Q(category_name__icontains=search_query) |
             Q(description__icontains=search_query)
@@ -26,6 +39,13 @@ def category_list_view(request):
     paginator = Paginator(categories, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    logger.info(
+        "Admin viewed category list | admin_id=%s | admin_email=%s | page=%s",
+        request.user.id,
+        request.user.email,
+        page_number or 1,
+    )
 
     context = {
         'page_obj': page_obj,
@@ -57,6 +77,14 @@ def add_category_view(request):
             errors['category_name'] = 'Category name must be at least 2 characters.'
             
         elif Category.objects.filter(category_name__iexact=category_name, is_deleted=False).exists():
+            
+            logger.warning(
+                "Admin attempted duplicate category create | admin_id=%s | admin_email=%s | category_name=%s",
+                request.user.id,
+                request.user.email,
+                category_name,
+            )
+            
             errors['category_name'] = 'This category already exists.'
             
         if description and len(description) < 10:
@@ -72,11 +100,20 @@ def add_category_view(request):
                 }
             })
 
-        Category.objects.create(
+        category = Category.objects.create(
             category_name=category_name,
             description=description,
             category_image=category_image,
             is_active=is_active,
+        )
+        
+        logger.info(
+            "Admin created category | admin_id=%s | admin_email=%s | category_id=%s | category_name=%s | is_active=%s",
+            request.user.id,
+            request.user.email,
+            category.id,
+            category.category_name,
+            category.is_active,
         )
 
         messages.success(request, 'Category added successfully.')
@@ -110,6 +147,15 @@ def edit_category_view(request, category_id):
             category_name__iexact=category_name,
             is_deleted=False
         ).exclude(id=category.id).exists():
+            
+            logger.warning(
+                "Admin attempted duplicate category update | admin_id=%s | admin_email=%s | category_id=%s | attempted_name=%s",
+                request.user.id,
+                request.user.email,
+                category.id,
+                category_name,
+            )
+            
             errors['category_name'] = 'Another category with this name already exists.'
             
         if description and len(description) < 10:
@@ -129,6 +175,10 @@ def edit_category_view(request, category_id):
         old_name = category.category_name
         old_description = category.description or ''
         old_status = category.is_active
+        
+        old_image = bool(category.category_image)
+        image_removed = False
+        image_uploaded = False
 
         category.category_name = category_name
         category.description = description
@@ -137,12 +187,28 @@ def edit_category_view(request, category_id):
         if remove_image and category.category_image:
             category.category_image.delete(save=False)
             category.category_image = None
+            image_removed = True
 
         
         if category_image:
             category.category_image = category_image
+            image_uploaded = True
             
         category.save()
+        
+        logger.info(
+            "Admin updated category | admin_id=%s | admin_email=%s | category_id=%s | old_name=%s | new_name=%s | old_status=%s | new_status=%s | had_old_image=%s | image_removed=%s | image_uploaded=%s",
+            request.user.id,
+            request.user.email,
+            category.id,
+            old_name,
+            category.category_name,
+            old_status,
+            category.is_active,
+            old_image,
+            image_removed,
+            image_uploaded,
+        )
 
         only_status_changed = (
             old_name == category_name and
@@ -171,8 +237,20 @@ def edit_category_view(request, category_id):
 def toggle_category_status_view(request, category_id):
     category = get_object_or_404(Category, id=category_id, is_deleted=False)
     
+    old_status = category.is_active
+    
     category.is_active = not category.is_active
     category.save(update_fields=['is_active', 'updated_at'])
+    
+    logger.warning(
+        "Admin toggled category status | admin_id=%s | admin_email=%s | category_id=%s | category_name=%s | old_status=%s | new_status=%s",
+        request.user.id,
+        request.user.email,
+        category.id,
+        category.category_name,
+        old_status,
+        category.is_active,
+    )
     
     if category.is_active:
         messages.success(request, 'Category activated successfully.')

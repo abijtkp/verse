@@ -10,6 +10,9 @@ import razorpay
 from payments.models import WalletTransaction
 from django.core.paginator import Paginator
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def wallet_view(request):
@@ -24,6 +27,14 @@ def wallet_view(request):
     paginator = Paginator(transactions_queryset, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    logger.info(
+        "User viewed wallet | user_id=%s | email=%s | balance=%s | page=%s",
+        request.user.id,
+        request.user.email,
+        wallet.balance,
+        page_number or 1,
+    )
 
     return render(request, 'payments/wallet.html', {
         'wallet': wallet,
@@ -40,6 +51,14 @@ def add_money_view(request):
 def create_wallet_topup_view(request):
 
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid wallet topup request method | user_id=%s | email=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            request.method,
+        )
+        
         return redirect('add_money')
 
     amount = request.POST.get('amount')
@@ -50,7 +69,15 @@ def create_wallet_topup_view(request):
         if amount <= 0:
             raise ValueError
 
-    except:
+    except Exception:
+        
+        logger.warning(
+            "Invalid wallet topup amount | user_id=%s | email=%s | amount=%s",
+            request.user.id,
+            request.user.email,
+            amount,
+        )
+        
         messages.error(request, "Invalid amount.")
         return redirect('add_money')
 
@@ -66,6 +93,14 @@ def create_wallet_topup_view(request):
         "currency": "INR",
         "payment_capture": 1,
     })
+    
+    logger.info(
+        "Razorpay wallet order created | user_id=%s | email=%s | razorpay_order_id=%s | amount=%s",
+        request.user.id,
+        request.user.email,
+        razorpay_order['id'],
+        amount,
+    )
 
     context = {
         'amount': amount,
@@ -82,6 +117,14 @@ def create_wallet_topup_view(request):
 def verify_wallet_topup_view(request):
 
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid wallet topup verification method | user_id=%s | email=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            request.method,
+        )
+        
         return redirect('wallet')
 
     razorpay_order_id = request.POST.get('razorpay_order_id')
@@ -108,7 +151,8 @@ def verify_wallet_topup_view(request):
         wallet, created = Wallet.objects.get_or_create(
             user=request.user
         )
-
+        
+        old_balance = wallet.balance
         wallet.balance += amount
 
         wallet.save(update_fields=[
@@ -122,6 +166,17 @@ def verify_wallet_topup_view(request):
             amount=amount,
             reason='Wallet top-up'
         )
+        
+        logger.info(
+            "Wallet topup verified successfully | user_id=%s | email=%s | razorpay_order_id=%s | razorpay_payment_id=%s | amount=%s | old_balance=%s | new_balance=%s",
+            request.user.id,
+            request.user.email,
+            razorpay_order_id,
+            razorpay_payment_id,
+            amount,
+            old_balance,
+            wallet.balance,
+        )
 
         messages.success(
             request,
@@ -131,6 +186,16 @@ def verify_wallet_topup_view(request):
         return redirect('wallet')
 
     except Exception:
+        
+        logger.exception(
+            "Wallet topup verification failed | user_id=%s | email=%s | razorpay_order_id=%s | razorpay_payment_id=%s | amount=%s",
+            request.user.id,
+            request.user.email,
+            razorpay_order_id,
+            razorpay_payment_id,
+            amount,
+        )
+        
         messages.error(
             request,
             "Wallet top-up failed."

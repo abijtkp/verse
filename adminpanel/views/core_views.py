@@ -17,20 +17,48 @@ import json
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import TruncDay
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
+            
+            logger.warning(
+                "Unauthorized admin access attempt - unauthenticated | ip=%s | path=%s",
+                request.META.get("REMOTE_ADDR"),
+                request.path,
+            )
+            
             messages.error(request, "Please login to continue")
             return redirect('admin_login')
 
         if not request.user.is_staff:
+            
+            logger.warning(
+                "Unauthorized admin access attempt - non staff | user_id=%s | email=%s | ip=%s | path=%s",
+                request.user.id,
+                request.user.email,
+                request.META.get("REMOTE_ADDR"),
+                request.path,
+            )
+            
             messages.error(request, "You are not authorized to access admin panel")
             return redirect('home')
         
         if request.user.is_blocked:
+            
+            logger.warning(
+                "Blocked admin attempted access | user_id=%s | email=%s | ip=%s",
+                request.user.id,
+                request.user.email,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             logout(request)
+            
             messages.error(request, "Your account has been blocked")
             return redirect('admin_login')
             
@@ -42,6 +70,13 @@ def admin_required(view_func):
 def admin_login_view(request):
     if request.user.is_authenticated:
         if request.user.is_staff:
+            
+            logger.info(
+                "Admin already authenticated redirected to dashboard | user_id=%s | email=%s",
+                request.user.id,
+                request.user.email,
+            )
+            
             return redirect('admin_dashboard')
         else:
             logout(request)
@@ -53,18 +88,48 @@ def admin_login_view(request):
         user = authenticate(request, email=email, password=password)
 
         if user is None:
+            
+            logger.warning(
+                "Failed admin login attempt | email=%s | ip=%s",
+                email,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "Invalid email or password")
             return redirect('admin_login')
 
         if not user.is_staff:
+            
+            logger.warning(
+                "Non-admin attempted admin login | user_id=%s | email=%s | ip=%s",
+                user.id,
+                user.email,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "You are not authorized to access admin panel")
             return redirect('admin_login')
 
         if user.is_blocked:
+            
+            logger.warning(
+                "Blocked admin login attempt | user_id=%s | email=%s | ip=%s",
+                user.id,
+                user.email,
+                request.META.get("REMOTE_ADDR"),
+            )
+   
             messages.error(request, "Your account has been blocked")
             return redirect('admin_login')
 
         login(request, user)
+        
+        logger.info(
+            "Admin logged in successfully | user_id=%s | email=%s",
+            user.id,
+            user.email,
+        )
+        
         messages.success(request, "Welcome to admin panel")
         return redirect('admin_dashboard')
 
@@ -75,6 +140,13 @@ def admin_login_view(request):
 @admin_required
 def admin_dashboard_view(request):
     today = timezone.now()
+    
+    logger.info(
+        "Admin dashboard accessed | user_id=%s | email=%s",
+        request.user.id,
+        request.user.email,
+    )
+    
     month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     successful_orders = Order.objects.exclude(
@@ -249,6 +321,14 @@ def admin_dashboard_view(request):
 @never_cache
 @admin_required
 def admin_logout_view(request):
+    
+    logger.info(
+        "Admin logged out | user_id=%s | email=%s",
+        request.user.id,
+        request.user.email,
+    )
+    
     logout(request)
+    
     messages.success(request, "Logged out successfully")
     return redirect('admin_login')

@@ -13,6 +13,9 @@ from django.contrib.auth.hashers import make_password
 from userprofile.models import Profile
 from products.models import Category
 from django.views.decorators.cache import never_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 @never_cache
 def signup_view(request):
@@ -48,6 +51,13 @@ def signup_view(request):
         if 'email' not in field_errors:
             existing_user = User.objects.filter(email=email).first()
             if existing_user and existing_user.is_verified:
+                
+                logger.warning(
+                    "Signup blocked - verified email already exists | email=%s | ip=%s",
+                    email,
+                    request.META.get("REMOTE_ADDR"),
+                )
+                
                 field_errors['email'] = "An account with this email already exists."
                 
         referrer = None
@@ -60,6 +70,14 @@ def signup_view(request):
             ).first()
 
             if not referrer:
+                
+                logger.warning(
+                    "Signup attempted with invalid referral code | email=%s | referral_code=%s | ip=%s",
+                    email,
+                    referral_code,
+                    request.META.get("REMOTE_ADDR"),
+                )
+                
                 field_errors['referral_code'] = "Invalid referral code."        
 
         password_errors = []
@@ -96,6 +114,14 @@ def signup_view(request):
 
             existing_user.save()
             user = existing_user
+            
+            
+            logger.info(
+                "Existing unverified signup user updated | user_id=%s | email=%s",
+                user.id,
+                user.email
+            )    
+            
         else:
             user = User.objects.create_user(
                 email=email,
@@ -104,9 +130,23 @@ def signup_view(request):
                 is_verified=False,
                 referred_by=referrer,
             )
+            
+            logger.info(
+                "New signup user created | user_id=%s | email=%s | referred_by=%s",
+                user.id,
+                user.email,
+                referrer.id if referrer else None,
+            )
 
         request.session['otp_user_id'] = user.id
         request.session['otp_purpose'] = 'signup'
+        
+        logger.info(
+            "Signup OTP flow started | user_id=%s | email=%s | referral_code=%s",
+            user.id,
+            user.email,
+            referral_code or None,
+        )
 
         otp_obj = generate_otp(user, purpose='signup')
         send_otp_email(user, otp_obj)
@@ -130,6 +170,13 @@ def verify_otp_view(request):
         purpose = request.session.get('otp_purpose', 'signup')
 
         if not user_id:
+            
+            logger.warning(
+                "OTP verification failed - session expired | purpose=%s | ip=%s",
+                purpose,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "Session expired. Try again.")
             return redirect('signup')
 
@@ -137,6 +184,14 @@ def verify_otp_view(request):
         user = User.objects.filter(id=user_id).first()
         
         if not user:
+            
+            logger.warning(
+                "OTP verification failed - user not found | user_id=%s, | purpose=%s | ip=%s",
+                user_id,
+                purpose,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "User not found")
             return redirect('signup')
         
@@ -148,21 +203,55 @@ def verify_otp_view(request):
 
 
         if not otp_obj:
+            
+            logger.warning(
+                "OTP verification failed - no active OTP | user_id=%s | email=%s | purpose=%s | ip=%s",
+                user.id,
+                user.email,
+                purpose,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "No OTP found")
             return redirect('verify_otp')
 
 
         if otp_obj.code != otp_input:
+            
+            logger.warning(
+                "Invalid OTP attempt | user_id=%s | email=%s | purpose=%s | ip=%s",
+                user.id,
+                user.email,
+                purpose,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "Invalid OTP")
             return redirect('verify_otp')
 
   
         if otp_obj.expired_at < timezone.now():
+            
+            logger.warning(
+                "Expired OTP attempt | user_id=%s | email=%s | purpose=%s | ip=%s",
+                user.id,
+                user.email,
+                purpose,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.error(request, "OTP expired")
             return redirect('verify_otp')
 
         otp_obj.is_used = True
         otp_obj.save(update_fields=['is_used'])
+        
+        logger.info(
+            "OTP verified successfully | user_id=%s | email=%s | purpose=%s",
+            user.id,
+            user.email,
+            purpose,
+        )
         
        
         if purpose == 'reset_password':
@@ -174,22 +263,57 @@ def verify_otp_view(request):
       
         if purpose == 'email_change':
             if not request.user.is_authenticated:
+                
+                logger.warning(
+                    "Email change OTP verified but user not authenticated | user_id=%s | email=%s | ip=%s",
+                    user.id,
+                    user.email,
+                    request.META.get("REMOTE_ADDR"),
+                )
+
+                
                 messages.error(request, "Authentication required")
                 return redirect('login')
+            
+            old_email = request.user.email
             
             new_email = request.session.get('new_email')
 
             if not new_email:
+                
+                logger.warning(
+                    "Email change failed - new email missing in session | user_id=%s | email=%s",
+                    request.user.id,
+                    request.user.email,
+                )
+                
                 messages.error(request, "Session expired")
                 return redirect('profile')
             
             if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+                
+                logger.warning(
+                    "Email change failed - email already exists | user_id=%s | current_email=%s | attempted_email=%s",
+                    request.user.id,
+                    request.user.email,
+                    new_email,
+                )
+
+                
                 messages.error(request, "Email already in use")
                 return redirect('profile')
 
             request.user.email = new_email
             request.user.is_verified = True
             request.user.save(update_fields=['email', 'is_verified'])
+            
+            
+            logger.info(
+                "User email changed successfully | user_id=%s | old_email=%s | new_email=%s",
+                request.user.id,
+                old_email,
+                new_email,
+            )
 
            
             request.session.pop('otp_user_id', None)
@@ -203,6 +327,13 @@ def verify_otp_view(request):
     
         user.is_verified = True
         user.save(update_fields=['is_verified'])
+        
+        logger.info(
+            "Account verified successfully | user_id=%s | email=%s",
+            user.id,
+            user.email,
+        )
+            
             
     
         request.session.pop('otp_user_id', None)
@@ -224,24 +355,54 @@ def resend_otp_view(request):
     purpose = request.session.get('otp_purpose', 'signup')
 
     if not user_id:
+        
+        logger.warning(
+            "OTP resend failed - session expired | purpose=%s | ip=%s",
+            purpose,
+            request.META.get("REMOTE_ADDR"),
+        )
+        
         messages.error(request, "Session expired. Try again.")
         return redirect('signup')
     
     user = User.objects.filter(id=user_id).first()
 
     if not user:
+        
+        logger.warning(
+            "OTP resend failed - user not found | user_id=%s | purpose=%s | ip=%s",
+            user_id,
+            purpose,
+            request.META.get("REMOTE_ADDR"),
+        )
+        
         messages.error(request, "User not found")
         return redirect('signup')
 
     
-    last_otp = OTP.objects.filter(user=user, purpose=purpose, is_used = False).order_by('-created_at').first()
+    last_otp = OTP.objects.filter(
+        user=user, 
+        purpose=purpose, 
+        is_used = False
+        ).order_by('-created_at').first()
 
  
     if last_otp:
         time_diff = (timezone.now() - last_otp.created_at).total_seconds()
 
         if time_diff < 30:
-            messages.error(request, f"Please wait {int(30 - time_diff)} seconds before requesting new OTP")
+            wait_seconds = int(30 - time_diff)
+            
+            logger.warning(
+                "OTP resend throttled | user_id=%s | email=%s | purpose=%s | wait_seconds=%s | ip=%s",
+                user.id,
+                user.email,
+                purpose,
+                wait_seconds,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
+            messages.error(request, f"Please wait {wait_seconds} seconds before requesting new OTP")
             return redirect('verify_otp')
 
   
@@ -253,6 +414,14 @@ def resend_otp_view(request):
     else:
        
         send_otp_email(user, otp_obj)
+        
+    logger.info(
+        "OTP resent successfully | user_id=%s | email=%s | purpose=%s",
+        user.id,
+        user.email,
+        purpose,
+    )
+        
 
     messages.success(request, "New OTP sent successfully")
 
@@ -291,26 +460,60 @@ def login_view(request):
         user = authenticate(request, email=email, password=password)
 
         if user is None:
+            
+            logger.warning(
+                "Failed login attempt | email=%s | ip=%s",
+                email,
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             field_errors['general'] = "Invalid email or password."
+            
             return render(request, 'accounts/login.html', {
                 'form_data':form_data,
                 'field_errors': field_errors,
             })
+       
 
         if user.is_blocked:
+            
+            logger.warning(
+                "Blocked user login attempt | user_id=%s | email=%s | ip=%s",
+                user.id,
+                user.email,
+                request.META.get("REMOTE_ADDR"),
+            ) 
+            
+            
+            
             field_errors['general'] = "Your account has been blocked."
+            
             return render(request, 'accounts/login.html', {
                 'form_data': form_data,
                 'field_errors': field_errors,
                 })
 
         if not user.is_verified:
+            
+            logger.info(
+                "Unverified user attempted login | user_id=%s | email=%s",
+                user.id,
+                user.email,
+            )
+            
             request.session['otp_user_id'] = user.id
             request.session['otp_purpose'] = 'signup'
             messages.error(request, "Please verify your account first")
             return redirect('verify_otp')
 
         login(request, user)
+        
+        logger.info(
+            "User logged in successfully | user_id=%s | email=%s",
+            user.id,
+            user.email,
+        )
+        
         messages.success(request, "Logged in successfully,")
         return redirect('home')
 
@@ -319,7 +522,16 @@ def login_view(request):
 
 @never_cache
 def logout_view(request):
+    if request.user.is_authenticated:
+        
+        logger.info(
+            "User logged out | user_id=%s | email=%s",
+            request.user.id,
+            request.user.email,
+        )
+        
     logout(request)
+    
     messages.success(request, "Logged out successfully.")
     return redirect('login')
 
@@ -360,7 +572,6 @@ def forgot_password_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
 
-        
         field_errors = {}
 
         try:
@@ -371,6 +582,13 @@ def forgot_password_view(request):
         if 'email' not in field_errors:
             user = User.objects.filter(email=email).first()
             if not user:
+                
+                logger.warning(
+                    "Password reset requested for unknown email | email=%s | ip=%s",
+                    email,
+                    request.META.get("REMOTE_ADDR"),
+                )
+                
                 field_errors['email'] = "No account found with this email."
 
         if field_errors:
@@ -381,6 +599,13 @@ def forgot_password_view(request):
 
         request.session['otp_user_id'] = user.id
         request.session['otp_purpose'] = 'reset_password'
+        
+        logger.info(
+            "Password reset OTP requested | user_id=%s | email=%s | ip=%s",
+            user.id,
+            user.email,
+            request.META.get("REMOTE_ADDR"),
+        )
 
         otp_obj = generate_otp(user, purpose='reset_password')
         send_otp_email(user, otp_obj)
@@ -397,12 +622,27 @@ def reset_password_view(request):
     otp_verified = request.session.get('otp_verified') 
 
     if not user_id or not otp_verified:
+    
+        logger.warning(
+            "Unauthorized reset password access | session_user_id=%s | otp_verified=%s | ip=%s",
+            user_id,
+            otp_verified,
+            request.META.get("REMOTE_ADDR"),
+        )
+        
         messages.error(request, "Unauthorized access")
         return redirect('forgot_password')
     
     user = User.objects.filter(id=user_id).first()
     
     if not user:
+        
+        logger.warning(
+            "Reset password failed - user not found | user_id=%s | ip=%s",
+            user_id,
+            request.META.get("REMOTE_ADDR"),
+        )
+        
         messages.error(request, "User not found")
         return redirect('forgot_password')
 
@@ -438,6 +678,12 @@ def reset_password_view(request):
 
         user.set_password(password)
         user.save()
+        
+        logger.info(
+            "Password reset successful | user_id=%s | email=%s",
+            user.id,
+            user.email,
+        )
 
         request.session.flush()
 

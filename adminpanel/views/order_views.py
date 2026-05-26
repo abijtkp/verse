@@ -7,12 +7,14 @@ from orders.models import Order, OrderItem
 from payments.models import Wallet, WalletTransaction
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from adminpanel.views.core_views import admin_required
 from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
 from django.db.models.functions import Coalesce
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def credit_wallet(user, amount, order, reason):
     wallet, created = Wallet.objects.get_or_create(user=user)
@@ -58,6 +60,12 @@ def admin_order_list_view(request):
     )
 
     if search_query:
+        logger.info(
+            "Admin searched orders | admin_id=%s | admin_email=%s | query=%s",
+            request.user.id,
+            request.user.email,
+            search_query,
+        )
 
         cleaned_query = search_query.replace('#', '').strip()
 
@@ -79,6 +87,13 @@ def admin_order_list_view(request):
     ]
 
     if sort_by not in allowed_sorts:
+        logger.warning(
+            "Invalid admin order sort requested | admin_id=%s | admin_email=%s | sort=%s",
+            request.user.id,
+            request.user.email,
+            sort_by,
+        )
+        
         sort_by = '-created_at'
 
     orders = orders.order_by(sort_by)
@@ -101,19 +116,26 @@ def admin_order_list_view(request):
     ).count()
 
     paginator = Paginator(orders, 10)
-
     page_number = request.GET.get('page')
-
     page_obj = paginator.get_page(page_number)
+    
+    logger.info(
+        "Admin viewed order list | admin_id=%s | admin_email=%s | search=%s | status=%s | sort=%s | page=%s",
+        request.user.id,
+        request.user.email,
+        search_query or None,
+        status_filter or None,
+        sort_by,
+        page_number or 1,
+    )
+
 
     context = {
         'orders': page_obj,
         'page_obj': page_obj,
-
         'search_query': search_query,
         'status_filter': status_filter,
         'sort_by': sort_by,
-
         'total_orders': total_orders,
         'pending_orders': pending_orders,
         'revenue': revenue,
@@ -129,6 +151,14 @@ def admin_order_list_view(request):
 @login_required
 @admin_required
 def admin_order_detail_view(request, order_id):
+    
+    logger.info(
+        "Admin viewed order detail | admin_id=%s | admin_email=%s | order_id=%s",
+        request.user.id,
+        request.user.email,
+        order_id,
+    )
+    
     order = get_object_or_404(
         Order.objects
         .select_related('user')
@@ -153,8 +183,15 @@ def update_order_status_view(request, order_id):
     old_status = order.status
     new_status = request.POST.get('status')
     
+    logger.info(
+        "Admin attempted order status update | admin_id=%s | admin_email=%s | order_id=%s | old_status=%s | new_status=%s",
+        request.user.id,
+        request.user.email,
+        order.order_id,
+        old_status,
+        new_status,
+    )
     
-
     ALLOWED_ORDER_TRANSITIONS = {
         'pending': ['shipped', 'cancelled'],
         'shipped': ['out_for_delivery'],
@@ -173,10 +210,28 @@ def update_order_status_view(request, order_id):
     ]
 
     if new_status not in allowed_statuses:
+        
+        logger.warning(
+            "Invalid order status update attempted | admin_id=%s | admin_email=%s | order_id=%s | attempted_status=%s",
+            request.user.id,
+            request.user.email,
+            order.order_id,
+            new_status,
+        )
+        
         messages.error(request, "Invalid order status.")
         return redirect('admin_order_detail', order_id=order.order_id)
 
     if old_status == new_status:
+        
+        logger.info(
+            "Order status already same | admin_id=%s | admin_email=%s | order_id=%s | status=%s",
+            request.user.id,
+            request.user.email,
+            order.order_id,
+            old_status,
+        )
+        
         messages.info(request, "Order status is already updated.")
         return redirect('admin_order_detail', order_id=order.order_id)
 
@@ -212,6 +267,14 @@ def update_order_status_view(request, order_id):
             order.cancelled_at = timezone.now()
 
         order.save()
+        
+        logger.warning(
+            "Admin cancelled order | admin_id=%s | admin_email=%s | order_id=%s",
+            request.user.id,
+            request.user.email,
+            order.order_id,
+        )
+
 
         messages.success(
             request,
@@ -232,6 +295,15 @@ def update_order_status_view(request, order_id):
     order.items.exclude(
         status__in=['cancelled', 'returned']
     ).update(status=new_status)
+    
+    logger.info(
+        "Admin updated order status successfully | admin_id=%s | admin_email=%s | order_id=%s | old_status=%s | new_status=%s",
+        request.user.id,
+        request.user.email,
+        order.order_id,
+        old_status,
+        new_status,
+    )
 
     messages.success(
         request,
@@ -263,6 +335,14 @@ def admin_return_list_view(request):
     )
 
     if search_query:
+        
+        logger.info(
+            "Admin searched return requests | admin_id=%s | admin_email=%s | query=%s",
+            request.user.id,
+            request.user.email,
+            search_query,
+        )
+        
         cleaned_query = search_query.replace('#', '').strip()
 
         return_items = return_items.filter(
@@ -279,6 +359,15 @@ def admin_return_list_view(request):
     paginator = Paginator(return_items, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    logger.info(
+        "Admin viewed return list | admin_id=%s | admin_email=%s | search=%s | status=%s | page=%s",
+        request.user.id,
+        request.user.email,
+        search_query or None,
+        status_filter or None,
+        page_number or 1,
+    )
 
     context = {
         'return_items': page_obj,
@@ -305,8 +394,10 @@ def approve_return_request_view(request, item_id):
     )
 
     order = item.order
+    old_stock = item.variant.stock if item.variant else None
 
     refund_amount = get_refund_amount(order, [item])
+    wallet_credited = False
 
     item.status = 'returned'
     item.return_reviewed_at = timezone.now()
@@ -329,6 +420,8 @@ def approve_return_request_view(request, item_id):
             order=order,
             reason=f"Refund for returned item: {item.product_name}"
         )
+        
+        wallet_credited = True
 
     remaining_active_items = order.items.exclude(
         status__in=['cancelled', 'returned']
@@ -346,6 +439,20 @@ def approve_return_request_view(request, item_id):
 
         order.save(update_fields=['status', 'payment_status', 'updated_at'])
 
+    logger.warning(
+        "Admin approved return request | admin_id=%s | admin_email=%s | order_id=%s | item_id=%s | product=%s | quantity=%s | old_stock=%s | new_stock=%s | refund_amount=%s | wallet_credited=%s",
+        request.user.id,
+        request.user.email,
+        order.order_id,
+        item.id,
+        item.product_name,
+        item.quantity,
+        old_stock,
+        item.variant.stock if item.variant else None,
+        refund_amount,
+        wallet_credited,
+    )
+    
     messages.success(request, f"Return approved for '{item.product_name}'. Stock restored.")
     return redirect('admin_return_list')
 
@@ -364,6 +471,15 @@ def reject_return_request_view(request, item_id):
     rejection_reason = request.POST.get('rejection_reason', '').strip()
 
     if not rejection_reason:
+        
+        logger.warning(
+            "Admin attempted return rejection without reason | admin_id=%s | admin_email=%s | order_id=%s | item_id=%s",
+            request.user.id,
+            request.user.email,
+            item.order.order_id,
+            item.id,
+        )
+        
         messages.error(request, "Rejection reason is required.")
         return redirect('admin_return_list')
 
@@ -371,6 +487,16 @@ def reject_return_request_view(request, item_id):
     item.return_rejection_reason = rejection_reason
     item.return_reviewed_at = timezone.now()
     item.save(update_fields=['status', 'return_rejection_reason', 'return_reviewed_at'])
+    
+    logger.warning(
+        "Admin rejected return request | admin_id=%s | admin_email=%s | order_id=%s | item_id=%s | product=%s | reason=%s",
+        request.user.id,
+        request.user.email,
+        item.order.order_id,
+        item.id,
+        item.product_name,
+        rejection_reason,
+    )
 
     messages.success(request, f"Return rejected for '{item.product_name}'.")
     return redirect('admin_return_list')

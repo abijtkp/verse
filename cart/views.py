@@ -10,6 +10,10 @@ from userprofile.models import Address
 from offers.utils import calculate_best_offer
 from django.core.paginator import Paginator
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 MAX_CART_QUANTITY = 5
 
 @never_cache
@@ -36,6 +40,15 @@ def cart_view(request):
 
     has_address = Address.objects.filter(user=request.user).exists() 
     
+    
+    logger.info(
+        "User viewed cart | user_id=%s | email=%s | total_items=%s | cart_total=%s",
+        request.user.id,
+        request.user.email,
+        cart.total_items,
+        cart_total,
+    )
+    
     return render(request, 'cart/cart.html', {
         'cart': cart,
         'cart_items': cart_items,
@@ -47,6 +60,15 @@ def cart_view(request):
 @user_required
 def add_to_cart(request, variant_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid add to cart request method | user_id=%s | email=%s | variant_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            variant_id,
+            request.method,
+        )
+        
         return redirect('home')
 
     variant = get_object_or_404(
@@ -61,6 +83,15 @@ def add_to_cart(request, variant_id):
     )
 
     if variant.stock <= 0:
+        
+        logger.warning(
+            "User attempted to add out-of-stock item to cart | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
+        
         messages.error(request, "This item is currently out of stock.")
         return redirect(request.META.get('HTTP_REFERER', 'home'))
 
@@ -74,10 +105,30 @@ def add_to_cart(request, variant_id):
 
     if not item_created:
         if cart_item.quantity >= MAX_CART_QUANTITY:
+            
+            logger.warning(
+                "User exceeded max cart quantity | user_id=%s | email=%s | variant_id=%s | current_quantity=%s | max_quantity=%s",
+                request.user.id,
+                request.user.email,
+                variant.id,
+                cart_item.quantity,
+                MAX_CART_QUANTITY,
+            )
+            
             messages.error(request, f"You can add maximum {MAX_CART_QUANTITY} quantity only.")
             return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
 
         if cart_item.quantity >= variant.stock:
+            
+            logger.warning(
+                "User attempted to add more than available stock | user_id=%s | email=%s | variant_id=%s | current_quantity=%s | stock=%s",
+                request.user.id,
+                request.user.email,
+                variant.id,
+                cart_item.quantity,
+                variant.stock,
+            )
+            
             messages.error(request, "Cannot add more than available stock.")
             return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
 
@@ -88,6 +139,16 @@ def add_to_cart(request, variant_id):
         user=request.user,
         variant=variant
     ).delete()   
+    
+    logger.info(
+        "User added item to cart | user_id=%s | email=%s | variant_id=%s | sku=%s | quantity=%s | created=%s",
+        request.user.id,
+        request.user.email,
+        variant.id,
+        variant.sku,
+        cart_item.quantity,
+        item_created,
+    )
 
     cart_count = cart.total_items
 
@@ -109,6 +170,15 @@ def add_to_cart(request, variant_id):
 @user_required
 def increase_cart_item(request, item_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid increase cart item request method | user_id=%s | email=%s | item_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            item_id,
+            request.method,
+        )
+        
         return redirect('cart_view')
 
     cart_item = get_object_or_404(
@@ -118,15 +188,45 @@ def increase_cart_item(request, item_id):
     )
 
     if cart_item.quantity >= MAX_CART_QUANTITY:
+        
+        logger.warning(
+            "User attempted to exceed max cart quantity | user_id=%s | email=%s | item_id=%s | variant_id=%s | current_quantity=%s",
+            request.user.id,
+            request.user.email,
+            cart_item.id,
+            cart_item.variant.id,
+            cart_item.quantity,
+        )
+        
         messages.error(request, f"Maximum {MAX_CART_QUANTITY} quantity allowed.")
         return redirect('cart_view')
 
     if cart_item.quantity >= cart_item.variant.stock:
+        
+        logger.warning(
+            "User attempted to increase cart beyond stock | user_id=%s | email=%s | item_id=%s | variant_id=%s | current_quantity=%s | stock=%s",
+            request.user.id,
+            request.user.email,
+            cart_item.id,
+            cart_item.variant.id,
+            cart_item.quantity,
+            cart_item.variant.stock,
+        )
+        
         messages.error(request, "Cannot increase beyond available stock.")
         return redirect('cart_view')
 
     cart_item.quantity += 1
     cart_item.save(update_fields=['quantity', 'updated_at'])
+    
+    logger.info(
+        "User increased cart item quantity | user_id=%s | email=%s | item_id=%s | variant_id=%s | new_quantity=%s",
+        request.user.id,
+        request.user.email,
+        cart_item.id,
+        cart_item.variant.id,
+        cart_item.quantity,
+    )
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         cart = cart_item.cart
@@ -155,6 +255,15 @@ def increase_cart_item(request, item_id):
 @user_required
 def decrease_cart_item(request, item_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid decrease cart item request method | user_id=%s | email=%s | item_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            item_id,
+            request.method,
+        )
+        
         return redirect('cart_view')
 
     cart_item = get_object_or_404(
@@ -162,15 +271,38 @@ def decrease_cart_item(request, item_id):
         id=item_id,
         cart__user=request.user
     )
-
+    
+    variant_id = cart_item.variant.id
+    old_quantity = cart_item.quantity
     deleted = False
+    
     if cart_item.quantity <= 1:
         cart_item.delete()
         messages.success(request, "Item removed from cart.")
         deleted = True
+        
+        logger.info(
+            "User decreased cart item and removed it | user_id=%s | email=%s | item_id=%s | variant_id=%s | old_quantity=%s",
+            request.user.id,
+            request.user.email,
+            item_id,
+            variant_id,
+            old_quantity,
+        )
+        
     else:
         cart_item.quantity -= 1
         cart_item.save(update_fields=['quantity', 'updated_at'])
+        
+        logger.info(
+            "User decreased cart item quantity | user_id=%s | email=%s | item_id=%s | variant_id=%s | old_quantity=%s | new_quantity=%s",
+            request.user.id,
+            request.user.email,
+            cart_item.id,
+            variant_id,
+            old_quantity,
+            cart_item.quantity,
+        )
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         cart = Cart.objects.get(user=request.user)
@@ -203,6 +335,15 @@ def decrease_cart_item(request, item_id):
 @user_required
 def remove_cart_item(request, item_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid remove cart item request method | user_id=%s | email=%s | item_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            item_id,
+            request.method,
+        )
+        
         return redirect('cart_view')
 
     cart_item = get_object_or_404(
@@ -210,8 +351,20 @@ def remove_cart_item(request, item_id):
         id=item_id,
         cart__user=request.user
     )
-
+    
+    variant_id = cart_item.variant.id
+    quantity = cart_item.quantity
     cart_item.delete()
+    
+    logger.info(
+        "User removed item from cart | user_id=%s | email=%s | item_id=%s | variant_id=%s | quantity=%s",
+        request.user.id,
+        request.user.email,
+        item_id,
+        variant_id,
+        quantity,
+    )
+    
     messages.success(request, "Item removed from cart.")
 
     return redirect('cart_view')
@@ -234,6 +387,14 @@ def wishlist_view(request):
 
     for item in page_obj:
         item.offer_data = calculate_best_offer(item.variant)
+        
+    logger.info(
+        "User viewed wishlist | user_id=%s | email=%s | total_items=%s | page=%s",
+        request.user.id,
+        request.user.email,
+        wishlist_items.count(),
+        page_number or 1,
+    )    
 
     return render(request, 'cart/wishlist.html', {
         'wishlist_items': page_obj,
@@ -245,6 +406,15 @@ def wishlist_view(request):
 @user_required
 def add_to_wishlist(request, variant_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid add to wishlist request method | user_id=%s | email=%s | variant_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            variant_id,
+            request.method,
+        )
+        
         return redirect('home')
 
     variant = get_object_or_404(
@@ -264,8 +434,27 @@ def add_to_wishlist(request, variant_id):
     )
 
     if created:
+        
+        logger.info(
+            "User added item to wishlist | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
+        
         messages.success(request, "Product added to wishlist.")
     else:
+        
+        logger.info(
+            "User attempted to add existing wishlist item | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
+
+        
         messages.info(request, "Product is already in your wishlist.")
 
     return redirect(request.META.get('HTTP_REFERER', 'wishlist_view'))
@@ -274,12 +463,29 @@ def add_to_wishlist(request, variant_id):
 @user_required
 def remove_from_wishlist(request, variant_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid remove from wishlist request method | user_id=%s | email=%s | variant_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            variant_id,
+            request.method,
+        )
+        
         return redirect('wishlist_view')
 
-    Wishlist.objects.filter(
+    deleted_count, _ = Wishlist.objects.filter(
         user=request.user,
         variant_id=variant_id
     ).delete()
+    
+    logger.info(
+        "User removed item from wishlist | user_id=%s | email=%s | variant_id=%s | deleted_count=%s",
+        request.user.id,
+        request.user.email,
+        variant_id,
+        deleted_count,
+    )
 
     messages.success(request, "Product removed from wishlist.")
     return redirect(request.META.get('HTTP_REFERER', 'wishlist_view'))
@@ -288,6 +494,15 @@ def remove_from_wishlist(request, variant_id):
 @user_required
 def toggle_wishlist(request, variant_id):
     if request.method != 'POST':
+        
+        logger.warning(
+            "Invalid toggle wishlist request method | user_id=%s | email=%s | variant_id=%s | method=%s",
+            request.user.id,
+            request.user.email,
+            variant_id,
+            request.method,
+        )
+        
         return redirect('home')
 
     variant = get_object_or_404(
@@ -308,6 +523,14 @@ def toggle_wishlist(request, variant_id):
 
     if wishlist_item:
         wishlist_item.delete()
+        
+        logger.info(
+            "User toggled wishlist off | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({
@@ -321,6 +544,14 @@ def toggle_wishlist(request, variant_id):
 
     else:
         Wishlist.objects.create(user=request.user, variant=variant)
+        
+        logger.info(
+            "User toggled wishlist on | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({
@@ -334,7 +565,7 @@ def toggle_wishlist(request, variant_id):
 
     return redirect(request.META.get('HTTP_REFERER', 'wishlist_view'))
 
-
+@user_required
 @login_required
 def buy_now(request, variant_id):
     variant = get_object_or_404(
@@ -349,10 +580,27 @@ def buy_now(request, variant_id):
     )
 
     if variant.stock <= 0:
+        
+        logger.warning(
+            "User attempted buy now for out-of-stock item | user_id=%s | email=%s | variant_id=%s | sku=%s",
+            request.user.id,
+            request.user.email,
+            variant.id,
+            variant.sku,
+        )
+        
         messages.error(request, "Product is out of stock.")
         return redirect('product_detail', variant_id=variant.id)
 
     request.session['buy_now_variant_id'] = variant.id
     request.session['buy_now_quantity'] = 1
+    
+    logger.info(
+        "User started buy now checkout | user_id=%s | email=%s | variant_id=%s | sku=%s",
+        request.user.id,
+        request.user.email,
+        variant.id,
+        variant.sku,
+    )
 
     return redirect('checkout')
