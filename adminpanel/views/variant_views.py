@@ -6,6 +6,7 @@ from django.db import transaction
 from products.models import Product, Variant, VariantImage
 from .core_views import admin_required
 from products.utils import optimize_variant_image
+from offers.utils import calculate_best_offer
 
 
 @never_cache
@@ -20,6 +21,9 @@ def variant_management_view(request, product_id):
     variants = product.variants.filter(
         is_deleted=False
     ).prefetch_related('images').order_by('-created_at')
+    
+    for variant in variants:
+        variant.offer_data = calculate_best_offer(variant)
 
     if request.method == 'POST':
         color = request.POST.get('variant_name', '').strip()

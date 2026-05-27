@@ -17,7 +17,8 @@
             <a href="{% url 'product_list' %}" class="hover:text-black">Inventory</a>
             <span class="material-symbols-outlined text-xs">chevron_right</span>
             <a href="{% url 'edit_product' product.id %}" class="hover:text-black">Product</a>
-            <span class="material-symbols-outlined text-xs">chevron_right</span>
+            <spa
+            n class="material-symbols-outlined text-xs">chevron_right</span>
             <span class="text-black">Variants</span>
         </nav>
 
@@ -182,7 +183,35 @@
                             </td>
 
                             <td class="px-6 py-5">
-                                <span class="text-sm font-black text-slate-900">₹{{ variant.price }}</span>
+                                {% if variant.offer_data.discount_amount > 0 %}
+
+                                    <div class="inline-flex flex-col items-start gap-1">
+
+                                        <div class="flex items-baseline gap-2">
+
+                                            <span class="text-sm font-black text-slate-900">
+                                                ₹{{ variant.offer_data.final_price|floatformat:0 }}
+                                            </span>
+
+                                            <span class="text-[10px] line-through text-slate-400 font-bold">
+                                                ₹{{ variant.offer_data.base_price|floatformat:0 }}
+                                            </span>
+
+                                        </div>
+
+                                        <span class="text-[9px] font-black uppercase tracking-wider text-emerald-600">
+                                            Save ₹{{ variant.offer_data.discount_amount|floatformat:0 }}
+                                        </span>
+
+                                    </div>
+
+                                {% else %}
+
+                                    <span class="text-sm font-black text-slate-900">
+                                        ₹{{ variant.price|floatformat:0 }}
+                                    </span>
+
+                                {% endif %}
                             </td>
 
                             <td class="px-6 py-5">

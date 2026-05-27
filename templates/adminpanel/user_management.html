@@ -1,5 +1,5 @@
 {% extends 'adminpanel/admin_base.html' %}
-{% load static %}
+{% load static admin_format %}
 
 {% block title %}User Management | VERSE{% endblock %}
 
@@ -151,9 +151,18 @@
                                 <span class="font-black truncate max-w-[150px]">{{ customer.full_name|default:"No Name" }}</span>
                             </div>
                         </td>
-                        <td class="py-4 font-bold text-slate-400">{{ customer.email }}</td>
-                        <td class="py-4 font-black">-</td>
-                        <td class="py-4 font-black">-</td>
+                        <td class="py-4 font-bold text-slate-400">
+                            {{ customer.email }}
+                        </td>
+
+                        <td class="py-4 font-black">
+                            {{ customer.total_orders|default:0 }}
+                        </td>
+
+                        <td class="py-4 font-black">
+                            {{ customer.total_spent|compact_money }}
+                        </td>
+
                         <td class="py-4">
                             {% if customer.is_blocked %}
                                 <span class="px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase">Blocked</span>
@@ -208,7 +217,7 @@
                     </div>
                     <div class="text-right">
                         <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Engagement</p>
-                        <p class="text-xs font-bold text-slate-600">- Orders / - Spend</p>
+                        <p class="text-xs font-bold text-slate-600">{{ customer.total_orders|default:0 }} Orders / {{ customer.total_spent|compact_money }}Spend</p>
                     </div>
                 </div>
 

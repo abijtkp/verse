@@ -8,6 +8,8 @@ from django.db import transaction
 from products.models import Product, Category, Variant, VariantImage
 from products.utils import optimize_variant_image
 from .core_views import admin_required
+from offers.utils import calculate_best_offer
+
 
 import logging
 

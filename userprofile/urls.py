@@ -17,16 +17,8 @@ urlpatterns = [
     path('addresses/<int:pk>/set-default/', views.set_default_address, name='set_default_address'),
 
     path('change-email/', views.change_email_view, name='change_email'),
+    path('change-password/', views.change_password_view, name='change_password'),
     
-
-    path(
-        'change-password/',
-        auth_views.PasswordChangeView.as_view(
-            template_name='userprofile/change_password.html',
-            success_url=reverse_lazy('profile')
-        ),
-        name='change_password'
-    ),
     path(
         'change-password/done/',
         auth_views.PasswordChangeDoneView.as_view(

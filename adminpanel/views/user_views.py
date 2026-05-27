@@ -7,6 +7,11 @@ from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 from django.db.models import Q
 from accounts.models import User
+
+from django.db.models import Count, Sum, Q
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+
 from .core_views import admin_required
 
 logger = logging.getLogger(__name__)
@@ -17,8 +22,29 @@ def user_management_view(request):
     search_query = request.GET.get('q', '').strip()
 
     all_users = User.objects.filter(is_staff=False)
-    
-    users = all_users.order_by('-date_joined')
+
+    users = all_users.annotate(
+        total_orders=Count(
+            'orders',
+            filter=Q(
+                orders__payment_status__in=['paid', 'pending']
+            ) & ~Q(
+                orders__status__in=['cancelled', 'payment_failed']
+            ),
+            distinct=True
+        ),
+        total_spent=Coalesce(
+            Sum(
+                'orders__final_total',
+                filter=Q(
+                    orders__payment_status__in=['paid', 'pending']
+                ) & ~Q(
+                    orders__status__in=['cancelled', 'payment_failed']
+                )
+            ),
+            Decimal('0.00')
+        )
+    ).order_by('-date_joined')
 
     if search_query:
         

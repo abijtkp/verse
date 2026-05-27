@@ -12,6 +12,10 @@ from django.views.decorators.http import require_POST
 from django.core.files.images import get_image_dimensions
 from allauth.socialaccount.models import SocialAccount
 
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+
+
 @never_cache
 @user_required
 def profile_view(request):
@@ -478,3 +482,52 @@ def change_email_view(request):
 
     return render(request, 'userprofile/change_email.html')
 
+
+@never_cache
+@user_required
+def change_password_view(request):
+
+    if request.method == "POST":
+
+        form = PasswordChangeForm(
+            user=request.user,
+            data=request.POST
+        )
+
+        if form.is_valid():
+
+            user = form.save()
+
+            update_session_auth_hash(
+                request,
+                user
+            )
+
+            messages.success(
+                request,
+                "Password changed successfully."
+            )
+
+            return redirect("profile")
+
+        field_errors = {}
+
+        for field, errors in form.errors.items():
+            field_errors[field] = errors[0]
+
+        request.session["change_password_errors"] = field_errors
+
+        return redirect("change_password")
+
+    field_errors = request.session.pop(
+        "change_password_errors",
+        {}
+    )
+
+    return render(
+        request,
+        "userprofile/change_password.html",
+        {
+            "field_errors": field_errors,
+        }
+    )
