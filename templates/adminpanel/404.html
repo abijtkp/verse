@@ -1,0 +1,37 @@
+{% extends 'adminpanel/admin_base.html' %}
+
+{% block title %}404 - Page Not Found{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+    <div class="text-center max-w-lg">
+
+        <h1 class="text-8xl font-bold text-gray-200">
+            404
+        </h1>
+
+        <h2 class="mt-4 text-3xl font-semibold text-gray-800">
+            Admin Page Not Found
+        </h2>
+
+        <p class="mt-3 text-gray-500">
+            The page you are looking for doesn't exist or may have been moved.
+        </p>
+
+        <div class="mt-8 flex justify-center gap-4">
+
+            <a href="{% url 'admin_dashboard' %}"
+               class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition">
+                Dashboard
+            </a>
+
+            <button onclick="history.back()"
+                    class="px-6 py-3 border rounded-lg hover:bg-gray-100 transition">
+                Go Back
+            </button>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -221,7 +221,7 @@
 
                         <!-- Actions -->
                         <td class="px-6 sm:px-8 py-5 text-right">
-                            <div class="flex items-center justify-end gap-2">
+                            <div class="flex items-center justify-start gap-2 w-[96px] ml-auto">
 
                                 <a href="{% url 'edit_offer' offer.offer_type offer.id %}"
                                    class="p-2 text-slate-300 hover:text-black transition-colors"
@@ -229,10 +229,13 @@
                                     <span class="material-symbols-outlined text-xl">edit</span>
                                 </a>
 
+                                {% now "U" as current_timestamp %}
+
+                                {% if offer.valid_to|date:"U" >= current_timestamp %}
                                 <form action="{% url 'toggle_offer_status' offer.offer_type offer.id %}"
-                                      method="POST"
-                                      id="toggle-offer-form-{{ offer.id }}"
-                                      class="inline-flex items-center">
+                                    method="POST"
+                                    id="toggle-offer-form-{{ offer.id }}"
+                                    class="inline-flex items-center">
                                     {% csrf_token %}
                                     <button type="submit"
                                             title="{% if offer.is_active %}Deactivate offer{% else %}Activate offer{% endif %}"
@@ -242,6 +245,27 @@
                                                 {% if offer.is_active %}translate-x-4{% else %}translate-x-[2px]{% endif %}">
                                         </span>
                                     </button>
+                                </form>
+                                {% endif %}
+
+                                {% if offer.valid_to|date:"U" < current_timestamp or not offer.is_active %}
+                                <button type="button"
+                                        class="p-2 text-slate-300 hover:text-red-600 transition-colors"
+                                        title="Delete offer"
+                                        data-confirm-modal
+                                        data-modal-title="Delete Offer"
+                                        data-modal-message="Are you sure you want to delete {{ offer.offer_name }}?"
+                                        data-modal-confirm-text="Delete"
+                                        data-modal-form-id="delete-offer-form-{{ offer.offer_type }}-{{ offer.id }}">
+                                    <span class="material-symbols-outlined text-xl">delete</span>
+                                </button>
+                                {% endif %}
+
+                                <form id="delete-offer-form-{{ offer.offer_type }}-{{ offer.id }}"
+                                    action="{% url 'delete_offer' offer.offer_type offer.id %}"
+                                    method="POST"
+                                    class="hidden">
+                                    {% csrf_token %}
                                 </form>
 
                             </div>

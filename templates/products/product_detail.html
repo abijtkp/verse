@@ -1092,6 +1092,18 @@
                         body: new FormData(this)
                     });
 
+                    if (response.status === 401) {
+                        const data = await response.json();
+                        showToast(data.message || 'Please login to continue.', 'error');
+                        return;
+                    }
+
+                    if (response.status === 403) {
+                        const data = await response.json();
+                        showToast(data.message || 'Access denied.', 'error');
+                        return;
+                    }
+
                     const data = await response.json();
 
                     if (typeof showToast === 'function') {
@@ -1131,6 +1143,18 @@
                         },
                         body: new FormData(this)
                     });
+
+                    if (response.status === 401) {
+                        const data = await response.json();
+                        showToast(data.message || 'Please login to continue.', 'error');
+                        return;
+                    }
+
+                    if (response.status === 403) {
+                        const data = await response.json();
+                        showToast(data.message || 'Access denied.', 'error');
+                        return;
+                    }
 
                     const data = await response.json();
 

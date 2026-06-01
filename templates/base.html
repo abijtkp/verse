@@ -729,8 +729,10 @@
 
             <!-- Avatar -->
             <button
-                {% if user.is_authenticated %}
+                {% if user.is_authenticated and not user.is_staff %}
                     onclick="toggleSidebar()"
+                {% elif user.is_staff %}
+                    onclick="window.location.href='{% url 'admin_dashboard' %}'"
                 {% else %}
                     onclick="window.location.href='{% url 'login' %}'"
                 {% endif %}

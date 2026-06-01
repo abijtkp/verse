@@ -433,3 +433,28 @@ def toggle_coupon_status_view(request, coupon_id):
     )
 
     return redirect('coupon_list')
+
+@admin_required
+def delete_coupon_view(request, coupon_id):
+
+    if request.method != 'POST':
+        return redirect('coupon_list')
+
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+
+    if coupon.current_status not in ["expired", "inactive"]:
+        messages.error(
+            request,
+            "Only expired or inactive coupons can be deleted."
+        )
+        return redirect('coupon_list')
+
+    coupon_code = coupon.code
+    coupon.delete()
+
+    messages.success(
+        request,
+        f'Coupon "{coupon_code}" deleted successfully.'
+    )
+
+    return redirect('coupon_list')

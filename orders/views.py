@@ -23,6 +23,7 @@ import razorpay
 from coupons.models import Coupon, CouponUsage
 from offers.utils import calculate_best_offer
 from django.db import models
+from products.utils import is_variant_available
 
 import logging
 
@@ -81,39 +82,44 @@ def apply_coupon_view(request):
         messages.error(request, "Please enter a coupon code.")
         return redirect('checkout')
 
-    cart = Cart.objects.filter(user=request.user).first()
-
-    if not cart:
-        
-        logger.warning(
-            "Coupon apply failed - cart not found | user_id=%s | email=%s | coupon_code=%s",
-            request.user.id,
-            request.user.email,
-            coupon_code,
-        )
-        
-        messages.error(request, "Cart not found.")
-        return redirect('checkout')
-
-    cart_items = CartItem.objects.filter(cart=cart)
-
-    if not cart_items.exists():
-        
-        logger.warning(
-            "Coupon apply failed - empty cart | user_id=%s | email=%s | coupon_code=%s",
-            request.user.id,
-            request.user.email,
-            coupon_code,
-        )
-        
-        messages.error(request, "Your cart is empty.")
-        return redirect('checkout')
+    buy_now_variant_id = request.session.get('buy_now_variant_id')
 
     subtotal = Decimal("0.00")
 
-    for item in cart_items:
-        offer_data = calculate_best_offer(item.variant)
-        subtotal += offer_data["final_price"] * item.quantity
+    if buy_now_variant_id:
+        variant = Variant.objects.filter(
+            id=buy_now_variant_id,
+            is_active=True,
+            is_deleted=False,
+            product__is_active=True,
+            product__is_deleted=False,
+            product__category__is_active=True,
+            product__category__is_deleted=False,
+        ).first()
+
+        if not variant:
+            messages.error(request, "Selected product is unavailable.")
+            return redirect('checkout')
+
+        offer_data = calculate_best_offer(variant)
+        subtotal = offer_data["final_price"]
+
+    else:
+        cart = Cart.objects.filter(user=request.user).first()
+
+        if not cart:
+            messages.error(request, "Cart not found.")
+            return redirect('checkout')
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty.")
+            return redirect('checkout')
+
+        for item in cart_items:
+            offer_data = calculate_best_offer(item.variant)
+            subtotal += offer_data["final_price"] * item.quantity
 
     coupon = Coupon.objects.filter(
         code__iexact=coupon_code,
@@ -337,11 +343,9 @@ def checkout_view(request):
             variant = item.variant
 
             if (
-                not variant or
-                variant.is_deleted or
-                not variant.is_active or
-                variant.stock <= 0 or
-                variant.stock < item.quantity
+                not variant 
+                or not is_variant_available(variant)
+                or variant.stock < item.quantity
             ):
                 
                 logger.warning(
@@ -630,11 +634,9 @@ def place_order_view(request):
     for item in cart_items:
         variant = locked_variants.get(item.variant_id)
         if (
-            not variant or
-            variant.is_deleted or
-            not variant.is_active or
-            variant.stock <= 0 or
-            variant.stock < item.quantity
+            not variant 
+            or not is_variant_available(variant) 
+            or variant.stock < item.quantity
         ):
             product_name = item.variant.product.product_name if item.variant and item.variant.product else 'Product'
             

@@ -38,3 +38,15 @@ def optimize_variant_image(image_file, max_size=(1200, 1200), quality=85):
     new_name = f"{original_name}.jpg"
 
     return ContentFile(output.read(), name=new_name)
+
+
+def is_variant_available(variant):
+    return (
+        variant.is_active
+        and not variant.is_deleted
+        and variant.product.is_active
+        and not variant.product.is_deleted
+        and variant.product.category.is_active
+        and not variant.product.category.is_deleted
+        and variant.stock > 0
+    )

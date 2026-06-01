@@ -692,6 +692,14 @@
         .tracker-step { min-width: 90px; }
     }
 
+    .badge-payment_failed {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+    .badge-payment_failed::before {
+        background: #e02020;
+    }
+
 
     
 </style>
@@ -757,6 +765,24 @@
                     </div>
                 </div>
             </div>
+        
+        {% elif order.status == 'payment_failed' %}
+
+        <div style="display:flex;align-items:center;gap:14px;padding:4px 0;">
+            <div class="tracker-dot cancelled">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </div>
+            <div>
+                <div style="font-size:13px;font-weight:900;letter-spacing:-0.01em;text-transform:uppercase;color:#e02020;">
+                    Payment Failed
+                </div>
+                <div style="font-size:10px;font-weight:500;color:#94a3b8;margin-top:2px;">
+                    Your payment could not be completed. Please try again.
+                </div>
+            </div>
+        </div>    
 
         {% elif order.status == 'returned' %}
 
@@ -882,9 +908,15 @@
                                     <span class="meta-chip">SKU: {{ item.sku }}</span>
                                 {% endif %}
                             </div>
-                           <span class="status-badge badge-{{ item.status|default:'placed' }}">
-                                {{ item.status|default:"Placed"|cut:"_"|title }}
-                            </span>
+                           {% if order.status == 'payment_failed' %}
+                                <span class="status-badge badge-payment_failed">
+                                    Payment Failed
+                                </span>
+                            {% else %}
+                                <span class="status-badge badge-{{ item.status|default:'placed' }}">
+                                    {{ item.status|default:"Placed"|cut:"_"|title }}
+                                </span>
+                            {% endif %}
 
                             {% if item.status == 'return_rejected' and item.return_rejection_reason %}
                                 <p class="mt-2 text-[10px] font-bold text-red-500 leading-snug max-w-md">
@@ -909,7 +941,7 @@
                             {% if order.status == 'pending' and item.status == 'pending' %}
                             <button type="button" 
                                     onclick="triggerCancelItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
-                                    class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors mt-2">
+                                    class="mt-2 inline-flex items-center justify-center rounded-lg border border-red-200 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 hover:border-red-500 hover:text-red-700 transition-all">
                                 Cancel Item
                             </button>
 
@@ -921,7 +953,7 @@
                             {% if order.status == 'delivered' and item.status == 'delivered' %}
                             <button type="button"
                                     onclick="triggerReturnItemModal('{{ item.id }}', '{{ item.product_name|escapejs }}')"
-                                    class="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-slate-700 hover:bg-black hover:text-white hover:border-black transition-all"
+                                    class="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-slate-700 hover:bg-black hover:text-white hover:border-black transition-all">
                                 Return Item
                             </button>
 
@@ -1020,16 +1052,28 @@
                 </div>
             </div>
 
+            {% if order.status == 'payment_failed' or order.status == 'pending' or order.status == 'delivered' %}
+
             <!-- Action Buttons Card -->
             <div class="ord-card" style="animation-delay:0.16s;display:flex;flex-direction:column;gap:10px;">
 
+                {% if order.status == 'payment_failed' and order.payment_method == 'razorpay' %}
+                <a href="{% url 'razorpay_payment' order.order_id %}" class="action-btn btn-invoice">
+                    <span class="material-symbols-outlined icon-sm">refresh</span>
+                    Retry Payment
+                </a>
+                {% endif %}
+
                 <!-- Invoice -->
+                {% if order.payment_status == 'paid' and order.status == 'delivered' %}
                 <a href="{% url 'download_invoice' order.order_id %}" class="action-btn btn-invoice">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     Download Invoice
                 </a>
+                {% endif %}
+
 
                 {% if order.status == 'pending' %}
                 <button type="button" onclick="triggerCancelOrderModal()" class="action-btn btn-cancel">
@@ -1059,6 +1103,8 @@
                 </form>
                 {% endif %}
             </div>
+
+            {% endif %}
 
             <!-- Help Card -->
             <a href="#" class="help-card" style="animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.22s both;">

@@ -224,7 +224,7 @@
 
                         <!-- Actions -->
                         <td class="px-6 sm:px-8 py-5 text-right">
-                            <div class="flex items-center justify-end gap-2">
+                            <div class="flex items-center justify-start gap-2 w-[96px] ml-auto">
 
                                 <a href="{% url 'edit_coupon' coupon.id %}"
                                    class="p-2 text-slate-300 hover:text-black transition-colors"
@@ -232,6 +232,7 @@
                                     <span class="material-symbols-outlined text-xl">edit</span>
                                 </a>
 
+                                {% if coupon.current_status != "expired" %}
                                 <form action="{% url 'toggle_coupon_status' coupon.id %}"
                                       method="POST"
                                       id="toggle-coupon-form-{{ coupon.id }}"
@@ -246,6 +247,31 @@
                                         </span>
                                     </button>
                                 </form>
+                                {% endif %}
+
+                                <form id="delete-coupon-form-{{ coupon.id }}"
+                                    action="{% url 'delete_coupon' coupon.id %}"
+                                    method="POST"
+                                    class="hidden">
+                                    {% csrf_token %}
+                                </form>
+
+                                {% if coupon.current_status == "expired" or coupon.current_status == "inactive" %}
+                                <button type="button"
+                                        class="p-2 text-slate-300 hover:text-red-600 transition-colors"
+                                        title="Delete coupon"
+                                        data-confirm-modal
+                                        data-modal-title="Delete Coupon"
+                                        data-modal-message="Are you sure you want to delete coupon {{ coupon.code }}?"
+                                        data-modal-confirm-text="Delete"
+                                        data-modal-form-id="delete-coupon-form-{{ coupon.id }}">
+                                    <span class="material-symbols-outlined text-xl">delete</span>
+                                </button>
+                                {% else %}
+                                <span class="p-2 opacity-0 pointer-events-none">
+                                    <span class="material-symbols-outlined text-xl">delete</span>
+                                </span>
+                                {% endif %}
 
                             </div>
                         </td>
@@ -294,4 +320,6 @@
 
     </div>
 </div>
+
+
 {% endblock %}

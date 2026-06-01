@@ -128,7 +128,12 @@
                 <!-- Image Area -->
                 <div class="relative overflow-hidden bg-[#f4f4f4] aspect-square">
 
+                    {% if item.is_available %}
                     <a href="{% url 'product_detail' item.variant.id %}" class="block w-full h-full">
+                    {% else %}
+                    <div class="block w-full h-full opacity-60 cursor-not-allowed">
+                    {% endif %}
+
                         {% with primary_image=item.variant.images.first %}
                             {% if primary_image and primary_image.image_url %}
                                 <img src="{{ primary_image.image_url.url }}"
@@ -141,13 +146,18 @@
                                 </div>
                             {% endif %}
                         {% endwith %}
+
+                    {% if item.is_available %}
                     </a>
+                    {% else %}
+                    </div>
+                    {% endif %}
 
                     <!-- Status badges -->
                     <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-                        {% if item.variant.stock == 0 %}
+                        {% if not item.is_available %}
                             <span class="px-2.5 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                                Out of Stock
+                                Unavailable
                             </span>
                         {% elif item.variant.stock <= 5 %}
                             <span class="stock-badge px-2.5 py-1 bg-orange-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
@@ -183,10 +193,16 @@
                     </span>
 
                     <!-- Product Name -->
+                    {% if item.is_available %}
                     <a href="{% url 'product_detail' item.variant.id %}"
-                       class="text-sm font-[900] uppercase italic tracking-tight text-black leading-tight mb-2 hover:opacity-60 transition-opacity line-clamp-2">
+                    class="text-sm font-[900] uppercase italic tracking-tight text-black leading-tight mb-2 hover:opacity-60 transition-opacity line-clamp-2">
                         {{ item.variant.product.product_name }}
                     </a>
+                    {% else %}
+                    <p class="text-sm font-[900] uppercase italic tracking-tight text-slate-400 leading-tight mb-2 line-clamp-2">
+                        {{ item.variant.product.product_name }}
+                    </p>
+                    {% endif %}
 
                     <!-- Variant details -->
                     <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -236,7 +252,7 @@
                         {% endif %}
 
                         <!-- Move to Cart -->
-                        {% if item.variant.stock > 0 %}
+                        {% if item.is_available %}
                         <form method="POST" action="{% url 'add_to_cart' item.variant.id %}">
                             {% csrf_token %}
                             <button type="submit"

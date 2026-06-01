@@ -9,6 +9,7 @@ from .models import Cart, CartItem, Wishlist
 from userprofile.models import Address
 from offers.utils import calculate_best_offer
 from django.core.paginator import Paginator
+from products.utils import is_variant_available
 
 import logging
 
@@ -29,8 +30,15 @@ def cart_view(request):
     )
     
     cart_total = 0
+    
+    has_unavailable_items = False
 
     for item in cart_items:
+        item.is_available = is_variant_available(item.variant)
+        
+        if not item.is_available:
+            has_unavailable_items = True
+        
         item.offer_data = calculate_best_offer(item.variant)
         item.discounted_price = item.offer_data['final_price']
         item.discount_amount = item.offer_data['discount_amount']
@@ -52,6 +60,7 @@ def cart_view(request):
     return render(request, 'cart/cart.html', {
         'cart': cart,
         'cart_items': cart_items,
+        'has_unavailable_items': has_unavailable_items,
         'has_address': has_address,
         'cart_total': cart_total,
     })
@@ -387,6 +396,7 @@ def wishlist_view(request):
 
     for item in page_obj:
         item.offer_data = calculate_best_offer(item.variant)
+        item.is_available = is_variant_available(item.variant)
         
     logger.info(
         "User viewed wishlist | user_id=%s | email=%s | total_items=%s | page=%s",

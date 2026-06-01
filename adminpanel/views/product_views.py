@@ -60,6 +60,23 @@ def product_list_view(request):
         is_deleted=False,
         is_active=True,
     ).order_by('category_name')
+    
+    low_stock_count = Variant.objects.filter(
+        is_deleted=False,
+        is_active=True,
+        stock__gt=0,
+        stock__lte=5
+    ).count()
+
+    out_of_stock_count = Variant.objects.filter(
+        is_deleted=False,
+        is_active=True,
+        stock=0
+    ).count()
+
+    new_arrivals_count = Product.objects.filter(
+        is_deleted=False
+    ).order_by('-created_at')[:30].count()
           
         
     paginator = Paginator(products, 10)
@@ -82,6 +99,10 @@ def product_list_view(request):
         'categories':categories,
         'selected_category':selected_category,
         'sort_by':sort_by,
+        
+        'low_stock_count': low_stock_count,
+        'out_of_stock_count': out_of_stock_count,
+        'new_arrivals_count': new_arrivals_count,
     })
 
 

@@ -270,10 +270,10 @@
                                 {% endif %}
 
                                 <div class="mt-4">
-                                    {% if item.variant.stock == 0 %}
+                                    {% if not item.is_available %}
                                         <span class="stock-pill out">
                                             <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
-                                            Out of Stock
+                                            Unavailable
                                         </span>
                                     {% elif item.variant.stock <= 3 %}
                                         <span class="stock-pill low">
@@ -296,7 +296,7 @@
                                 <button type="submit"
                                         id="decrease-btn-{{ item.id }}"
                                         class="qty-btn"
-                                        {% if item.quantity <= 1 %}disabled{% endif %}
+                                        {% if item.quantity <= 1 or not item.is_available %}disabled{% endif %}
                                         title="Decrease quantity">
                                     −
                                 </button>
@@ -311,7 +311,7 @@
                                 <button type="submit"
                                         id="increase-btn-{{ item.id }}"
                                         class="qty-btn"
-                                        {% if item.quantity >= item.variant.stock or item.quantity >= 5 %}disabled{% endif %}
+                                        {% if item.quantity >= item.variant.stock or item.quantity >= 5 or not item.is_available %}disabled{% endif %}
                                         title="Increase quantity">
                                     +
                                 </button>
@@ -381,10 +381,18 @@
                     <span id="summary-total" class="text-2xl font-[900] text-black">₹{{ cart_total|floatformat:0 }}</span>
                 </div>
 
+                {% if has_unavailable_items %}
+
+                <button disabled class="checkout-btn mb-4 cursor-not-allowed">
+                    <span class="material-symbols-outlined icon-sm">block</span>
+                    Remove Unavailable Items
+                </button>
+                {% else %}
                 <a href="{% url 'checkout' %}" class="checkout-btn mb-4">
                     <span class="material-symbols-outlined icon-sm">lock</span>
                     Proceed to Checkout
                 </a>
+                {% endif %}
 
                 <a href="{% url 'home' %}" class="continue-btn">
                     Continue Shopping

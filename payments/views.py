@@ -14,6 +14,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+MAX_WALLET_BALANCE = Decimal("50000.00")
+
 @login_required
 def wallet_view(request):
     wallet, created = Wallet.objects.get_or_create(user=request.user)
@@ -68,6 +70,13 @@ def create_wallet_topup_view(request):
 
         if amount <= 0:
             raise ValueError
+        
+        if amount > MAX_WALLET_BALANCE:
+            messages.error(
+                request,
+                "Maximum wallet top-up amount is ₹50,000."
+            )
+            return redirect('add_money')
 
     except Exception:
         
@@ -79,6 +88,17 @@ def create_wallet_topup_view(request):
         )
         
         messages.error(request, "Invalid amount.")
+        return redirect('add_money')
+    
+    wallet, _ = Wallet.objects.get_or_create(
+        user=request.user
+    )
+
+    if wallet.balance + amount > MAX_WALLET_BALANCE:
+        messages.error(
+            request,
+            f"Wallet balance cannot exceed ₹50,000. Current balance: ₹{wallet.balance}"
+        )
         return redirect('add_money')
 
     client = razorpay.Client(
@@ -152,6 +172,23 @@ def verify_wallet_topup_view(request):
             user=request.user
         )
         
+        if wallet.balance + amount > MAX_WALLET_BALANCE:
+
+            logger.warning(
+                "Wallet balance limit exceeded | user_id=%s | email=%s | current_balance=%s | amount=%s",
+                request.user.id,
+                request.user.email,
+                wallet.balance,
+                amount,
+            )
+
+            messages.error(
+                request,
+                "Wallet balance cannot exceed ₹50,000."
+            )
+
+            return redirect('wallet')
+        
         old_balance = wallet.balance
         wallet.balance += amount
 
@@ -185,7 +222,7 @@ def verify_wallet_topup_view(request):
 
         return redirect('wallet')
 
-    except Exception:
+    except (ValueError, TypeError):
         
         logger.exception(
             "Wallet topup verification failed | user_id=%s | email=%s | razorpay_order_id=%s | razorpay_payment_id=%s | amount=%s",

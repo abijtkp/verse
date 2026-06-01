@@ -31,9 +31,9 @@ urlpatterns = [
     path('orders/', include('orders.urls')),
     path('adminpanel/', include('adminpanel.urls')),
     path('wallet/', include('payments.urls')),
-
-    
 ]
+
+handler404 = "verse_shoes.views.custom_404"
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -4,7 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-*.env
+
 
 # Django
 *.log
@@ -25,4 +25,5 @@ env/
 logs/
 *.log
 
-
+# Collected static files
+staticfiles/

@@ -363,3 +363,25 @@ def toggle_offer_status_view(request, offer_type, offer_id):
 
     messages.success(request, "Offer status updated successfully.")
     return redirect("offer_list")
+
+
+@admin_required
+def delete_offer_view(request, offer_type, offer_id):
+
+    if request.method != "POST":
+        return redirect("offer_list")
+
+    if offer_type == "product":
+        offer = get_object_or_404(ProductOffer, id=offer_id)
+
+    elif offer_type == "category":
+        offer = get_object_or_404(CategoryOffer, id=offer_id)
+
+    else:
+        messages.error(request, "Invalid offer type.")
+        return redirect("offer_list")
+
+    offer.delete()
+
+    messages.success(request, "Offer deleted successfully.")
+    return redirect("offer_list")
