@@ -553,6 +553,7 @@ def home(request):
     show_category_cards = categories_with_images.count() >= 4
 
     home_categories = categories_with_images[:4] if show_category_cards else []
+    
 
     return render(request, 'home.html', {
         'profile': profile,

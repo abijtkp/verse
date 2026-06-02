@@ -208,16 +208,26 @@ def admin_dashboard_view(request):
     )
 
     for item in top_products_queryset:
-        variant = Variant.objects.filter(
-            product__product_name=item['product_name']
-        ).prefetch_related('images').first()
+        variant = (
+            Variant.objects
+            .filter(
+                product__product_name=item['product_name'],
+                is_deleted=False,
+                is_active=True,
+                product__is_deleted=False,
+                product__is_active=True,
+            )
+            .prefetch_related('images')
+            .order_by('-is_default', 'id')
+            .first()
+        )
 
         primary_image = None
 
         if variant:
-            primary = variant.images.filter(is_primary=True).first()
+            primary = variant.images.filter(is_primary=True).first() or variant.images.first()
 
-            if primary:
+            if primary and primary.image_url:
                 primary_image = primary.image_url.url
 
         top_products.append({

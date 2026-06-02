@@ -171,29 +171,7 @@
         .nav-link:hover {
             transform: translateY(-1px);
         }
-                {% comment %} .nav-link {
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--ink);
-            text-decoration: none;
-            position: relative;
-            padding-bottom: 2px;
-            opacity: 0.55;
-            transition: opacity 0.25s ease;
-        } {% endcomment %}
 
-        {% comment %} .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1.5px;
-            background: var(--ink);
-            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
-        } {% endcomment %}
 
         .nav-link:hover { opacity: 1; }
         .nav-link:hover::after { width: 100%; }
@@ -306,6 +284,7 @@
             visibility: visible;
         }
 
+
         /* ─── PROFILE SIDEBAR ─────────────────────────────────── */
         .profile-sidebar {
             position: fixed;
@@ -319,15 +298,17 @@
             overflow-y: auto;
             width: 320px;
             z-index: 500;
-            background: rgba(253,253,253,0.92);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border-left: 1px solid var(--border);
+            background: rgba(255,255,255,0.50);
+            backdrop-filter: blur(42px) saturate(240%);
+            -webkit-backdrop-filter: blur(42px) saturate(240%);
+            border: 1px solid rgba(255,255,255,0.45);
             display: flex;
             flex-direction: column;
             transition: right 0.5s cubic-bezier(0.4,0,0.2,1);
             padding: 28px 24px 32px;
-            box-shadow: 0 30px 80px rgba(10,10,10,0.12);
+            box-shadow:
+                0 30px 80px rgba(10,10,10,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.35);
         }
 
         .profile-sidebar.open { right: 20px; }
@@ -554,29 +535,61 @@
             position: fixed;
             inset: 0;
             z-index: 400;
-            background: var(--ink);
+
+            background: rgba(255, 255, 255, 0.42);
+
+            backdrop-filter: blur(42px) saturate(240%);
+            -webkit-backdrop-filter: blur(42px) saturate(240%);
+
             display: flex;
             flex-direction: column;
             padding: 28px 32px;
-            transform: translateX(-100%);
-            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+
+            transform: translateY(-100%);
+            transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255,255,255,0.45);
+            box-shadow: 0 30px 80px rgba(10,10,10,0.08);
         }
 
-        .mobile-menu.open { transform: translateX(0); }
+        .mobile-menu::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(255,255,255,0.18) 0%,
+                    rgba(255,255,255,0.08) 34%,
+                    rgba(255,255,255,0.01) 100%
+                );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .mobile-menu > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .mobile-menu.open { transform: translateY(0); }
 
         .mobile-nav-link {
-            font-size: clamp(28px, 8vw, 44px);
-            font-weight: 900;
-            font-style: italic;
-            letter-spacing: -0.03em;
-            text-transform: uppercase;
-            color: rgba(253,253,253,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: #1d1d1f;
             text-decoration: none;
-            line-height: 1.1;
-            transition: color 0.2s ease;
+            line-height: 1.25;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
 
-        .mobile-nav-link:hover { color: var(--paper); }
+        .mobile-nav-link:hover {
+            color: #000;
+            transform: translateX(4px);
+        }
 
         @media (max-width: 768px) {
             .site-header { padding: 0 20px; }
@@ -635,29 +648,35 @@
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation menu">
-        <div class="flex items-center justify-between mb-16">
-            <a href="{% url 'home' %}" class="logo text-white" onclick="closeMobileMenu()">VERSE<span style="background:#fff;"></span></a>
-            <button onclick="closeMobileMenu()" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors" aria-label="Close menu">
+        <div class="flex items-center justify-between mb-10">
+            <a href="{% url 'home' %}" class="logo text-black" onclick="closeMobileMenu()">VERSE<span style="background:#fff;"></span></a>
+            <button onclick="closeMobileMenu()" class="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-black hover:bg-black/5 transition-colors" aria-label="Close menu">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
-        <nav class="flex flex-col gap-3 flex-1">
+        <nav class="flex flex-col gap-2 flex-1">
+            <a href="{% url 'home' %}" class="mobile-nav-link" onclick="closeMobileMenu()">Home</a>
             <a href="{% url 'product_listing' %}" class="mobile-nav-link" onclick="closeMobileMenu()">Collections</a>
-            <a href="#" class="mobile-nav-link" onclick="closeMobileMenu()">New Drops</a>
-            <a href="#" class="mobile-nav-link" onclick="closeMobileMenu()">About</a>
+            <a href="#new-drops" class="mobile-nav-link" onclick="closeMobileMenu()">New Drops</a>
+            <a href="#about" class="mobile-nav-link" onclick="closeMobileMenu()">About</a>
         </nav>
-        <div class="flex items-center gap-6 pt-8 border-t border-white/10">
-            <a href="{% url 'wishlist_view' %}" class="text-white/50 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Wishlist</a>
-            <a href="{% url 'cart_view' %}" class="text-white/50 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Cart</a>
-        </div>
+
     </div>
 
     <!-- ─── HEADER ──────────────────────────────────────────── -->
     <header class="site-header" id="siteHeader">
         <!-- Logo -->
-        <a href="{% url 'home' %}" class="logo">VERSE</a>
+        <!-- Mobile hamburger -->
+        <button onclick="openMobileMenu()" class="lg:hidden icon-btn mr-2" aria-label="Open menu">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
+            </svg>
+        </button>
+
+        <!-- Logo -->
+        <a href="{% url 'home' %}" class="logo hidden sm:block">VERSE</a>
 
         <!-- Center Nav -->
         <nav class="main-nav hidden lg:flex items-center gap-2 absolute left-1/2 -translate-x-1/2" id="mainNav">
@@ -682,6 +701,9 @@
         <!-- Right Actions -->
         <div class="flex items-center gap-2 ml-auto">
             <!-- Search -->
+             <a href="{% url 'product_listing' %}" class="icon-btn md:hidden" aria-label="Search">
+                <span class="material-symbols-outlined">search</span>
+            </a>
             <form method="GET" action="{% url 'product_listing' %}" class="search-box hidden md:flex relative">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:var(--muted);flex-shrink:0;">
                     <circle cx="11" cy="11" r="8"/>
@@ -705,37 +727,31 @@
     {% endif %}
             </form>
 
-            <!-- Wishlist -->
-            <a href="{% url 'wishlist_view' %}" class="icon-btn" aria-label="Wishlist">
+
+
+            <!-- Wishlist - Desktop only -->
+            <a href="{% url 'wishlist_view' %}" class="icon-btn hidden lg:inline-flex" aria-label="Wishlist">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                 </svg>
-                <span id="wishlistCount"
-                    class="badge {% if wishlist_count == 0 %}hidden{% endif %}">
+                <span id="wishlistCount" class="badge {% if wishlist_count == 0 %}hidden{% endif %}">
                     {{ wishlist_count }}
                 </span>
             </a>
 
-            <!-- Cart -->
-            <a href="{% url 'cart_view' %}" class="icon-btn" aria-label="Shopping bag">
+            <!-- Cart - Desktop only -->
+            <a href="{% url 'cart_view' %}" class="icon-btn hidden lg:inline-flex" aria-label="Shopping bag">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
-                <span id="cart-count-badge"
-                    class="badge {% if cart_count == 0 %}hidden{% endif %}">
+                <span id="cart-count-badge" class="badge {% if cart_count == 0 %}hidden{% endif %}">
                     {{ cart_count }}
                 </span>
             </a>
 
             <!-- Avatar -->
             <button
-                {% if user.is_authenticated and not user.is_staff %}
-                    onclick="toggleSidebar()"
-                {% elif user.is_staff %}
-                    onclick="window.location.href='{% url 'admin_dashboard' %}'"
-                {% else %}
-                    onclick="window.location.href='{% url 'login' %}'"
-                {% endif %}
+                onclick="toggleSidebar()"
                 class="avatar-btn ml-1"
                 aria-label="Account">
                 {% if user.is_authenticated and user.profile.image and user.profile.image.name != 'default.png' %}
@@ -746,27 +762,23 @@
             </button>
 
             <!-- Mobile hamburger -->
-            <button onclick="openMobileMenu()" class="lg:hidden icon-btn ml-1" aria-label="Open menu">
+            {% comment %} <button onclick="openMobileMenu()" class="lg:hidden icon-btn ml-1" aria-label="Open menu">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h10"/>
                 </svg>
-            </button>
+            </button> {% endcomment %}
         </div>
     </header>
 
     <!-- ─── PROFILE SIDEBAR ──────────────────────────────────── -->
     <aside id="profileSidebar" class="profile-sidebar" role="dialog" aria-label="Account menu">
         {% if user.is_authenticated %}
-        {% comment %} <button onclick="toggleSidebar()" class="sidebar-close" aria-label="Close">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button> {% endcomment %}
+
 
         <!-- Profile card -->
         <!-- Profile compact card -->
             <a href="{% url 'profile' %}"
-            class="flex items-center gap-4 bg-white border border-slate-200 rounded-[24px] p-4 mt-2 mb-5 shadow-sm hover:shadow-md transition-all group">
+            class="flex items-center gap-4 bg-white/40 border border-white/30 backdrop-blur-xl rounded-[24px] p-4 mt-2 mb-5 shadow-sm hover:shadow-md transition-all group">
 
                 <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
                     {% if user.profile.image and user.profile.image.name != 'default.png' %}
@@ -792,7 +804,7 @@
             </a>
 
             <!-- Nav -->
-            <nav class="flex flex-col gap-2 flex-none bg-white border border-slate-200 rounded-[26px] p-5 shadow-sm">
+            <nav class="flex flex-col gap-2 flex-none bg-white/40 border border-white/30 backdrop-blur-xl rounded-[26px] p-5 shadow-sm">
                 <p class="text-[9px] font-black uppercase tracking-[0.28em] text-slate-400 px-3 mb-2">
                     Account Settings
                 </p>
@@ -812,6 +824,18 @@
                 <a href="{% url 'wallet' %}" class="sidebar-link {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
                     <img src="{% static 'images/wallet.svg' %}" class="sidebar-icon" alt="">Wallet
                 </a>
+
+                <a href="{% url 'wishlist_view' %}"
+                class="sidebar-link lg:hidden {% if request.resolver_match.url_name == 'wishlist_view' %}active{% endif %}">
+                    <span class="material-symbols-outlined" style="font-size:18px;">favorite</span>
+                    Wishlist
+                </a>
+
+                <a href="{% url 'cart_view' %}"
+                class="sidebar-link lg:hidden {% if request.resolver_match.url_name == 'cart_view' %}active{% endif %}">
+                    <span class="material-symbols-outlined" style="font-size:18px;">shopping_bag</span>
+                    Cart
+                </a>
             </nav>
 
             <!-- Logout -->
@@ -828,7 +852,23 @@
                     </button>
                 </form>
             </div>
-        {% endif %}
+        {% else %}
+    <div class="bg-white border border-slate-200 rounded-[26px] p-5 shadow-sm mt-2">
+        <p class="text-[9px] font-black uppercase tracking-[0.28em] text-slate-400 px-3 mb-4">
+            Account
+        </p>
+
+        <a href="{% url 'login' %}" class="sidebar-link">
+            <span class="material-symbols-outlined" style="font-size:18px;">login</span>
+            Login
+        </a>
+
+        <a href="{% url 'signup' %}" class="sidebar-link">
+            <span class="material-symbols-outlined" style="font-size:18px;">person_add</span>
+            Signup
+        </a>
+    </div>
+{% endif %}
     </aside>
 
     <!-- ─── MAIN ─────────────────────────────────────────────── -->
@@ -844,63 +884,7 @@
         </div>
 
         <div class="max-w-7xl mx-auto relative z-10">
-            {% comment %} <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
 
-                <!-- Newsletter -->
-                <div class="space-y-6">
-                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Stay Connected</p>
-                    <p class="text-sm leading-relaxed max-w-xs" style="color:#6b6b6b;">First to know. New drops, exclusive collabs, and member-only offers — straight to you.</p>
-                    <form class="flex border rounded-2xl overflow-hidden" style="border-color:rgba(253,253,253,0.08);" onsubmit="return false;">
-                        <input type="email" placeholder="your@email.com"
-                               class="bg-transparent px-4 py-3 text-sm w-full outline-none"
-                               style="font-family:'Manrope',sans-serif;color:var(--paper);"
-                               aria-label="Email address">
-                        <button type="submit"
-                                class="px-5 py-3 text-[9px] font-black uppercase tracking-widest flex-shrink-0 transition-colors"
-                                style="background:var(--paper);color:var(--ink);">Join</button>
-                    </form>
-                </div>
-
-                <!-- Shop -->
-                <div class="space-y-6 lg:pl-6">
-                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Shop</p>
-                    <ul class="space-y-4">
-                        {% for label, href in forloop.parentloop.revaluelist|default:'' %}{% endfor %}
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">New Releases</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Men's Shoes</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Women's Shoes</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Kid's Shoes</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight" style="color:#e87c3e;">Sale</a></li>
-                    </ul>
-                </div>
-
-                <!-- Help -->
-                <div class="space-y-6">
-                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Help</p>
-                    <ul class="space-y-4">
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Order Status</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Shipping & Delivery</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Returns</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Payment Options</a></li>
-                        <li><a href="#" class="text-sm font-semibold uppercase tracking-tight transition-colors" style="color:#6b6b6b;" onmouseover="this.style.color='#fdfdfd'" onmouseout="this.style.color='#6b6b6b'">Contact Us</a></li>
-                    </ul>
-                </div>
-
-                <!-- Social -->
-                <div class="space-y-6 lg:text-right">
-                    <p class="text-[9px] font-black uppercase tracking-[0.25em]" style="color:var(--muted);">Connect</p>
-                    <div class="flex gap-3 lg:justify-end">
-                        <a href="#" class="w-10 h-10 rounded-full border flex items-center justify-center transition-colors" style="border-color:rgba(253,253,253,0.1);" onmouseover="this.style.background='rgba(253,253,253,0.08)'" onmouseout="this.style.background='transparent'" aria-label="Twitter">
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full border flex items-center justify-center transition-colors" style="border-color:rgba(253,253,253,0.1);" onmouseover="this.style.background='rgba(253,253,253,0.08)'" onmouseout="this.style.background='transparent'" aria-label="Instagram">
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                        </a>
-                    </div>
-                    <!-- Tagline -->
-                    <p class="text-xs font-black italic uppercase tracking-tight" style="color:rgba(253,253,253,0.15);">Made for the<br>streets. Built for<br>forever.</p>
-                </div>
-            </div> {% endcomment %}
 
             <!-- Bottom bar -->
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style="border-top:1px solid rgba(253,253,253,0.06);">
