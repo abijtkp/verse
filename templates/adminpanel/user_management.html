@@ -142,7 +142,15 @@
                         <td class="py-4">
                             <div class="flex items-center gap-3">
                                 {% if customer.profile.image and customer.profile.image.name != 'default.png' %}
-                                    <img src="{{ customer.profile.image.url }}" class="w-8 h-8 rounded-full object-cover shrink-0" alt="">
+                                    <img
+                                        src="{{ customer.profile.image.url }}"
+                                        class="w-8 h-8 rounded-full object-cover shrink-0"
+                                        alt="{{ customer.full_name|default:customer.email }}"
+                                        onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+                                    >
+                                    <div class="hidden w-8 h-8 rounded-full bg-slate-100 items-center justify-center font-bold text-[10px] uppercase shrink-0">
+                                        {{ customer.full_name|default:customer.email|slice:":2"|upper }}
+                                    </div>
                                 {% else %}
                                     <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] uppercase shrink-0">
                                         {{ customer.full_name|default:customer.email|slice:":2"|upper }}

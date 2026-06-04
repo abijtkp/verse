@@ -486,6 +486,10 @@ def change_email_view(request):
 @never_cache
 @user_required
 def change_password_view(request):
+    
+    if SocialAccount.objects.filter(user=request.user, provider="google").exists():
+        messages.error(request, "Google account password cannot be changed.")
+        return redirect("profile")
 
     if request.method == "POST":
 
