@@ -3,6 +3,24 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
 
+def validate_full_name(value):
+    value = (value or "").strip()
+
+    if not value:
+        raise ValidationError(_("Full name is required."))
+
+    if not re.fullmatch(r"^[A-Za-z][A-Za-z0-9 ]*$", value):
+        raise ValidationError(
+            _("Name must start with a letter and contain only letters, numbers, and spaces.")
+        )
+
+    alphabet_count = len(re.findall(r"[A-Za-z]", value))
+
+    if alphabet_count < 4:
+        raise ValidationError(
+            _("Name must contain at least 4 alphabetic characters.")
+        )
+
 class StrongPasswordValidator:
     def validate(self, password, user=None):
         errors = []

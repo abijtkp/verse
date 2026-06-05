@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import make_password
 from userprofile.models import Profile
 from products.models import Category
 from django.views.decorators.cache import never_cache
+from .validators import validate_full_name
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,8 +37,10 @@ def signup_view(request):
         
         field_errors = {}
 
-        if not full_name or len(full_name.strip()) < 4:
-            field_errors['full_name'] = "Full name must be at least 4 characters."
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            field_errors['full_name'] = e.messages[0]
 
         if not email:
             field_errors['email'] = "Email is required."
@@ -101,7 +104,7 @@ def signup_view(request):
             return render(request, 'accounts/signup.html', {
                 'form_data': form_data,
                 'field_errors': field_errors,
-            })
+            }, status=400)
 
         existing_user = User.objects.filter(email=email).first()
         
@@ -594,7 +597,7 @@ def forgot_password_view(request):
             return render(request, 'accounts/forgot_password.html', {
                 'form_data': {'email': email},
                 'field_errors': field_errors,
-            })
+            }, status=400)
 
         request.session['otp_user_id'] = user.id
         request.session['otp_purpose'] = 'reset_password'
@@ -673,7 +676,7 @@ def reset_password_view(request):
         if field_errors:
             return render(request, 'accounts/reset_password.html', {
                 'field_errors': field_errors,
-            })
+            }, status=400)
 
         user.set_password(password)
         user.save()
