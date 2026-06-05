@@ -455,7 +455,7 @@ def login_view(request):
             return render(request, 'accounts/login.html',{
                 'form_data':form_data,
                 'field_errors':field_errors,
-            })                 
+            }, status=400)                 
 
         user = authenticate(request, email=email, password=password)
 
@@ -472,7 +472,7 @@ def login_view(request):
             return render(request, 'accounts/login.html', {
                 'form_data':form_data,
                 'field_errors': field_errors,
-            })
+            }, status=400)
        
 
         if user.is_blocked:
@@ -484,14 +484,12 @@ def login_view(request):
                 request.META.get("REMOTE_ADDR"),
             ) 
             
-            
-            
             field_errors['general'] = "Your account has been blocked."
             
             return render(request, 'accounts/login.html', {
                 'form_data': form_data,
                 'field_errors': field_errors,
-                })
+                }, status=403)
 
         if not user.is_verified:
             
