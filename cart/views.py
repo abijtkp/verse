@@ -79,6 +79,8 @@ def add_to_cart(request, variant_id):
         )
         
         return redirect('home')
+    
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     variant = get_object_or_404(
         Variant,
@@ -101,8 +103,16 @@ def add_to_cart(request, variant_id):
             variant.sku,
         )
         
-        messages.error(request, "This item is currently out of stock.")
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
+        message = "This item is currently out of stock."
+
+        if is_ajax:
+            return JsonResponse({
+                "success": False,
+                "message": message,
+            }, status=409)
+
+        messages.error(request, message)
+        return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
 
     cart, created = Cart.objects.get_or_create(user=request.user)
 
@@ -113,20 +123,7 @@ def add_to_cart(request, variant_id):
     )
 
     if not item_created:
-        if cart_item.quantity >= MAX_CART_QUANTITY:
-            
-            logger.warning(
-                "User exceeded max cart quantity | user_id=%s | email=%s | variant_id=%s | current_quantity=%s | max_quantity=%s",
-                request.user.id,
-                request.user.email,
-                variant.id,
-                cart_item.quantity,
-                MAX_CART_QUANTITY,
-            )
-            
-            messages.error(request, f"You can add maximum {MAX_CART_QUANTITY} quantity only.")
-            return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
-
+        
         if cart_item.quantity >= variant.stock:
             
             logger.warning(
@@ -138,7 +135,37 @@ def add_to_cart(request, variant_id):
                 variant.stock,
             )
             
-            messages.error(request, "Cannot add more than available stock.")
+            message = "Cannot add more than available stock."
+
+            if is_ajax:
+                return JsonResponse({
+                    "success": False,
+                    "message": message,
+                }, status=409)
+
+            messages.error(request, message)
+            return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
+        
+        if cart_item.quantity >= MAX_CART_QUANTITY:
+            message = f"You can add maximum {MAX_CART_QUANTITY} quantity only."
+            
+            logger.warning(
+                "User exceeded max cart quantity | user_id=%s | email=%s | variant_id=%s | current_quantity=%s | max_quantity=%s",
+                request.user.id,
+                request.user.email,
+                variant.id,
+                cart_item.quantity,
+                MAX_CART_QUANTITY,
+            )
+            
+            if is_ajax:
+                return JsonResponse({
+                    "success": False,
+                    "message": message,
+                }, status=409)
+                    
+            
+            messages.error(request, message)
             return redirect(request.META.get('HTTP_REFERER', 'cart_view'))
 
         cart_item.quantity += 1
@@ -158,10 +185,11 @@ def add_to_cart(request, variant_id):
         cart_item.quantity,
         item_created,
     )
+    
 
     cart_count = cart.total_items
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    if is_ajax:
         return JsonResponse({
             'success': True,
             'message': 'Product added to cart.',
