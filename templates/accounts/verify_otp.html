@@ -154,15 +154,6 @@
                     Verify & Proceed
                 </button>
             </form>
-
-
-
-
-
-
-
-
-
             <div class="mt-10 pt-8 border-t border-slate-100">
                 <div class="flex items-center justify-between text-sm font-bold">
                     <p class="text-slate-500">
@@ -181,15 +172,6 @@
                     </div>
                 </div>
             </div>
-
-
-
-
-
-
-
-
-
         </div>
     </div>
 </div>
@@ -198,21 +180,29 @@
     const timerDisplay = document.getElementById('timer');
     const resendBtn = document.getElementById('resendBtn');
 
-    let timeLeft = 30;
+    const allowResendImmediately = "{{ allow_resend_immediately|yesno:'true,false' }}" === "true";
 
-    resendBtn.disabled = true;
-    resendBtn.classList.add("opacity-50", "cursor-not-allowed");
+    if (allowResendImmediately) {
+        timerDisplay.innerHTML = "Resend available";
+        resendBtn.disabled = false;
+        resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+    } else {
+        let timeLeft = 30;
 
-    const countdown = setInterval(() => {
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            timerDisplay.innerHTML = "Resend available";
-            resendBtn.disabled = false;
-            resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
-            return;
-        }
+        resendBtn.disabled = true;
+        resendBtn.classList.add("opacity-50", "cursor-not-allowed");
 
-        timerDisplay.innerHTML = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-        timeLeft--;
-    }, 1000);
+        const countdown = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerDisplay.innerHTML = "Resend available";
+                resendBtn.disabled = false;
+                resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                return;
+            }
+
+            timerDisplay.innerHTML = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+            timeLeft--;
+        }, 1000);
+    }
 </script>

@@ -243,7 +243,8 @@ def verify_otp_view(request):
                 request.META.get("REMOTE_ADDR"),
             )
             
-            messages.error(request, "OTP expired")
+            messages.error(request, "OTP expired. Please request a new OTP.")
+            request.session["otp_expired"] = True
             return redirect('verify_otp')
 
         otp_obj.is_used = True
@@ -345,7 +346,11 @@ def verify_otp_view(request):
         messages.success(request, "Account verified successfully")
         return redirect('login')
     
-    return render(request, 'accounts/verify_otp.html')
+    allow_resend_immediately = request.session.pop("otp_expired", False)
+
+    return render(request, 'accounts/verify_otp.html', {
+        "allow_resend_immediately": allow_resend_immediately,
+    })
 
 
 
