@@ -14,7 +14,8 @@ from allauth.socialaccount.models import SocialAccount
 
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
-
+from accounts.validators import validate_full_name
+import re
 
 @never_cache
 @user_required
@@ -51,8 +52,10 @@ def edit_profile_view(request):
 
         field_errors = {}
 
-        if not full_name or len(full_name) < 4:
-            field_errors['full_name'] = "Full name must be at least 4 characters."
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            field_errors['full_name'] = e.messages[0]
 
         if phone_number:
             if not phone_number.isdigit():
@@ -66,7 +69,7 @@ def edit_profile_view(request):
                 'profile': profile,
                 'form_data': form_data,
                 'field_errors': field_errors,
-            })
+            }, status=400)
 
         user.full_name = full_name
         user.phone_number = phone_number
@@ -173,10 +176,10 @@ def add_address(request):
         
         field_errors = {}
         
-        if not full_name:
-            field_errors['full_name'] = "Full name is required."
-        elif len(full_name) < 4:
-            field_errors['full_name'] = "Full name must be at least 4 characters."
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            field_errors['full_name'] = e.messages[0]
 
         if not phone_number:
             field_errors['phone_number'] = "Phone number is required."
@@ -184,12 +187,22 @@ def add_address(request):
             field_errors['phone_number'] = "Phone number must contain only digits."
         elif len(phone_number) != 10:
             field_errors['phone_number'] = "Phone number must be exactly 10 digits."
+            
+        address_alpha_num_count = sum(char.isalnum() for char in address_line1)    
 
         if not address_line1:
             field_errors['address_line1'] = "Address line 1 is required."
         elif len(address_line1) < 5:
             field_errors['address_line1'] = "Address must be at least 5 characters."
-
+        elif not re.fullmatch(r'^[A-Za-z0-9\s,./-]+$', address_line1):
+            field_errors['address_line1'] = (
+                "Address can contain only letters, numbers, spaces, comma, dot, slash and hyphen."
+            )
+        elif not any(char.isalpha() for char in address_line1):
+            field_errors['address_line1'] = "Address must contain at least one letter."    
+        elif address_alpha_num_count < 4:
+            field_errors['address_line1'] = "Address must contain at least 4 letters or numbers."
+        
         if not city:
             field_errors['city'] = "City is required."
         elif len(city) < 3:
@@ -228,7 +241,7 @@ def add_address(request):
             return render(request, 'userprofile/add_address.html', {
                 'form_data': form_data,
                 'field_errors': field_errors,
-            })
+            }, status=400)
 
     
         existing_addresses = Address.objects.filter(user=request.user)
@@ -265,8 +278,6 @@ def add_address(request):
     return render(request, 'userprofile/add_address.html')
  
     
-    
-
 @user_required
 def address_list(request):
     addresses = request.user.addresses.all().order_by('-is_default', '-created_at')
@@ -305,11 +316,10 @@ def edit_address(request, pk):
 
         field_errors = {}
         
-        if not full_name:
-            field_errors['full_name'] = 'Full name is required.'
-        elif len(full_name) < 4:
-            field_errors['full_name'] = "Full name must be at least 4 characters."
-            
+        try:
+            validate_full_name(full_name)
+        except ValidationError as e:
+            field_errors['full_name'] = e.messages[0]
             
         if not phone_number:
             field_errors['phone_number'] = "Phone number is required."
@@ -319,10 +329,21 @@ def edit_address(request, pk):
             field_errors['phone_number'] = "Phone number must be exactly 10 digits."
             
             
+        address_alpha_num_count = sum(char.isalnum() for char in address_line1)    
+
         if not address_line1:
             field_errors['address_line1'] = "Address line 1 is required."
         elif len(address_line1) < 5:
-            field_errors['address_line1'] = "Address must be at least 5 characters." 
+            field_errors['address_line1'] = "Address must be at least 5 characters."
+        elif not re.fullmatch(r'^[A-Za-z0-9\s,./-]+$', address_line1):
+            field_errors['address_line1'] = (
+                "Address can contain only letters, numbers, spaces, comma, dot, slash and hyphen."
+            )
+        elif not any(char.isalpha() for char in address_line1):
+            field_errors['address_line1'] = "Address must contain at least one letter."    
+
+        elif address_alpha_num_count < 4:
+            field_errors['address_line1'] = "Address must contain at least 4 letters or numbers."
         
         
         if not city:
@@ -358,7 +379,7 @@ def edit_address(request, pk):
             ).exclude(id=address.id).exists()
             
             if duplicate_address:
-                field_errors['duplicate'] = "This address already exists."
+                field_errors['address_line1'] = "This address already exists."
             
             
         if field_errors:
@@ -366,7 +387,7 @@ def edit_address(request, pk):
                 'address':address,
                 'form_data':form_data,
                 'field_errors':field_errors,
-            })  
+            }, status=400)  
             
         if address.is_default:
             final_is_default = True
