@@ -89,7 +89,7 @@
                     </label>
 
                     <label for="category_image"
-                        class="group relative flex flex-col items-center justify-center w-full aspect-square rounded-[28px] border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
+                        class="group relative flex flex-col items-center justify-center w-full aspect-square rounded-[28px] border-2 border-dashed {% if errors.category_image %}border-red-500{% else %}border-slate-200{% endif %} bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer overflow-hidden">
 
                         <img id="categoryImagePreview"
                             src=""
@@ -112,7 +112,7 @@
                     <input id="category_image"
                         type="file"
                         name="category_image"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp"
                         class="hidden">
 
                     {% if errors.category_image %}
@@ -176,11 +176,24 @@
         const preview = document.getElementById("categoryImagePreview");
         const placeholder = document.getElementById("categoryImagePlaceholder");
 
-        if (imageInput) {
+        if (imageInput && preview && placeholder) {
             imageInput.addEventListener("change", function () {
                 const file = this.files[0];
 
                 if (!file) return;
+
+                // Remove old image validation error message
+                const imageError = imageInput.closest(".mb-6").querySelector("[data-inline-error]");
+                if (imageError) {
+                    imageError.remove();
+                }
+
+                // Remove red border from image upload box
+                const imageBox = document.querySelector("label[for='category_image']");
+                if (imageBox) {
+                    imageBox.classList.remove("border-red-500");
+                    imageBox.classList.add("border-slate-200");
+                }
 
                 const reader = new FileReader();
 

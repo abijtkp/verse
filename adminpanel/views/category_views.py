@@ -11,6 +11,8 @@ from django.db.models import Q
 from products.models import Category
 from .core_views import admin_required
 
+from django.core.files.images import get_image_dimensions
+
 logger = logging.getLogger(__name__)
 
 @never_cache
@@ -88,7 +90,20 @@ def add_category_view(request):
             errors['category_name'] = 'This category already exists.'
             
         if description and len(description) < 10:
-            errors['description'] = 'Description must be at least 10 characters.'    
+            errors['description'] = 'Description must be at least 10 characters.' 
+        
+        if category_image:
+            allowed_content_types = ['image/jpeg', 'image/png', 'image/webp']
+
+            if category_image.content_type not in allowed_content_types:
+                errors['category_image'] = "Only JPG, PNG, or WEBP images are allowed."
+            elif category_image.size > 2 * 1024 * 1024:
+                errors['category_image'] = "Image size must be less than 2MB."
+            else:
+                try:
+                    get_image_dimensions(category_image)
+                except Exception:
+                    errors['category_image'] = "Invalid image file."      
 
         if errors:
             return render(request, 'adminpanel/add_category.html', {
@@ -98,7 +113,7 @@ def add_category_view(request):
                     'description': description,
                     'is_active': is_active,
                 }
-            })
+            }, status=400)
 
         category = Category.objects.create(
             category_name=category_name,
@@ -159,7 +174,20 @@ def edit_category_view(request, category_id):
             errors['category_name'] = 'Another category with this name already exists.'
             
         if description and len(description) < 10:
-            errors['description'] = 'Description must be at least 10 characters.'    
+            errors['description'] = 'Description must be at least 10 characters.'   
+            
+        if category_image:
+            allowed_content_types = ['image/jpeg', 'image/png', 'image/webp']
+
+            if category_image.content_type not in allowed_content_types:
+                errors['category_image'] = "Only JPG, PNG, or WEBP images are allowed."
+            elif category_image.size > 2 * 1024 * 1024:
+                errors['category_image'] = "Image size must be less than 2MB."
+            else:
+                try:
+                    get_image_dimensions(category_image)
+                except Exception:
+                    errors['category_image'] = "Invalid image file."     
 
         if errors:
             return render(request, 'adminpanel/edit_category.html', {
@@ -170,7 +198,7 @@ def edit_category_view(request, category_id):
                     'description': description,
                     'is_active': is_active,
                 }
-            })
+            }, status=400)
 
         old_name = category.category_name
         old_description = category.description or ''
