@@ -1411,6 +1411,14 @@ def cancel_order(request, order_id):
     order.cancellation_reason = reason
     order.save(update_fields=['status', 'cancelled_at', 'cancellation_reason', 'updated_at'])
 
+    should_restore_stock = (
+        order.payment_method in ['cod', 'wallet'] or
+        (
+            order.payment_method == 'razorpay' and
+            order.payment_status == 'paid'
+        )
+    )
+    
     for item in order.items.all():
 
         if item.status != 'cancelled':
@@ -1420,7 +1428,7 @@ def cancel_order(request, order_id):
             item.cancellation_reason = reason
             item.save(update_fields=['status', 'cancelled_at', 'cancellation_reason'])
 
-            if item.variant:
+            if should_restore_stock and item.variant:
 
                 old_stock = item.variant.stock
 
@@ -1540,8 +1548,16 @@ def cancel_order_item(request, item_id):
     item.cancelled_at = timezone.now()
     item.cancellation_reason = reason
     item.save(update_fields=['status', 'cancelled_at', 'cancellation_reason'])
+    
+    should_restore_stock = (
+        order.payment_method in ['cod', 'wallet'] or
+        (
+            order.payment_method == 'razorpay' and
+            order.payment_status == 'paid'
+        )
+    )
 
-    if item.variant:
+    if should_restore_stock and item.variant:
         old_stock = item.variant.stock
 
         item.variant.stock += item.quantity
