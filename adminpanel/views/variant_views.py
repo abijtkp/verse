@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.db import transaction
-
+from django.core.files.images import get_image_dimensions
 from products.models import Product, Variant, VariantImage
 from .core_views import admin_required
 from products.utils import optimize_variant_image
@@ -38,12 +38,18 @@ def variant_management_view(request, product_id):
 
         if not color:
             errors['variant_name'] = 'Color / variant name is required.'
+        elif color.isdigit():
+            errors['variant_name'] = 'Color name cannot be only numbers.'
 
         if not sku_suffix:
             errors['sku_suffix'] = 'SKU suffix is required.'
 
         if not size:
             errors['size'] = 'Size is required.'
+        elif not size.isdigit():
+            errors['size'] = 'Size must be a number.'
+        elif int(size) < 3 or int(size) > 15:
+            errors['size'] = 'Size must be between 3 and 15.'    
 
         if not stock:
             errors['stock'] = 'Stock is required.'
@@ -60,8 +66,25 @@ def variant_management_view(request, product_id):
             except ValueError:
                 errors['price'] = 'Enter a valid price.'
 
+        allowed_content_types = ['image/jpeg', 'image/png', 'image/webp']
+
         if len(images) < 3:
             errors['variant_images'] = 'Please upload at least 3 variant images.'
+        else:
+            for image in images:
+                if image.content_type not in allowed_content_types:
+                    errors['variant_images'] = 'Only JPG, PNG, or WEBP images are allowed.'
+                    break
+
+                if image.size > 2 * 1024 * 1024:
+                    errors['variant_images'] = 'Each image must be less than 2MB.'
+                    break
+
+                try:
+                    get_image_dimensions(image)
+                except Exception:
+                    errors['variant_images'] = 'Invalid image file.'
+                    break
 
         sku = f"{product.product_name[:3]}-{color[:3]}-{size}-{sku_suffix}".upper().replace(" ", "")
 
@@ -82,7 +105,7 @@ def variant_management_view(request, product_id):
                 'variants': variants,
                 'errors': errors,
                 'form_data': request.POST,
-            })
+            }, status=400)
             
         try:    
             with transaction.atomic():
@@ -112,7 +135,7 @@ def variant_management_view(request, product_id):
                 'variants':variants,
                 'errors':errors,
                 'form_data':request.POST,
-            })
+            }, status=400)
             
         messages.success(request, 'Variant added successfully.')
         return redirect('variant_management', product_id=product.id)
@@ -146,9 +169,16 @@ def edit_variant_view(request, product_id, variant_id):
 
         if not color:
             errors['variant_name'] = 'Color / variant name is required.'
+        elif color.isdigit():
+            errors['variant_name'] = 'Color name cannot be only numbers.'
 
         if not size:
             errors['size'] = 'Size is required.'
+        elif not size.isdigit():
+            errors['size'] = 'Size must be a number.'
+        elif int(size) < 3 or int(size) > 15:
+            errors['size'] = 'Size must be between 3 and 15.'
+            
 
         if not stock:
             errors['stock'] = 'Stock is required.'
@@ -178,8 +208,20 @@ def edit_variant_view(request, product_id, variant_id):
             errors['size'] = 'This size already exists for this color.'
 
         if errors:
-            messages.error(request, 'Please correct the errors and try again.')
-            return redirect('variant_management', product_id=product.id)
+            variants = product.variants.filter(
+                is_deleted=False
+            ).prefetch_related('images').order_by('-created_at')
+
+            for item in variants:
+                item.offer_data = calculate_best_offer(item)
+
+            return render(request, 'adminpanel/variant_management.html', {
+                'product': product,
+                'variants': variants,
+                'edit_errors': errors,
+                'edit_form_data': request.POST,
+                'edit_variant_id': variant.id,
+            }, status=400)
 
         variant.color = color
         variant.size = size
@@ -221,6 +263,23 @@ def add_variant_image_view(request, variant_id):
         if not images:
             messages.error(request, 'Please select at least one image to upload.')
             return redirect('variant_management', product_id=product_id)
+        
+        allowed_content_types = ['image/jpeg', 'image/png', 'image/webp']
+
+        for image in images:
+            if image.content_type not in allowed_content_types:
+                messages.error(request, 'Only JPG, PNG, or WEBP images are allowed.')
+                return redirect('variant_management', product_id=product_id)
+
+            if image.size > 2 * 1024 * 1024:
+                messages.error(request, 'Each image must be less than 2MB.')
+                return redirect('variant_management', product_id=product_id)
+
+            try:
+                get_image_dimensions(image)
+            except Exception:
+                messages.error(request, 'Invalid image file.')
+                return redirect('variant_management', product_id=product_id)
 
         has_primary = variant.images.filter(is_primary=True).exists()
 
@@ -258,11 +317,21 @@ def delete_variant_image_view(request, image_id):
         image_count = variant.images.count()
 
         if image_count <= 3:
-            messages.error(
-                request,
-                'Each variant must keep at least 3 images. Upload another image before deleting this one.'
-            )
-            return redirect('variant_management', product_id=product_id)
+            product = variant.product
+
+            variants = product.variants.filter(
+                is_deleted=False
+            ).prefetch_related('images').order_by('-created_at')
+
+            for item in variants:
+                item.offer_data = calculate_best_offer(item)
+
+            return render(request, 'adminpanel/variant_management.html', {
+                'product': product,
+                'variants': variants,
+                'edit_image_error': 'Each variant must keep at least 3 images. Upload another image before deleting this one.',
+                'edit_variant_id': variant.id,
+            }, status=400)
 
         was_primary = image.is_primary
 

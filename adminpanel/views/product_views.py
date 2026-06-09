@@ -7,6 +7,7 @@ from django.views.decorators.cache import never_cache
 from django.db import transaction
 from products.models import Product, Category, Variant, VariantImage
 from products.utils import optimize_variant_image
+from django.core.files.images import get_image_dimensions
 from .core_views import admin_required
 from offers.utils import calculate_best_offer
 
@@ -146,14 +147,31 @@ def add_product_view(request):
         if not category_id:
             errors['category'] = 'Category is required.'
         
+        if not description:
+            errors['description'] = 'Description is required.' 
+            
+        if not (
+            color and
+            sku_suffix and
+            size and
+            stock and
+            price and
+            len(images) >= 3
+        ):
+            errors['variant_required'] = 'Please add the first variant before saving the product.'       
+        
         if not color:
-            errors['variant_name'] = 'Color / variant name is required.'
-
+            errors['variant_name'] = 'Color name is required.'
+            
         if not sku_suffix:
             errors['sku_suffix'] = 'SKU suffix is required.'
 
         if not size:
             errors['size'] = 'Size is required.'
+        elif not size.isdigit():
+            errors['size'] = "Size must be a number."
+        elif int(size) < 3  or int(size) > 15:
+            errors['size'] = "Size must be between 3 and 15."
 
         if not stock:
             errors['stock'] = 'Stock is required.'
@@ -169,9 +187,26 @@ def add_product_view(request):
                     errors['price'] = 'Price must be greater than zero.'
             except ValueError:
                 errors['price'] = 'Enter a valid price.'
+        
+        allowed_content_types = ['image/jpeg', 'image/png', 'image/webp']
 
         if len(images) < 3:
-            errors['variant_images'] = 'Please upload at least 3 variant images.'    
+            errors['variant_images'] = 'Please upload at least 3 variant images.'
+        else:
+            for image in images:
+                if image.content_type not in allowed_content_types:
+                    errors['variant_images'] = 'Only JPG, PNG, or WEBP images are allowed.'
+                    break
+
+                if image.size > 2 * 1024 * 1024:
+                    errors['variant_images'] = 'Each image must be less than 2MB.'
+                    break
+
+                try:
+                    get_image_dimensions(image)
+                except Exception:
+                    errors['variant_images'] = 'Invalid image file.'
+                    break
               
 
         category = None
@@ -197,7 +232,7 @@ def add_product_view(request):
                 'categories': categories,
                 'errors': errors,
                 'form_data': request.POST,
-            })
+            }, status=400)
 
         sku = f"{product_name[:3]}-{color[:3]}-{size}-{sku_suffix}".upper().replace(" ", "")
 
@@ -216,7 +251,7 @@ def add_product_view(request):
                 'categories': categories,
                 'errors': errors,
                 'form_data': request.POST,
-            })
+            }, status=400)
 
         try:
             with transaction.atomic():
@@ -261,7 +296,7 @@ def add_product_view(request):
                 'categories': categories,
                 'errors': errors,
                 'form_data': request.POST,
-            })
+            }, status=400)
         
         logger.info(
             "Admin created product | admin_id=%s | admin_email=%s | product_id=%s | product_name=%s | variant_id=%s | sku=%s",
@@ -314,6 +349,9 @@ def edit_product_view(request, product_id):
 
         if not category_id:
             errors['category'] = 'Category is required.'
+            
+        if not description:
+            errors['description'] = 'Description is required.'    
 
         category = None
         if category_id:

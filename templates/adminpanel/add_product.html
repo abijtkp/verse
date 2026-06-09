@@ -226,6 +226,12 @@
                                value="{{ form_data.variant_name|default:'' }}"
                                placeholder="e.g. Black"
                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.variant_name %}border-red-500{% endif %}">
+
+                               {% if errors.variant_name %}
+                                    <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                        {{ errors.variant_name }}
+                                    </p>
+                                {% endif %}
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -240,6 +246,7 @@
                                    value="{{ form_data.size|default:'' }}"
                                    placeholder="e.g. 8"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.size %}border-red-500{% endif %}">
+                                   <p id="variant-size-error" class="hidden text-[9px] font-bold text-red-500 uppercase mt-1 ml-1"></p>
                         </div>
 
                         <div class="space-y-2">
@@ -253,6 +260,12 @@
                                    value="{{ form_data.sku_suffix|default:'' }}"
                                    placeholder="e.g. BLK8"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.sku_suffix %}border-red-500{% endif %}">
+
+                                   {% if errors.sku_suffix %}
+                                        <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
+                                            {{ errors.sku_suffix }}
+                                        </p>
+                                    {% endif %}
                         </div>
                     </div>
 
@@ -269,6 +282,7 @@
                                    value="{{ form_data.price|default:'' }}"
                                    placeholder="0.00"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.price %}border-red-500{% endif %}">
+                                   <p id="variant-price-error" class="hidden text-[9px] font-bold text-red-500 uppercase mt-1 ml-1"></p>
                         </div>
 
                         <div class="space-y-2">
@@ -282,6 +296,7 @@
                                    value="{{ form_data.stock|default:'' }}"
                                    placeholder="0"
                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm focus:ring-1 focus:ring-black outline-none transition-all {% if errors.stock %}border-red-500{% endif %}">
+                                   <p id="variant-stock-error" class="hidden text-[9px] font-bold text-red-500 uppercase mt-1 ml-1"></p>
                         </div>
                     </div>
 
@@ -318,7 +333,7 @@
                                     id="variant-images-input"
                                     form="add-product-form"
                                     multiple
-                                    accept="image/*"
+                                    accept="image/jpeg,image/png,image/webp"
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
 
                             <div class="border-2 border-dashed border-slate-100 rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center gap-3 group-hover:bg-slate-50 transition-all {% if errors.variant_images %}border-red-200 bg-red-50/50{% endif %}">
@@ -334,7 +349,7 @@
                                 </div>
                             </div>
                         </div>
-
+                        <p id="variant-images-error" class="hidden text-[9px] font-bold text-red-500 uppercase mt-1 ml-1"></p>
                         {% if errors.variant_images %}
                             <p class="text-[9px] font-bold text-red-500 uppercase mt-1 ml-1">
                                 {{ errors.variant_images }}
@@ -354,6 +369,7 @@
                     </div>
                 </div>
             </div>
+            
 
             <div class="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-4">
                 <button type="button"
@@ -433,9 +449,25 @@
 
     if (imageInput) {
         imageInput.addEventListener('change', function() {
-            const newFiles = Array.from(imageInput.files || []).filter(file => file.type.startsWith('image/'));
+            const imageError = document.getElementById('variant-images-error');
+            const selectedInputFiles = Array.from(imageInput.files || []);
 
-            newFiles.forEach(file => {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+            const invalidFiles = selectedInputFiles.filter(file => !allowedTypes.includes(file.type));
+            const validFiles = selectedInputFiles.filter(file => allowedTypes.includes(file.type));
+
+            if (invalidFiles.length > 0) {
+                imageError.textContent = 'Only JPG, PNG, or WEBP images are allowed.';
+                imageError.classList.remove('hidden');
+                imageInput.value = '';
+                return;
+            }
+
+            imageError.textContent = '';
+            imageError.classList.add('hidden');
+
+            validFiles.forEach(file => {
                 selectedFiles.push(file);
             });
 
@@ -489,6 +521,16 @@
         const priceInput = document.getElementById('variant-price-input');
         const stockInput = document.getElementById('variant-stock-input');
 
+        const sizeError = document.getElementById('variant-size-error');
+        const priceError = document.getElementById('variant-price-error');
+        const stockError = document.getElementById('variant-stock-error');
+        const imageError = document.getElementById('variant-images-error');
+
+        [sizeError, priceError, stockError, imageError].forEach(error => {
+            error.textContent = '';
+            error.classList.add('hidden');
+        });
+
         const fields = [
             colorInput,
             sizeInput,
@@ -507,21 +549,96 @@
             if (!field.value.trim()) {
                 field.classList.add('border-red-500', 'bg-red-50');
                 hasError = true;
+
+                if (field === sizeInput) {
+                    sizeError.textContent = 'Size is required.';
+                    sizeError.classList.remove('hidden');
+                }
+
+                if (field === priceInput) {
+                    priceError.textContent = 'Price is required.';
+                    priceError.classList.remove('hidden');
+                }
+
+                if (field === stockInput) {
+                    stockError.textContent = 'Stock is required.';
+                    stockError.classList.remove('hidden');
+                }
             }
         });
 
+        const sizeValue = sizeInput.value.trim();
+        const priceValue = priceInput.value.trim();
+        const stockValue = stockInput.value.trim();
+
+        if (sizeValue && !/^\d+$/.test(sizeValue)) {
+            sizeInput.classList.add('border-red-500', 'bg-red-50');
+
+            sizeError.textContent = 'Size must be a number.';
+            sizeError.classList.remove('hidden');
+
+            return;
+        }
+
+        if (sizeValue && (Number(sizeValue) < 3 || Number(sizeValue) > 15)) {
+            sizeInput.classList.add('border-red-500', 'bg-red-50');
+
+            sizeError.textContent = 'Size must be between 3 and 15.';
+            sizeError.classList.remove('hidden');
+
+            return;
+        }
+
+        if (priceValue && Number(priceValue) <= 0) {
+            priceInput.classList.add('border-red-500', 'bg-red-50');
+
+            priceError.textContent = 'Price must be greater than zero.';
+            priceError.classList.remove('hidden');
+
+            return;
+        }
+
+        if (priceValue && isNaN(Number(priceValue))) {
+            priceInput.classList.add('border-red-500', 'bg-red-50');
+
+            priceError.textContent = 'Enter a valid price.';
+            priceError.classList.remove('hidden');
+
+            return;
+        }
+
+        if (stockValue && !/^\d+$/.test(stockValue)) {
+            stockInput.classList.add('border-red-500', 'bg-red-50');
+
+            stockError.textContent = 'Stock must be a valid number.';
+            stockError.classList.remove('hidden');
+
+            return;
+        }
+
         if (selectedFiles.length < 3) {
             warning.classList.remove('hidden');
+
+            imageError.textContent = 'Please upload at least 3 images.';
+            imageError.classList.remove('hidden');
+
             hasError = true;
         }
 
         if (hasError) {
-            showVariantError('Please complete variant details and upload minimum 3 images.');
+            showVariantError('Please complete valid variant details and upload minimum 3 images.');
             return;
         }
 
         toggleAddModal(false);
-    }
+            }
+
+        {% if errors.variant_name or errors.sku_suffix or errors.size or errors.stock or errors.price or errors.variant_images %}
+        window.addEventListener('load', function() {
+            toggleAddModal(true);
+        });
+        {% endif %}    
+
 </script>
 
 <style>
