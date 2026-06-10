@@ -60,10 +60,15 @@ def calculate_best_offer(variant):
             best_discount = discount
             applied_offer = offer
 
-    final_price = base_price - best_discount
+    minimum_price = Decimal("1.00")
+    maximum_allowed_discount = base_price - minimum_price
 
-    if final_price < 0:
-        final_price = Decimal("0.00")
+    if maximum_allowed_discount < Decimal("0.00"):
+        maximum_allowed_discount = Decimal("0.00")
+
+    best_discount = min(best_discount, maximum_allowed_discount)
+
+    final_price = base_price - best_discount
 
     return {
         "base_price": base_price,

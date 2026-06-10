@@ -1030,12 +1030,6 @@
                     {% endif %}
                 </div>
 
-                {% if order.tax %}
-                <div class="summary-row">
-                    <span class="summary-label">Estimated Tax (GST 5%)</span>
-                    <span class="summary-value">₹{{ order.tax }}</span>
-                </div>
-                {% endif %}
 
                 {% if order.cancelled_or_returned_total %}
                 <div class="summary-row">

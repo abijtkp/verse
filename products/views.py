@@ -336,7 +336,12 @@ def product_detail_view(request, variant_id):
         can_review = OrderItem.objects.filter(
             order__user=request.user,
             variant__product=variant.product,
-            status='delivered'
+            status__in=[
+                'delivered',
+                'return_requested',
+                'return_rejected',
+                'returned',
+            ]
         ).exists()
 
         user_review = ProductReview.objects.filter(
@@ -382,7 +387,12 @@ def submit_review(request, variant_id):
             has_purchased = OrderItem.objects.filter(
                 order__user=request.user,
                 variant__product=variant.product,
-                status='delivered'
+                status__in=[
+                    'delivered',
+                    'return_requested',
+                    'return_rejected',
+                    'returned',
+                ]
             ).exists()
 
             if not has_purchased:

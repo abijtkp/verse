@@ -27,7 +27,7 @@ def _parse_offer_form(request):
     }
 
 
-def _validate_offer_form(form_data):
+def _validate_offer_form(form_data, offer=None):
     field_errors = {}
 
     if not form_data["offer_name"]:
@@ -115,9 +115,16 @@ def _validate_offer_form(form_data):
         now = timezone.now()
 
         if valid_from_obj < now:
-            field_errors["valid_from"] = (
-                "Start date and time cannot be in the past."
-            )
+
+            if offer is None:
+                field_errors["valid_from"] = (
+                    "Start date and time cannot be in the past."
+                )
+
+            elif valid_from_obj != offer.valid_from:
+                field_errors["valid_from"] = (
+                    "Start date and time cannot be in the past."
+                )
 
         if valid_to_obj <= valid_from_obj:
             field_errors["valid_to"] = (
@@ -279,7 +286,7 @@ def edit_offer_view(request, offer_type, offer_id):
 
     if request.method == "POST":
         form_data = _parse_offer_form(request)
-        result = _validate_offer_form(form_data)
+        result = _validate_offer_form(form_data, offer)
         field_errors = result["field_errors"]
 
         if not field_errors:
