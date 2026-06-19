@@ -659,8 +659,8 @@
         <nav class="flex flex-col gap-2 flex-1">
             <a href="{% url 'home' %}" class="mobile-nav-link" onclick="closeMobileMenu()">Home</a>
             <a href="{% url 'product_listing' %}" class="mobile-nav-link" onclick="closeMobileMenu()">Collections</a>
-            <a href="#new-drops" class="mobile-nav-link" onclick="closeMobileMenu()">New Drops</a>
-            <a href="#about" class="mobile-nav-link" onclick="closeMobileMenu()">About</a>
+            <a href="{% url 'home' %}#new-drops" class="mobile-nav-link" onclick="closeMobileMenu()">New Drops</a>
+            <a href="{% url 'home' %}#about" class="mobile-nav-link" onclick="closeMobileMenu()">About</a>
         </nav>
 
     </div>
@@ -687,12 +687,12 @@
                 Collections
             </a>
 
-            <a href="#"
+            <a href="{% url 'home' %}#"
             class="nav-link">
                 New Drops
             </a>
 
-            <a href="#"
+            <a href="{% url 'home' %}#"
             class="nav-link">
                 About
             </a>

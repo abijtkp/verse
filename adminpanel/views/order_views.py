@@ -410,7 +410,7 @@ def approve_return_request_view(request, item_id):
         item.variant.save(update_fields=['stock', 'is_active'])
 
     if (
-        order.payment_method in ['razorpay', 'wallet']
+        order.payment_method in ['razorpay', 'wallet', 'cod']
         and order.payment_status == 'paid'
         and refund_amount > 0
     ):
