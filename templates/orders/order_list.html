@@ -716,7 +716,7 @@
                     <!-- Right: Total + CTA -->
                     <div class="order-right">
                         <div class="order-total">
-                            <small>₹</small>{{ order.adjusted_final_total|floatformat:0 }}
+                            <small>₹</small>{{ order.final_total|floatformat:0 }}
                         </div>
                         <a href="{% url 'order_detail' order.order_id %}" class="order-view-btn">
                             Details

@@ -437,12 +437,21 @@ def checkout_view(request):
 
         item.discount_share = item_discount
         item.final_price_after_discount = item_subtotal - item_discount
+    
+    used_coupon_ids = CouponUsage.objects.filter(
+        user=request.user
+    ).values_list(
+        'coupon_id',
+        flat=True
+    )        
         
     available_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=timezone.now(),
         valid_to__gte=timezone.now(),
         used_count__lt=models.F('usage_limit')
+    ).exclude(
+        id__in=used_coupon_ids
     )
     
     best_coupon = None
