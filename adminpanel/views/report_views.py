@@ -19,7 +19,7 @@ from orders.models import Order, OrderItem
 
 
 def _get_filtered_orders(request):
-    filter_type = request.GET.get('filter', 'montly')
+    filter_type = request.GET.get('filter', 'overall')
     today = timezone.now()
 
     base_orders = Order.objects.exclude(payment_status='failed')
@@ -27,8 +27,11 @@ def _get_filtered_orders(request):
     orders = base_orders.exclude(
         status__in=['cancelled', 'returned']
     )
+    
+    if filter_type == 'overall':
+        pass
 
-    if filter_type == 'daily':
+    elif filter_type == 'daily':
         orders = orders.filter(created_at__date=today.date())
 
     elif filter_type == 'weekly':
@@ -56,7 +59,7 @@ def _get_filtered_orders(request):
     return base_orders, orders, filter_type
 
 
-def _get_report_metrics(base_orders, orders):
+def _get_report_metrics(orders):
     total_orders = orders.count()
 
     total_revenue = orders.aggregate(
@@ -80,14 +83,14 @@ def _get_report_metrics(base_orders, orders):
     )['total'] or Decimal('0.00')
 
     cancelled_amount = OrderItem.objects.filter(
-        order__in=base_orders,
+        order__in=orders,
         status='cancelled'
     ).aggregate(
         total=Sum('final_item_total')
     )['total'] or Decimal('0.00')
 
     returned_amount = OrderItem.objects.filter(
-        order__in=base_orders,
+        order__in=orders,
         status='returned'
     ).aggregate(
         total=Sum('final_item_total')
@@ -177,7 +180,7 @@ def _get_chart_data(orders, filter_type):
 @admin_required
 def sales_report_view(request):
     base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(base_orders, orders)
+    metrics = _get_report_metrics(orders)
     chart_labels, chart_values = _get_chart_data(orders, filter_type)
 
     orders = orders.order_by('-created_at')
@@ -204,7 +207,7 @@ def sales_report_view(request):
 @admin_required
 def export_sales_report_excel(request):
     base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(base_orders, orders)
+    metrics = _get_report_metrics(orders)
 
     workbook = Workbook()
     sheet = workbook.active
@@ -267,7 +270,7 @@ def export_sales_report_excel(request):
 @admin_required
 def export_sales_report_pdf(request):
     base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(base_orders, orders)
+    metrics = _get_report_metrics(orders)
 
     html_string = render_to_string(
         'adminpanel/sales_report_pdf.html',

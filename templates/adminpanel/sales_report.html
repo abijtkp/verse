@@ -107,9 +107,10 @@
                 <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Period</label>
                 <div class="relative">
                     <select name="filter" class="filter-input appearance-none pr-9 cursor-pointer">
+                        <option value="overall" {% if filter_type == 'overall' %} selected {% endif %}>Overall </option>
                         <option value="daily"   {% if filter_type == 'daily' %}selected{% endif %}>Daily</option>
                         <option value="weekly"  {% if filter_type == 'weekly' %}selected{% endif %}>Weekly</option>
-                        <option value="monthly" {% if filter_type == 'monthly' or not filter_type %}selected{% endif %}>Monthly</option>
+                        <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Monthly</option>
                         <option value="yearly"  {% if filter_type == 'yearly' %}selected{% endif %}>Yearly</option>
                         <option value="custom"  {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
                     </select>
