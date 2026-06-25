@@ -24,73 +24,81 @@ def _get_filtered_orders(request):
 
     base_orders = Order.objects.exclude(payment_status='failed')
 
-    orders = base_orders.exclude(
-        status__in=['cancelled', 'returned']
-    )
+    filtered_orders = base_orders
     
     if filter_type == 'overall':
         pass
 
     elif filter_type == 'daily':
-        orders = orders.filter(created_at__date=today.date())
+        filtered_orders = filtered_orders.filter(
+            created_at__date=today.date()
+        )
 
     elif filter_type == 'weekly':
         start_week = today - timedelta(days=7)
-        orders = orders.filter(created_at__gte=start_week)
+        filtered_orders = filtered_orders.filter(
+            created_at__gte=start_week
+        )
 
     elif filter_type == 'monthly':
-        orders = orders.filter(
+        filtered_orders = filtered_orders.filter(
             created_at__month=today.month,
             created_at__year=today.year
         )
 
     elif filter_type == 'yearly':
-        orders = orders.filter(created_at__year=today.year)
+        filtered_orders = filtered_orders.filter(
+            created_at__year=today.year
+        )
 
     elif filter_type == 'custom':
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
 
         if start_date and end_date:
-            orders = orders.filter(
+            filtered_orders = filtered_orders.filter(
                 created_at__date__range=[start_date, end_date]
             )
+        
+    successful_orders = filtered_orders.exclude(
+        status__in=['cancelled', 'returned']
+    )    
 
-    return base_orders, orders, filter_type
+    return base_orders, filtered_orders, successful_orders, filter_type
 
 
-def _get_report_metrics(orders):
-    total_orders = orders.count()
+def _get_report_metrics(filtered_orders, successful_orders):
+    total_orders = successful_orders.count()
 
-    total_revenue = orders.aggregate(
+    total_revenue = successful_orders.aggregate(
         total=Sum('final_total')
     )['total'] or Decimal('0.00')
 
-    total_discount = orders.aggregate(
+    total_discount = successful_orders.aggregate(
         total=Sum('discount')
     )['total'] or Decimal('0.00')
 
     total_offer_discount = OrderItem.objects.filter(
-        order__in=orders
+        order__in=successful_orders
     ).aggregate(
         total=Sum('offer_discount')
     )['total'] or Decimal('0.00')
 
     total_coupon_discount = OrderItem.objects.filter(
-        order__in=orders
+        order__in=successful_orders
     ).aggregate(
         total=Sum('coupon_discount_share')
     )['total'] or Decimal('0.00')
 
     cancelled_amount = OrderItem.objects.filter(
-        order__in=orders,
+        order__in=filtered_orders,
         status='cancelled'
     ).aggregate(
         total=Sum('final_item_total')
     )['total'] or Decimal('0.00')
 
     returned_amount = OrderItem.objects.filter(
-        order__in=orders,
+        order__in=filtered_orders,
         status='returned'
     ).aggregate(
         total=Sum('final_item_total')
@@ -102,7 +110,7 @@ def _get_report_metrics(orders):
     )
 
     products_sold = OrderItem.objects.filter(
-        order__in=orders
+        order__in=successful_orders
     ).aggregate(
         total=Sum('quantity')
     )['total'] or 0
@@ -179,13 +187,21 @@ def _get_chart_data(orders, filter_type):
 
 @admin_required
 def sales_report_view(request):
-    base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(orders)
-    chart_labels, chart_values = _get_chart_data(orders, filter_type)
+    base_orders, filtered_orders, successful_orders, filter_type = _get_filtered_orders(request)
+    
+    metrics = _get_report_metrics(
+        filtered_orders,
+        successful_orders
+    )
+    
+    chart_labels, chart_values = _get_chart_data(
+        successful_orders,
+        filter_type
+    )
 
-    orders = orders.order_by('-created_at')
+    successful_orders = successful_orders.order_by('-created_at')
 
-    paginator = Paginator(orders, 5)
+    paginator = Paginator(successful_orders, 5)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
@@ -206,8 +222,12 @@ def sales_report_view(request):
 
 @admin_required
 def export_sales_report_excel(request):
-    base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(orders)
+    base_orders, filtered_orders, successful_orders, filter_type = _get_filtered_orders(request)
+
+    metrics = _get_report_metrics(
+        filtered_orders,
+        successful_orders
+    )
 
     workbook = Workbook()
     sheet = workbook.active
@@ -242,7 +262,7 @@ def export_sales_report_excel(request):
         'Final Total',
     ])
 
-    for order in orders.order_by('-created_at'):
+    for order in successful_orders.order_by('-created_at'):
         sheet.append([
             order.order_id,
             order.user.email,
@@ -269,13 +289,17 @@ def export_sales_report_excel(request):
 
 @admin_required
 def export_sales_report_pdf(request):
-    base_orders, orders, filter_type = _get_filtered_orders(request)
-    metrics = _get_report_metrics(orders)
+    base_orders, filtered_orders, successful_orders, filter_type = _get_filtered_orders(request)
+
+    metrics = _get_report_metrics(
+        filtered_orders,
+        successful_orders
+    )
 
     html_string = render_to_string(
         'adminpanel/sales_report_pdf.html',
         {
-            'orders': orders.order_by('-created_at'),
+            'orders': successful_orders.order_by('-created_at'),
             'filter_type': filter_type,
             **metrics,
         }
